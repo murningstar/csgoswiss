@@ -1,0 +1,33 @@
+:root {
+  font-family: Tahoma, Verdana, Segoe, sans-serif;
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 400;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+
+  --bg_light:     rgb(76, 88, 68);
+	--bg_dark:      rgb(53, 61, 46);
+  --border_light: rgb(135, 147, 127);
+	--border_dark:  rgb(35, 41, 27);
+  --progress_yellow: rgb(198, 178, 80)
+}
+*{
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-smooth: never;
+  -webkit-font-smoothing : none;
+}
+body{
+  min-height: 100vh;
+  /* background-color: rgba(53, 61, 46, 1); */
+  /* background: rgb(75,87,67);
+  background: linear-gradient(150deg, rgba(75,87,67,1) 0%, rgba(35,41,27,1) 100%);ckground: radial-gradient(circle, rgba(75,87,67,1) 0%, rgba(135,147,127,1) 72%, rgba(35,41,27,1) 100%); */
+  background: white;
+}
+
