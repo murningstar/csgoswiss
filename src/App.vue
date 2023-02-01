@@ -35,7 +35,7 @@
 			},
 			hideLoading(){
 				setTimeout(() => {
-					// this.isLoading=false;
+					this.isLoading=false;
 				}, 700);
 			}
 		},
@@ -70,4 +70,3 @@
 		}
 	}
 </style>
-16
