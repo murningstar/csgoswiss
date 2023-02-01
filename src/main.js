@@ -1,15 +1,14 @@
-import { createApp } from 'vue'
-import './style.css'
-import App from './App.vue'
-import components from '@/components/components.js'
-import router from './router.js'
+import { createApp } from "vue";
+import "./style.css";
+import App_composition from "./App_composition.vue";
+import components from "@/components/components.js";
+import router from "@/router/router.js";
 
+let app = createApp(App_composition);
+components.forEach((component) => {
+	app.component(component.name, component);
+});
 
-let app = createApp(App);
-components.forEach( (component)=>{
-    app.component(component.name, component)
-})
+app.use(router);
 
-app.use(router)
-
-app.mount('#app')
+app.mount("#app");

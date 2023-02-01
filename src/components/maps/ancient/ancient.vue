@@ -1,16 +1,12 @@
 <template>
-    <div>
-
-    </div>
+  <div></div>
 </template>
 
 <script>
-    export default {
-        name:'ancient',
-        mapId:8,
-    }
+export default {
+  name: "ancient",
+  mapId: 8,
+};
 </script>
 
-<style lang="scss" scoped>
-
-</style>
+<style lang="scss" scoped></style>
