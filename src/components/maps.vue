@@ -1,14 +1,5 @@
 <template>
 	<div class="mapsWrapper">
-		<!-- <router-view
-      @mapLoaded="$emit('mapLoaded')"
-      class="mapContainer"
-      v-slot="{ Component }"
-    >
-      <transition name="changeMapToLeft" mode="out-in">
-        <component :is="Component" />
-      </transition>
-    </router-view> -->
 		<router-view @mapLoaded="$emit('mapLoaded')" class="mapContainer">
 		</router-view>
 	</div>
