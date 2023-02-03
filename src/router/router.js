@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
-import maps from "@/components/maps/maps.js";
+import mapsComponentsExport from "@/components/maps/mapsComponentsExport.js";
 
 let router = createRouter({
   history: createWebHistory(),
@@ -7,13 +7,13 @@ let router = createRouter({
   linkActiveClass: "mapLink-active",
 });
 
-maps.forEach((mapComponent) => {
-  router.addRoute({
-    name: `/${mapComponent.name}`,
-    path: `/${mapComponent.name}`,
-    component: mapComponent,
-    meta: { mapId: mapComponent.mapId },
-  });
+mapsComponentsExport.forEach((mapComponent) => {
+	router.addRoute({
+		name: `/${mapComponent.name}`,
+		path: `/${mapComponent.name}`,
+		component: mapComponent,
+		meta: { mapId: mapComponent.mapId },
+	});
 });
 
 export default router;
