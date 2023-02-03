@@ -3,7 +3,7 @@
 		<img
 			@load="onMapImageLoad"
 			class="mapImg"
-			src="@/assets/maps/mirage.webp"
+			:src="`@/assets/maps/${map}.webp`"
 			alt=""
 		/>
 		<div
@@ -20,14 +20,15 @@
 	</div>
 </template>
 
-<script>
-import points_mirage from "./points_mirage.js";
+<script lang="ts">
+import points_mirage from "./maps/mirage/points_mirage.js";
 export default {
 	name: "mirage",
 	mapId: 1,
 	data: () => {
 		return {
 			points_mirage,
+            map: 'mirage'
 		};
 	},
 	methods: {
