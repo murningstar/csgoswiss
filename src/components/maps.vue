@@ -1,7 +1,6 @@
 <template>
 	<div class="mapsWrapper">
-		<router-view @mapLoaded="$emit('mapLoaded')" class="mapContainer">
-		</router-view>
+		<SingleMap @mapLoaded="$emit('mapLoaded')" class="mapContainer" />
 	</div>
 </template>
 
@@ -48,38 +47,5 @@ $bg_dark: rgba(53, 61, 46, 1);
 			background-color: var(--bg_dark);
 		}
 	}
-}
-
-/* 
-        Animations 
-    */
-.changeMapToLeft-enter-from {
-	opacity: 0;
-	transform: scale(0.9, 0.9) translateX(-100px);
-}
-.changeMapToLeft-enter-active {
-	transition: all 0.33s cubic-bezier(0.19, 1, 0.22, 1);
-}
-.changeMapToLeft-leave-active {
-	transition: all 0.4s cubic-bezier(0.55, 0.085, 0.68, 0.53);
-}
-.changeMapToLeft-leave-to {
-	opacity: 0;
-	transform: scale(0.9, 0.9) translateX(100px);
-}
-
-.changeMapToRight-enter-from {
-	opacity: 0;
-	transform: scale(0.9, 0.9) translateX(100px);
-}
-.changeMapToRight-enter-active {
-	transition: all 0.33s cubic-bezier(0.19, 1, 0.22, 1);
-}
-.changeMapToRight-leave-active {
-	transition: all 0.4s cubic-bezier(0.55, 0.085, 0.68, 0.53);
-}
-.changeMapToRight-leave-to {
-	opacity: 0;
-	transform: scale(0.9, 0.9) translateX(-100px);
 }
 </style>
