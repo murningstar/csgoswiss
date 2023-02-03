@@ -3,7 +3,7 @@
     <li class="listOfMapLinks">
       <ul
         v-for="map in maps"
-        :class="{ activeMap: currentMap == map }"
+        :class="{ activeMap: currentMap == map, }"
         @click="$emit('emit-startLoading')"
       >
         <router-link :to="`/${map}`">
@@ -16,7 +16,7 @@
 
 <script>
 export default {
-  name: "mapsNav",
+  name: "MapsNav",
   data: () => {
     return {
       maps: [
