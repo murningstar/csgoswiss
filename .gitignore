@@ -23,5 +23,6 @@ dist-ssr
 *.sln
 *.sw?
 
-# Asset images
+# Asset+Public
 src/assets/*
+public
