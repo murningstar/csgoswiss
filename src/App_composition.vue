@@ -6,15 +6,15 @@
 				@imgLoaded="isLoading = false"
 				:nSegmentsVisible="nSegmentsVisible"
 			/>
-			<maps-nav @emit-startLoading="isLoading = true" />
-			<maps @mapLoaded="hideLoading" />
+			<MapsNav @emit-startLoading="startLoading()" />
+			<Maps @mapLoaded="hideLoading" />
 			<!-- <maps-nav style="grid-area: nav;"/>
 			<maps style="grid-area: maps;"/> -->
 		</div>
 	</div>
 </template>
 
-<script>
+<script lang="ts">
 export default {
 	data: () => {
 		return {
@@ -24,7 +24,8 @@ export default {
 	},
 	methods: {
 		startLoading() {
-			// new Promise((res, rej) => {});
+			this.isLoading = true;
+			this.nSegmentsVisible = 0;
 			for (let i = 0; i < 15; i++) {
 				setTimeout(() => {
 					console.log(i);
@@ -33,14 +34,29 @@ export default {
 			}
 		},
 		// works only on Maps.vue's emits
-		hideLoading() {
+		async hideLoading() {
+			await new Promise((res) => {
+				setTimeout(() => {
+					res('')
+				}, 100);
+			})
+			await new Promise((res) => {
+				for (let i=0; i<6; i++) {
+					setTimeout(() => {
+						this.nSegmentsVisible+=1
+						if (i>=5){
+							res('')
+						}
+					}, i*10);
+				}
+			})
 			setTimeout(() => {
 				this.isLoading = false;
-			}, 700);
+				this.nSegmentsVisible = 0;
+			}, 40);
 		},
 	},
 	created() {
-		this.isLoading = true;
 		this.startLoading();
 	},
 };

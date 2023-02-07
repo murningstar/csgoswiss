@@ -14,7 +14,7 @@
   </nav>
 </template>
 
-<script>
+<script lang="ts">
 export default {
   name: "MapsNav",
   data: () => {
@@ -28,45 +28,59 @@ export default {
         "vertigo",
         "ancient",
       ],
-      currentMap: "",
     };
   },
   watch: {
-    $route(to, from) {
-      this.currentMap = to.name.slice(1);
-    },
     currentMap(nextmap, oldmap) {
-      console.log(nextmap);
+      console.log(nextmap)
     },
   },
+  computed: {
+    currentMap():string{
+      return this.$route.path.slice(1)
+    }
+  }
 };
 </script>
 
 <style lang="scss">
+/*
+  nav > 
+  li|.listOfMapLinks > 
+  ul|.activeMap > 
+  a|.mapLink-active|::first-letter
+*/
 nav {
+  // width: fit-content;
+  // border-color: rgb(74, 89, 66);
   box-sizing: content-box;
   background-color: rgb(75, 87, 67);
   justify-self: center;
-  // width: fit-content;
   max-width: 100%;
   border: 8px solid var(--bg_light);
   min-width: 0;
   height: 35px;
-  // border-color: rgb(74, 89, 66);
   .listOfMapLinks {
+    // border: 3px solid cyan;
     max-width: fit-content;
     min-width: 0;
-    // border: 3px solid cyan;
     display: flex;
     justify-content: center;
     align-items: center;
     height: 100%;
     border-bottom: 1px solid rgb(135, 147, 127);
+/*
+  nav > 
+  li|.listOfMapLinks > 
+  ul|.activeMap > 
+  a|.mapLink-active|::first-letter
+*/
     ul {
-      padding-left: 8px;
-      padding-right: 25px;
-      flex-shrink: 1;
       // flex-basis: 1;
+      // border-bottom:  1px solid rgb(35, 41, 27);
+      // padding-left: 8px;
+      // padding-right: 25px;
+      flex-shrink: 1;
       flex-grow: 0;
       min-width: 0;
       height: 100%;
@@ -79,9 +93,13 @@ nav {
       border-top: 1px solid rgb(135, 147, 127);
       border-left: 1px solid rgb(135, 147, 127);
       border-right: 1px solid rgb(35, 41, 27);
-      // border-bottom:  1px solid rgb(35, 41, 27);
       margin-right: 1px;
-
+      cursor: pointer;
+      // border: 1px cyan solid;
+      /* 
+        dynamic class for link text highlighing
+        applied on <ul>
+      */
       &.activeMap {
         border-top: 1px solid rgb(135, 147, 127);
         border-left: 1px solid rgb(135, 147, 127);
@@ -94,6 +112,8 @@ nav {
       }
 
       a {
+        padding-left: 8px;
+        padding-right: 25px;
         font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
         position: relative;
         font-size: min(2vw, 16px);
@@ -112,4 +132,10 @@ nav {
     }
   }
 }
+/*
+  nav > 
+  li|.listOfMapLinks > 
+  ul|.activeMap > 
+  a|.mapLink-active|::first-letter
+*/
 </style>

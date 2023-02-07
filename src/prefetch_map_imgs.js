@@ -1,3 +1,5 @@
+// Этот скрипт в данный момент не используется
+
 let maps = ['ancient', 'dust2', 'inferno', 'mirage', 'nuke', 'overpass', 'train', 'vertigo']
 
 document.addEventListener('DOMContentLoaded', () => {

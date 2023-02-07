@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
-const useSomestore = defineStore('somestore', {
+export const useSomestore = defineStore('somestore', {
     state: ()=>({
-
+        
     }),
     getters:{
 
@@ -10,4 +10,3 @@ const useSomestore = defineStore('somestore', {
         
     }
 });
-export default useSomestore
