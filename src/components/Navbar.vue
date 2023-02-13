@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { ref, computed, watch } from "vue";
+import { ref, computed } from "vue";
 import { useRoute } from "vue-router";
 const maps = ref([
 	"mirage",
@@ -12,9 +12,6 @@ const maps = ref([
 ]);
 const route = useRoute();
 const currentMap = computed(() => route.path.slice(1));
-watch(currentMap, (nextMap, previousMap) => {
-	console.log(nextMap);
-});
 </script>
 
 <template>
