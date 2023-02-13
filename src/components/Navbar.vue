@@ -1,47 +1,37 @@
-<template>
-  <nav>
-    <li class="listOfMapLinks">
-      <ul
-        v-for="map in maps"
-        :class="{ activeMap: currentMap == map, }"
-        @click="$emit('emit-startLoading')"
-      >
-        <router-link :to="`/${map}`">
-          {{ map }}
-        </router-link>
-      </ul>
-    </li>
-  </nav>
-</template>
-
-<script lang="ts">
-export default {
-  name: "Navbar",
-  data: () => {
-    return {
-      maps: [
-        "mirage",
-        "dust2",
-        "inferno",
-        "overpass",
-        "train",
-        "vertigo",
-        "ancient",
-      ],
-    };
-  },
-  watch: {
-    currentMap(nextmap, oldmap) {
-      console.log(nextmap)
-    },
-  },
-  computed: {
-    currentMap():string{
-      return this.$route.path.slice(1)
-    }
-  }
-};
+<script lang="ts" setup>
+import { ref, computed, watch } from "vue";
+import { useRoute } from "vue-router";
+const maps = ref([
+	"mirage",
+	"dust2",
+	"inferno",
+	"overpass",
+	"train",
+	"vertigo",
+	"ancient",
+]);
+const route = useRoute();
+const currentMap = computed(() => route.path.slice(1));
+watch(currentMap, (nextMap, previousMap) => {
+	console.log(nextMap);
+});
 </script>
+
+<template>
+	<nav>
+		<li class="listOfMapLinks">
+			<ul
+				v-for="map in maps"
+				:class="{ activeMap: currentMap == map }"
+				@click="$emit('emit-startLoading')"
+			>
+				<router-link :to="`/${map}`">
+					{{ map }}
+				</router-link>
+			</ul>
+		</li>
+	</nav>
+</template>
 
 <style lang="scss">
 /*
@@ -51,86 +41,86 @@ export default {
   a|.mapLink-active|::first-letter
 */
 nav {
-  // width: fit-content;
-  // border-color: rgb(74, 89, 66);
-  box-sizing: content-box;
-  background-color: rgb(75, 87, 67);
-  justify-self: center;
-  max-width: 100%;
-  border: 8px solid var(--bg_light);
-  min-width: 0;
-  height: 35px;
-  .listOfMapLinks {
-    // border: 3px solid cyan;
-    max-width: fit-content;
-    min-width: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100%;
-    border-bottom: 1px solid rgb(135, 147, 127);
-/*
+	// width: fit-content;
+	// border-color: rgb(74, 89, 66);
+	box-sizing: content-box;
+	background-color: rgb(75, 87, 67);
+	justify-self: center;
+	max-width: 100%;
+	border: 8px solid var(--bg_light);
+	min-width: 0;
+	height: 35px;
+	.listOfMapLinks {
+		// border: 3px solid cyan;
+		max-width: fit-content;
+		min-width: 0;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		height: 100%;
+		border-bottom: 1px solid rgb(135, 147, 127);
+		/*
   nav > 
   li|.listOfMapLinks > 
   ul|.activeMap > 
   a|.mapLink-active|::first-letter
 */
-    ul {
-      // flex-basis: 1;
-      // border-bottom:  1px solid rgb(35, 41, 27);
-      // padding-left: 8px;
-      // padding-right: 25px;
-      flex-shrink: 1;
-      flex-grow: 0;
-      min-width: 0;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: flex-start;
+		ul {
+			// flex-basis: 1;
+			// border-bottom:  1px solid rgb(35, 41, 27);
+			// padding-left: 8px;
+			// padding-right: 25px;
+			flex-shrink: 1;
+			flex-grow: 0;
+			min-width: 0;
+			height: 100%;
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+			align-items: flex-start;
 
-      background-color: rgb(75, 87, 67);
-      border-top: 1px solid rgb(135, 147, 127);
-      border-left: 1px solid rgb(135, 147, 127);
-      border-right: 1px solid rgb(35, 41, 27);
-      margin-right: 1px;
-      cursor: pointer;
-      // border: 1px cyan solid;
-      /* 
+			background-color: rgb(75, 87, 67);
+			border-top: 1px solid rgb(135, 147, 127);
+			border-left: 1px solid rgb(135, 147, 127);
+			border-right: 1px solid rgb(35, 41, 27);
+			margin-right: 1px;
+			cursor: pointer;
+			// border: 1px cyan solid;
+			/* 
         dynamic class for link text highlighing
         applied on <ul>
       */
-      &.activeMap {
-        border-top: 1px solid rgb(135, 147, 127);
-        border-left: 1px solid rgb(135, 147, 127);
-        border-right: 1px solid rgb(35, 41, 27);
-        border-bottom: none;
-        transform: scaleY(1.06);
-        a {
-          transform: scaleY(0.95) translateY(-2px);
-        }
-      }
+			&.activeMap {
+				border-top: 1px solid rgb(135, 147, 127);
+				border-left: 1px solid rgb(135, 147, 127);
+				border-right: 1px solid rgb(35, 41, 27);
+				border-bottom: none;
+				transform: scaleY(1.06);
+				a {
+					transform: scaleY(0.95) translateY(-2px);
+				}
+			}
 
-      a {
-        padding-left: 8px;
-        padding-right: 25px;
-        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-        position: relative;
-        font-size: min(2vw, 16px);
-        text-decoration: none;
-        display: block;
-        // border: 2px solid rgba(128, 0, 128, 1);
-        // text-align: center;
-        color: rgb(220, 220, 220);
-        &::first-letter {
-          text-transform: capitalize;
-        }
-        &.mapLink-active {
-          color: rgb(255, 255, 255);
-        }
-      }
-    }
-  }
+			a {
+				padding-left: 8px;
+				padding-right: 25px;
+				font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+				position: relative;
+				font-size: min(2vw, 16px);
+				text-decoration: none;
+				display: block;
+				// border: 2px solid rgba(128, 0, 128, 1);
+				// text-align: center;
+				color: rgb(220, 220, 220);
+				&::first-letter {
+					text-transform: capitalize;
+				}
+				&.mapLink-active {
+					color: rgb(255, 255, 255);
+				}
+			}
+		}
+	}
 }
 /*
   nav > 
