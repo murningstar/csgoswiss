@@ -14,28 +14,26 @@
 	</div>
 </template>
 
-<script lang="ts">
-export default {
-	data: () => {
-		return {
-			isLoading: false,
-			nSegmentsVisible: 0,
-		};
-	},
-	methods: {
-		startLoading() {
-			this.isLoading = true;
-			this.nSegmentsVisible = 0;
-			for (let i = 0; i < 15; i++) {
-				setTimeout(() => {
-					console.log(i);
-					this.nSegmentsVisible += 1;
-				}, i * 10);
-			}
-		},
-		// Используется только на эмитах из Maps.vue
-		async hideLoading() {
-			await new Promise((res) => {
+<script lang="ts" setup>
+import { ref, onBeforeMount } from 'vue'
+const isLoading = ref(false)
+const nSegmentsVisible = ref(0)
+onBeforeMount(()=>{
+	startLoading()
+})
+function startLoading(){
+	isLoading.value = true;
+	nSegmentsVisible.value = 0;
+	for (let i = 0; i < 15; i++) {
+		setTimeout(() => {
+			console.log(i);
+			nSegmentsVisible.value += 1;
+		}, i * 10);
+	}
+}
+// hideLoading используется только на эмитах из Maps.vue
+async function hideLoading(){
+	await new Promise((res) => {
 				setTimeout(() => {
 					res("");
 				}, 100);
@@ -43,7 +41,7 @@ export default {
 			await new Promise((res) => {
 				for (let i = 0; i < 6; i++) {
 					setTimeout(() => {
-						this.nSegmentsVisible += 1;
+						nSegmentsVisible.value += 1;
 						if (i >= 5) {
 							res("");
 						}
@@ -51,15 +49,10 @@ export default {
 				}
 			});
 			setTimeout(() => {
-				this.isLoading = false;
-				this.nSegmentsVisible = 0;
+				isLoading.value = false;
+				nSegmentsVisible.value = 0;
 			}, 40);
-		},
-	},
-	created() {
-		this.startLoading();
-	},
-};
+}
 </script>
 
 <style lang="scss">
