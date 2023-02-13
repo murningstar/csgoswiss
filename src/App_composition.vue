@@ -8,8 +8,8 @@
 			/>
 			<Navbar @emit-startLoading="startLoading()" />
 			<Maps @mapLoaded="hideLoading" />
-			<!-- <maps-nav style="grid-area: nav;"/>
-			<maps style="grid-area: maps;"/> -->
+			<!-- <Navbar style="grid-area: nav;"/> -->
+			<!-- <Maps style="grid-area: maps;"/>  -->
 		</div>
 	</div>
 </template>
@@ -37,19 +37,19 @@ export default {
 		async hideLoading() {
 			await new Promise((res) => {
 				setTimeout(() => {
-					res('')
+					res("");
 				}, 100);
-			})
+			});
 			await new Promise((res) => {
-				for (let i=0; i<6; i++) {
+				for (let i = 0; i < 6; i++) {
 					setTimeout(() => {
-						this.nSegmentsVisible+=1
-						if (i>=5){
-							res('')
+						this.nSegmentsVisible += 1;
+						if (i >= 5) {
+							res("");
 						}
-					}, i*10);
+					}, i * 10);
 				}
-			})
+			});
 			setTimeout(() => {
 				this.isLoading = false;
 				this.nSegmentsVisible = 0;

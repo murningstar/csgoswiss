@@ -1,14 +1,25 @@
 <template>
 	<aside class="loading">
 		<p class="loading__title">
-			<slot>Loading...</slot>
+			<slot name="title">Loading...</slot>
 		</p>
 		<p class="loading__message">
-			<slot>Downloading map image...</slot>
+			<slot name="message">Downloading map image...</slot>
 		</p>
 		<div class="loading__progressbar">
-			<div class="loading__progressSegment_container" v-for="segment in 21">
-				<div class="loading__progressSegment_item" :style="{ visibility: segment <= nSegmentsVisible ? 'visible' : 'hidden', }"></div>
+			<div
+				class="loading__progressSegment_container"
+				v-for="segment in 21"
+			>
+				<div
+					class="loading__progressSegment_item"
+					:style="{
+						visibility:
+							segment <= nSegmentsVisible
+								? 'visible'
+								: 'hidden',
+					}"
+				></div>
 			</div>
 		</div>
 	</aside>
