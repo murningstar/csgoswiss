@@ -1,6 +1,6 @@
 import { createApp } from "vue";
 import "./style.css";
-import App_composition from "./App_composition.vue";
+import App from "./App.vue";
 import router from "@/router/router.js";
 
 import Navbar from "@/components/Navbar.vue";
@@ -10,7 +10,7 @@ import SingleMap from "@/components/SingleMap.vue";
 
 const components = [Navbar, Maps, loadingWindow, SingleMap];
 
-let app = createApp(App_composition);
+let app = createApp(App);
 app.use(router);
 
 components.forEach((component) => {
