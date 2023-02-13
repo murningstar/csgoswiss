@@ -1,3 +1,7 @@
+<script lang="ts" setup>
+
+</script>
+
 <template>
 	<!--
 		Компонент Maps.vue существует отдельно, т.к. изначально было сделано по компоненту
@@ -12,12 +16,6 @@
 		<SingleMap @mapLoaded="$emit('mapLoaded')" class="mapContainer" />
 	</div>
 </template>
-
-<script>
-export default {
-	name: "Maps",
-};
-</script>
 
 <style lang="scss">
 $border_light: rgb(135, 147, 127);
