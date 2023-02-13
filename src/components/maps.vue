@@ -1,4 +1,9 @@
 <template>
+	<!--
+		Компонент Maps.vue существует отдельно, т.к. изначально было сделано по компоненту 
+		под каждую карту.
+		
+	-->
 	<div class="mapsWrapper">
 		<SingleMap @mapLoaded="$emit('mapLoaded')" class="mapContainer" />
 	</div>

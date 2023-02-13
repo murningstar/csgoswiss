@@ -37,7 +37,7 @@ onMounted(() => {
 	);
 });
 async function onMapImageLoad() {
-	console.log('%current map image loaded', 'color:green', performance.now());
+	console.log("%current map image loaded", "color:green", performance.now());
 	emit("mapLoaded");
 	/*
 		Функционал для подгрузки пикч всех карт, который срабатывает после загрузки самой первой пикчи.
@@ -71,6 +71,9 @@ async function onMapImageLoad() {
 </script>
 
 <style lang="scss" scoped>
+.mapImg{
+	text-align: center;
+}
 .pointContainer {
 	position: absolute;
 	border-radius: 50%;
@@ -98,6 +101,31 @@ button {
 	// border: 1px red solid;
 	z-index: -1;
 	opacity: 50%;
-	transform: translate(-41%, -41%);
+	// border: 2px red solid;
+	transform: translate(-44%, -43%);
+	// animation: rotateSprite 16s linear infinite;
+	animation: rotateSprite 16s linear infinite,
+		scaleSprite 5s ease-in-out infinite;
+	transform-origin: 6% 7%;
+}
+
+@keyframes rotateSprite {
+	from {
+		rotate: 0deg;
+	}
+	to {
+		rotate: 360deg;
+	}
+}
+@keyframes scaleSprite {
+	0% {
+		scale: 0.95;
+	}
+	50% {
+		scale: 1;
+	}
+	100% {
+		scale: 0.95;
+	}
 }
 </style>

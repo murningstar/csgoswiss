@@ -16,7 +16,7 @@
 
 <script lang="ts">
 export default {
-  name: "MapsNav",
+  name: "Navbar",
   data: () => {
     return {
       maps: [

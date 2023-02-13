@@ -3,12 +3,12 @@ import "./style.css";
 import App_composition from "./App_composition.vue";
 import router from "@/router/router.js";
 
-import MapsNav from "@/components/MapsNav.vue";
+import Navbar from "@/components/Navbar.vue";
 import Maps from "@/components/Maps.vue";
-import loadingWindow from "@/components/loadingWindow.vue";
+import loadingWindow from "@/components/Loading_goldsource.vue";
 import SingleMap from "@/components/SingleMap.vue";
 
-const components = [MapsNav, Maps, loadingWindow, SingleMap];
+const components = [Navbar, Maps, loadingWindow, SingleMap];
 
 let app = createApp(App_composition);
 app.use(router);

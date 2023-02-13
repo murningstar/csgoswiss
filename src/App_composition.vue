@@ -1,12 +1,12 @@
 <template>
 	<div class="layout-gridContainer">
 		<div class="mapNav">
-			<loading-window
+			<Loading_goldsource
 				v-if="isLoading"
 				@imgLoaded="isLoading = false"
 				:nSegmentsVisible="nSegmentsVisible"
 			/>
-			<MapsNav @emit-startLoading="startLoading()" />
+			<Navbar @emit-startLoading="startLoading()" />
 			<Maps @mapLoaded="hideLoading" />
 			<!-- <maps-nav style="grid-area: nav;"/>
 			<maps style="grid-area: maps;"/> -->
@@ -33,7 +33,7 @@ export default {
 				}, i * 10);
 			}
 		},
-		// works only on Maps.vue's emits
+		// Используется только на эмитах из Maps.vue
 		async hideLoading() {
 			await new Promise((res) => {
 				setTimeout(() => {
