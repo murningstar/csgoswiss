@@ -37,24 +37,6 @@ $bg_dark: rgba(53, 61, 46, 1);
 	max-height: 100%;
 	min-height: 0;
 	aspect-ratio: 1/1;
-	.mapContainer {
-		min-height: 0;
-		margin: 0 auto;
-		max-height: 100%;
-		aspect-ratio: 1/1;
-		display: flex;
-		border: 5px solid orange;
-		border: 15px solid var(--bg_dark);
-		position: relative;
-		box-shadow: -1px -1px 0 0 var(--border_dark),
-			1px 1px 0 0 var(--border_light);
-		.mapImg {
-			// border: 5px solid yellow;
-			max-width: 100%;
-			max-height: 100%;
-			// aspect-ratio: 1/1;
-			background-color: var(--bg_dark);
-		}
-	}
+	
 }
 </style>
