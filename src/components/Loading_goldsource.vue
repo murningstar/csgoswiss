@@ -1,3 +1,7 @@
+<script lang="ts" setup>
+defineProps({ nSegmentsVisible: Number })
+</script>
+
 <template>
 	<aside class="loading">
 		<p class="loading__title">
@@ -24,15 +28,6 @@
 		</div>
 	</aside>
 </template>
-
-<script>
-export default {
-	name: "Loading_goldsource",
-	props: {
-		nSegmentsVisible: Number,
-	},
-};
-</script>
 
 <style lang="scss" scoped>
 .loading {
