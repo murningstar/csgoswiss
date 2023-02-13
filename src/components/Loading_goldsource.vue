@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-defineProps({ nSegmentsVisible: Number })
+const props = defineProps({ nSegmentsVisible: { type: Number, default: 0 } })
 </script>
 
 <template>
@@ -11,19 +11,13 @@ defineProps({ nSegmentsVisible: Number })
 			<slot name="message">Downloading map image...</slot>
 		</p>
 		<div class="loading__progressbar">
-			<div
-				class="loading__progressSegment-container"
-				v-for="segment in 21"
-			>
-				<div
-					class="loading__progressSegment-item"
-					:style="{
-						visibility:
-							segment <= nSegmentsVisible
-								? 'visible'
-								: 'hidden',
-					}"
-				></div>
+			<div class="loading__progressSegment-container" v-for="segment in 21">
+				<div class="loading__progressSegment-item" :style="{
+					visibility:
+						segment <= props.nSegmentsVisible
+							? 'visible'
+							: 'hidden',
+				}"></div>
 			</div>
 		</div>
 	</aside>
@@ -54,11 +48,13 @@ defineProps({ nSegmentsVisible: Number })
 		font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 		font-weight: 400;
 		letter-spacing: -0.8px;
+
 		&.loading__title {
 			color: white;
 			padding-left: 10px;
 			margin-bottom: 12px;
 		}
+
 		&.loading__message {
 			color: rgb(142, 154, 141);
 			margin-bottom: 8px;
@@ -71,6 +67,7 @@ defineProps({ nSegmentsVisible: Number })
 		padding: 4px;
 		width: fit-content;
 		border: 2px solid blue;
+
 		.loading__progressSegment-container {
 			border: 2px solid cyan;
 
