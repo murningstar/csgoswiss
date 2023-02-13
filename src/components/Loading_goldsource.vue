@@ -8,11 +8,11 @@
 		</p>
 		<div class="loading__progressbar">
 			<div
-				class="loading__progressSegment_container"
+				class="loading__progressSegment-container"
 				v-for="segment in 21"
 			>
 				<div
-					class="loading__progressSegment_item"
+					class="loading__progressSegment-item"
 					:style="{
 						visibility:
 							segment <= nSegmentsVisible
@@ -76,10 +76,10 @@ export default {
 		padding: 4px;
 		width: fit-content;
 		border: 2px solid blue;
-		.loading__progressSegment_container {
+		.loading__progressSegment-container {
 			border: 2px solid cyan;
 
-			.loading__progressSegment_item {
+			.loading__progressSegment-item {
 				border: 2px solid green;
 				height: 24px;
 				width: 12px;
