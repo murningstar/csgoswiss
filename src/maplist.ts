@@ -1,5 +1,4 @@
-import { ref } from "vue";
-export const maplist = [
+export const maplist:string[] = [
   "mirage",
   "dust2",
   "inferno",
