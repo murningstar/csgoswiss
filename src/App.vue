@@ -10,7 +10,7 @@ function startLoading() {
 	nSegmentsVisible.value = 0;
 	for (let i = 0; i < 15; i++) {
 		setTimeout(() => {
-			console.log(i);
+			console.log(`progressbar element № ${i}`);
 			nSegmentsVisible.value += 1;
 		}, i * 10);
 	}
@@ -51,11 +51,20 @@ async function hideLoading() {
 <template>
 	<div class="layout-gridContainer">
 		<div class="mapNav">
-			<Loading_goldsource v-if="isLoading" @imgLoaded="isLoading = false" :nSegmentsVisible="nSegmentsVisible" />
 			<Navbar @emit-startLoading="startLoading()" />
 			<Maps @mapLoaded="hideLoading" />
 			<!-- <Navbar style="grid-area: nav;"/> -->
 			<!-- <Maps style="grid-area: maps;"/>  -->
+			<Teleport to="body">
+				<Loading_goldsource v-if="isLoading" @imgLoaded="isLoading = false" :nSegmentsVisible="nSegmentsVisible">
+					<template #title>
+						Loading...
+					</template>
+					<template #message>
+						Downloading first map image...
+					</template>
+				</Loading_goldsource>
+			</Teleport>
 		</div>
 	</div>
 </template>
