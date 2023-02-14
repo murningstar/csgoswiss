@@ -14,7 +14,7 @@ let app = createApp(App);
 app.use(router);
 
 components.forEach((component) => {
-	app.component(component.name || component.__name, component);
+	app.component(component.__name, component)
 });
 
 app.mount("#app");
