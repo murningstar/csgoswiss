@@ -1,15 +1,7 @@
 <script lang="ts" setup>
 import { ref, computed } from "vue";
 import { useRoute } from "vue-router";
-const maps = ref([
-	"mirage",
-	"dust2",
-	"inferno",
-	"overpass",
-	"train",
-	"vertigo",
-	"ancient",
-]);
+import { maplist } from "@/maplist"
 const route = useRoute();
 const currentMap = computed(() => route.path.slice(1));
 </script>
@@ -18,7 +10,7 @@ const currentMap = computed(() => route.path.slice(1));
 	<nav>
 		<li class="listOfMapLinks">
 			<ul
-				v-for="map in maps"
+				v-for="map in maplist"
 				:class="{ activeMap: currentMap == map }"
 				@click="$emit('emit-startLoading')"
 			>

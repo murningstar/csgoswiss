@@ -1,33 +1,8 @@
-<template>
-	<div>
-		<img
-			@load="onMapImageLoad"
-			class="mapImg"
-			:src="
-				$route.path.length > 1
-					? `/src/assets/maps/webp/${$route.path.slice(1)}.webp`
-					: ''
-			"
-			alt="map image"
-		/>
-		<div
-			class="pointContainer"
-			v-for="point in points"
-			:style="{
-				top: `${point.position.y}%`,
-				left: `${point.position.x}%`,
-			}"
-		>
-			<button></button>
-			<img class="sprite" src="@/assets/smoke_sprite.webp" alt="" />
-		</div>
-	</div>
-</template>
-
 <script lang="ts" setup>
 import { ref, onMounted } from "vue";
 import points_mirage from "./maps/mirage/points_mirage.js";
-const emit = defineEmits(["mapLoaded"]);
+import { maplist } from "@/maplist"
+const emit = defineEmits(["imageLoaded"]);
 const points = ref(points_mirage);
 onMounted(() => {
 	console.log(
@@ -36,9 +11,12 @@ onMounted(() => {
 		performance.now()
 	);
 });
-async function onMapImageLoad() {
+function onImageLoad() {
 	console.log("%current map image loaded", "color:green", performance.now());
-	emit("mapLoaded");
+	emit("imageLoaded");
+	preloadRestImages()
+}
+async function preloadRestImages() {
 	/*
 		Функционал для подгрузки пикч всех карт, который срабатывает после загрузки самой первой пикчи.
 		Т.к. пользователь может при первом заходе открыть любую из карт, можно просто
@@ -46,17 +24,7 @@ async function onMapImageLoad() {
 		браузер увидит, что она есть в кэше
 		=> функционал для отслеживания уже загруженных карт не нужен
 	*/
-	let maps = [
-		"ancient",
-		"dust2",
-		"inferno",
-		"mirage",
-		"nuke",
-		"overpass",
-		"train",
-		"vertigo",
-	];
-	maps.forEach((map) => {
+	maplist.value.forEach((map) => {
 		let img = new Image();
 		img.src = `/src/assets/maps/webp/${map}.webp`;
 		img.onload = (e) => {
@@ -70,6 +38,23 @@ async function onMapImageLoad() {
 }
 </script>
 
+<template>
+	<div>
+		<img @load="onImageLoad" class="mapImg" :src="
+			$route.path.length > 1
+				? `/src/assets/maps/webp/${$route.path.slice(1)}.webp`
+				: ''
+		" alt="map image" />
+		<div class="pointContainer" v-for="point in points" :style="{
+			top: `${point.position.y}%`,
+			left: `${point.position.x}%`,
+		}">
+			<button></button>
+			<img class="sprite" src="@/assets/smoke_sprite.webp" alt="" />
+		</div>
+	</div>
+</template>
+
 <style lang="scss" scoped>
 .mapContainer {
 	min-height: 0;
@@ -82,6 +67,7 @@ async function onMapImageLoad() {
 	position: relative;
 	box-shadow: -1px -1px 0 0 var(--border_dark),
 		1px 1px 0 0 var(--border_light);
+
 	.mapImg {
 		// border: 5px solid yellow;
 		max-width: 100%;
@@ -91,6 +77,7 @@ async function onMapImageLoad() {
 		text-align: center;
 	}
 }
+
 .pointContainer {
 	position: absolute;
 	border-radius: 50%;
@@ -103,6 +90,7 @@ async function onMapImageLoad() {
 	z-index: 2;
 	transform: translate(-50%, -50%);
 }
+
 button {
 	position: absolute;
 	width: 100%;
@@ -111,6 +99,7 @@ button {
 	cursor: pointer;
 	// border: 1px rgb(0, 114, 0) solid;
 }
+
 .sprite {
 	width: 50px;
 	height: 50px;
@@ -130,17 +119,21 @@ button {
 	from {
 		rotate: 0deg;
 	}
+
 	to {
 		rotate: 360deg;
 	}
 }
+
 @keyframes scaleSprite {
 	0% {
 		scale: 0.95;
 	}
+
 	50% {
 		scale: 1;
 	}
+
 	100% {
 		scale: 0.95;
 	}

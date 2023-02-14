@@ -10,7 +10,7 @@ function startLoading() {
 	nSegmentsVisible.value = 0;
 	for (let i = 0; i < 15; i++) {
 		setTimeout(() => {
-			console.log(`progressbar element № ${i}`);
+			// console.log(`progressbar element № ${i}`);
 			nSegmentsVisible.value += 1;
 		}, i * 10);
 	}
@@ -52,7 +52,7 @@ async function hideLoading() {
 	<div class="layout-gridContainer">
 		<div class="mapNav">
 			<Navbar @emit-startLoading="startLoading()" />
-			<Maps @mapLoaded="hideLoading" />
+			<Maps @imageLoaded="hideLoading" />
 			<!-- <Navbar style="grid-area: nav;"/> -->
 			<!-- <Maps style="grid-area: maps;"/>  -->
 			<Teleport to="body">

@@ -11,7 +11,7 @@
     заключается в том что, как мне опять же кажется, на каждый отдельный маршрут(/mirage,/dust2...) 
     должен быть отдельный view или че-то типо того. -->
     <div class="mapsWrapper">
-        <SingleMap @mapLoaded="$emit('mapLoaded')" class="mapContainer" />
+        <SingleMap @imageLoaded="$emit('imageLoaded')" class="mapContainer" />
     </div>
 </template>
 
