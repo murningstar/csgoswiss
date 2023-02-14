@@ -1,5 +1,5 @@
 import { ref } from "vue";
-export const maplist = ref([
+export const maplist = [
   "mirage",
   "dust2",
   "inferno",
@@ -8,4 +8,4 @@ export const maplist = ref([
   "train",
   "ancient",
   "vertigo",
-]);
+];

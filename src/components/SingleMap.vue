@@ -24,7 +24,7 @@ async function preloadRestImages() {
 		браузер увидит, что она есть в кэше
 		=> функционал для отслеживания уже загруженных карт не нужен
 	*/
-	maplist.value.forEach((map) => {
+	maplist.forEach((map) => {
 		let img = new Image();
 		img.src = `/src/assets/maps/webp/${map}.webp`;
 		img.onload = (e) => {
