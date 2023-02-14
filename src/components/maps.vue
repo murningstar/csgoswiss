@@ -2,6 +2,12 @@
 
 </script>
 
+<script>
+	export default {
+		name:'Maps'
+	}
+</script>
+
 <template>
 	<!--
 		Компонент Maps.vue существует отдельно, т.к. изначально было сделано по компоненту
@@ -22,6 +28,7 @@ $border_light: rgb(135, 147, 127);
 $border_dark: rgb(35, 41, 27);
 $bg_light: rgb(75, 87, 67);
 $bg_dark: rgba(53, 61, 46, 1);
+
 .mapsWrapper {
 	// justify-self: center;
 	border-top: 1px solid var(--border_light);
