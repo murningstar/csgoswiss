@@ -14,6 +14,7 @@ let app = createApp(App);
 app.use(router);
 
 components.forEach((component) => {
+	console.log(component.__name);
 	app.component(component.__name, component)
 });
 
