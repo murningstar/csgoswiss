@@ -1,16 +1,18 @@
 <script lang="ts" setup>
-import { onBeforeMount } from "vue";
+import { onBeforeMount, onMounted } from "vue";
 import { useLoadingGoldsourceLogic } from "@/composables/loading_goldsource"
 const { isLoading, nSegmentsVisible, startLoading, endLoading } = useLoadingGoldsourceLogic()
-onBeforeMount(() => {
-	startLoading();
+startLoading();
+onMounted(() => {
+	endLoading()
 });
+
 </script>
 
 <template>
 	<div class="layout-gridContainer">
 		<div class="mapNav">
-			<Navbar @emit-startLoading="startLoading()" />
+			<Navbar @emit-startLoading="startLoading" />
 			<Maps @imageLoaded="endLoading" />
 			<!-- <Navbar style="grid-area: nav;"/> -->
 			<!-- <Maps style="grid-area: maps;"/>  -->
