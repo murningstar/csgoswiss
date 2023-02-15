@@ -1,60 +1,22 @@
 <script lang="ts" setup>
-import { ref, onBeforeMount } from "vue";
-const isLoading = ref(false);
-const nSegmentsVisible = ref(0);
+import { onBeforeMount } from "vue";
+import { useLoadingGoldsourceLogic } from "@/composables/loading_goldsource"
+const { isLoading, nSegmentsVisible, startLoading, endLoading } = useLoadingGoldsourceLogic()
 onBeforeMount(() => {
 	startLoading();
 });
-function startLoading() {
-	isLoading.value = true;
-	nSegmentsVisible.value = 0;
-	for (let i = 0; i < 15; i++) {
-		setTimeout(() => {
-			// console.log(`progressbar element № ${i}`);
-			nSegmentsVisible.value += 1;
-		}, i * 10);
-	}
-}
-async function hideLoading() {
-	/* hideLoading используется только на эмитах из Maps.vue
-	hideLoading срабатывает когда изображение карты уже загружено. В этот момент progressbar
-	должен находиться в состоянии загрузки 15/21(аутентичность goldsource UI). */
-	await new Promise((res) => {
-		/* Декоративный таймаут (для аутентичности загрузки goldsource)
-		Для ситуации, когда эмит из Maps может произойти мгновенно.
-		То есть, чтобы отрисовка последних палок прокнула во время отрисовки 15 первых. */
-		setTimeout(res, 100);
-	});
-	await new Promise((res) => {
-		/* Здесь цикл спавнит таймауты со временем i*10 (то есть 10, 20, 30... мс),
-		для дорисовки оставшихся палок в progressbar */
-		for (let i = 0; i < 6; i++) {
-			setTimeout(() => {
-				nSegmentsVisible.value += 1;
-				if (i >= 5) {
-					res("");
-				}
-			}, i * 10);
-		}
-	});
-	setTimeout(() => {
-		/* Выключение окна загрузки.
-		Обёрнуто в таймаут тоже с декоративной целью */
-		isLoading.value = false;
-		nSegmentsVisible.value = 0;
-	}, 40);
-}
 </script>
 
 <template>
 	<div class="layout-gridContainer">
 		<div class="mapNav">
 			<Navbar @emit-startLoading="startLoading()" />
-			<Maps @imageLoaded="hideLoading" />
+			<Maps @imageLoaded="endLoading" />
 			<!-- <Navbar style="grid-area: nav;"/> -->
 			<!-- <Maps style="grid-area: maps;"/>  -->
 			<Teleport to="body">
-				<Loading_goldsource v-if="isLoading" @imgLoaded="isLoading = false" :nSegmentsVisible="nSegmentsVisible">
+				<Loading_goldsource v-if="isLoading" @imgLoaded="isLoading = false"
+					:nSegmentsVisible="nSegmentsVisible">
 					<template #title>
 						Loading...
 					</template>
