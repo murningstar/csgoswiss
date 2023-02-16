@@ -1,4 +1,5 @@
 import { createApp } from "vue";
+import { createPinia } from "pinia";
 import "./style.css";
 import App from "./App.vue";
 import router from "@/router/router.js";
@@ -12,7 +13,7 @@ const components = [Navbar, Maps, loadingWindow, SingleMap];
 
 let app = createApp(App);
 app.use(router);
-
+app.use(createPinia())
 components.forEach((component) => {
 	console.log(component.__name);
 	app.component(component.__name, component)
