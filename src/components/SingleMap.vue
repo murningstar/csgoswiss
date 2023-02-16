@@ -10,7 +10,7 @@ const store = useSomestore()
 const route = useRoute()
 const points = ref(points_mirage);
 const imgMapError = computed(() => {
-	return `map ${route.path.slice(1)} downloading error, please refresh the page`
+	return `Downloading error of map image de_${route.path.slice(1)}, please refresh the page or choose another map`
 })
 /* открывает окно загрузки когда путь изменился */
 watch(() => route.path, (newPath, oldPath) => {
