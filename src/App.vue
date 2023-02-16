@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { onBeforeMount, onMounted } from "vue";
+import { onMounted } from "vue";
 import { useLoadingGoldsourceLogic } from "@/composables/loading_goldsource"
 const { isLoading, nSegmentsVisible, startLoading, endLoading } = useLoadingGoldsourceLogic()
 startLoading();
@@ -12,23 +12,22 @@ onMounted(() => {
 <template>
 	<div class="layout-gridContainer">
 		<div class="mapNav">
-			<Navbar @emit-startLoading="startLoading" />
-			<Maps @imageLoaded="endLoading" />
+			<Navbar />
+			<Maps />
 			<!-- <Navbar style="grid-area: nav;"/> -->
 			<!-- <Maps style="grid-area: maps;"/>  -->
 			<Teleport to="body">
-				<Loading_goldsource v-if="isLoading" @imgLoaded="isLoading = false"
-					:nSegmentsVisible="nSegmentsVisible">
+				<Loading_goldsource v-if="isLoading" :nSegmentsVisible="nSegmentsVisible">
 					<template #title>
 						Loading...
 					</template>
 					<template #message>
-						Downloading first map image...
+						Initializing...
 					</template>
 				</Loading_goldsource>
 			</Teleport>
 		</div>
-	</div>
+</div>
 </template>
 
 <style lang="scss">

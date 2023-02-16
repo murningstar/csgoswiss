@@ -12,7 +12,6 @@ const currentMap = computed(() => route.path.slice(1));
 			<ul
 				v-for="map in maplist"
 				:class="{ activeMap: currentMap == map }"
-				@click="$emit('emit-startLoading')"
 			>
 				<router-link :to="`/${map}`">
 					{{ map }}
