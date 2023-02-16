@@ -1,46 +1,45 @@
 <script lang="ts" setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed, watch } from "vue";
+import { useRoute } from 'vue-router'
+import { useSomestore } from "@/stores/somestore";
 import points_mirage from "./maps/mirage/points_mirage.js";
 import { maplist } from "@/maplist"
-const emit = defineEmits(["imageLoaded"]);
+import { useLoadingGoldsourceLogic } from "@/composables/loading_goldsource"
+const { isLoading, nSegmentsVisible, startLoading, endLoading } = useLoadingGoldsourceLogic()
+const store = useSomestore()
+const route = useRoute()
 const points = ref(points_mirage);
-onMounted(() => {
-	console.log(
-		"%c mirage_component mounted",
-		"color: red",
-		performance.now()
-	);
-});
-function onImageLoad() {
-	console.log("%current map image loaded", "color:green", performance.now());
-	emit("imageLoaded");
+/* открывает окно загрузки когда путь изменился */
+watch(() => route.path, (newPath, oldPath) => {
+	/* если убрать условие, то всё все равно будет работать, а именно
+	- при клике на ту же карту, startloading не сработает,
+	- при клике на другую карту startloading сработает.
+	Почему так, хз его знает, проверку оставил на всякий случай */
+	if (newPath != oldPath) {
+		startLoading()
+	}
+})
+function onImageLoaded() {
+	store.isFirstLoadTrue()
+	console.log("%cimage loaded", "color:green", performance.now());
+	endLoading()
 	preloadRestImages()
 }
+/* Т.к. пользователь может при первом заходе открыть любую из карт, можно просто
+попытаться подгрузить все карты и пикча текущей карты загружена не будет т.к.
+браузер увидит, что она есть в кэше => функционал для отслеживания уже загруженных карт не нужен */
 async function preloadRestImages() {
-	/*
-		Функционал для подгрузки пикч всех карт, который срабатывает после загрузки самой первой пикчи.
-		Т.к. пользователь может при первом заходе открыть любую из карт, можно просто
-		попытаться подгрузить все карты и пикча текущей карты загружена не будет т.к.
-		браузер увидит, что она есть в кэше
-		=> функционал для отслеживания уже загруженных карт не нужен
-	*/
 	maplist.forEach((map) => {
-		let img = new Image();
-		img.src = `/src/assets/maps/webp/${map}.webp`;
-		img.onload = (e) => {
-			console.log(
-				`%c ${map} image loaded`,
-				"color:blue",
-				performance.now()
-			);
-		};
-	});
+		let img = new Image()
+		img.src = `/src/assets/maps/webp/${map}.webp`
+		img.onload = (e) => { console.log(`%c ${map} image loaded`, "color:blue") }
+	})
 }
 </script>
 
 <template>
 	<div>
-		<img @load="onImageLoad" class="mapImg" :src="
+		<img @load="onImageLoaded" class="mapImg" :src="
 			$route.path.length > 1
 				? `/src/assets/maps/webp/${$route.path.slice(1)}.webp`
 				: ''
@@ -52,7 +51,17 @@ async function preloadRestImages() {
 			<button></button>
 			<img class="sprite" src="@/assets/smoke_sprite.webp" alt="" />
 		</div>
-	</div>
+		<Teleport to="body">
+			<Loading_goldsource v-if="isLoading" :nSegmentsVisible="nSegmentsVisible">
+				<template #title>
+					Loading...
+				</template>
+				<template #message>
+					Downloading {{ $route.path.slice(1) }} map image...
+				</template>
+			</Loading_goldsource>
+		</Teleport>
+</div>
 </template>
 
 <style lang="scss" scoped>
