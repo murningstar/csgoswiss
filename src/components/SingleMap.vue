@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { ref, onMounted, computed, watch } from "vue";
+import { ref, computed, watch } from "vue";
 import { useRoute } from 'vue-router'
 import { useSomestore } from "@/stores/somestore";
 import points_mirage from "./maps/mirage/points_mirage.js";
@@ -9,6 +9,9 @@ const { isLoading, nSegmentsVisible, startLoading, endLoading } = useLoadingGold
 const store = useSomestore()
 const route = useRoute()
 const points = ref(points_mirage);
+const imgMapError = computed(() => {
+	return `map ${route.path.slice(1)} downloading error, please refresh the page`
+})
 /* открывает окно загрузки когда путь изменился */
 watch(() => route.path, (newPath, oldPath) => {
 	/* если убрать условие, то всё все равно будет работать, а именно
@@ -43,13 +46,13 @@ async function preloadRestImages() {
 			$route.path.length > 1
 				? `/src/assets/maps/webp/${$route.path.slice(1)}.webp`
 				: ''
-		" alt="map image" />
+		" :alt="imgMapError" />
 		<div class="pointContainer" v-for="point in points" :style="{
 			top: `${point.position.y}%`,
 			left: `${point.position.x}%`,
 		}">
 			<button></button>
-			<img class="sprite" src="@/assets/smoke_sprite.webp" alt="" />
+			<img class="sprite" src="@/assets/smoke_sprite.webp" alt="Smoke effect image downloading error" />
 		</div>
 		<Teleport to="body">
 			<Loading_goldsource v-if="isLoading" :nSegmentsVisible="nSegmentsVisible">
