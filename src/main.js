@@ -8,8 +8,9 @@ import Navbar from "@/components/Navbar.vue";
 import Maps from "@/components/Maps.vue"
 import loadingWindow from "@/components/Loading_goldsource.vue";
 import SingleMap from "@/components/SingleMap.vue";
+import cmsOverlay from "@/components/cms/cmsOverlay.vue";
 
-const components = [Navbar, Maps, loadingWindow, SingleMap];
+const components = [Navbar, Maps, loadingWindow, SingleMap, cmsOverlay];
 
 let app = createApp(App);
 app.use(router);
