@@ -1,10 +1,12 @@
 <script lang="ts" setup>
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, onMounted } from "vue";
 import { useRoute } from 'vue-router'
+import panzoom from "panzoom"
 import { useSomestore } from "@/stores/somestore";
-import points_mirage from "./maps/mirage/points_mirage.js";
+import points_mirage from "@/data/grenadePoints/points_mirage";
 import { maplist } from "@/maplist"
 import { useLoadingGoldsourceLogic } from "@/composables/loading_goldsource"
+import cmsOverlay from "./cms/cmsOverlay.vue";
 const { isLoading, nSegmentsVisible, startLoading, endLoading } = useLoadingGoldsourceLogic()
 const store = useSomestore()
 const route = useRoute()
@@ -38,37 +40,69 @@ async function preloadRestImages() {
 		img.onload = (e) => { console.log(`%c ${map} image loaded`, "color:blue") }
 	})
 }
+const innerContainerRef = ref<HTMLDivElement | null>(null)
+onMounted(() => {
+	panzoom(innerContainerRef.value as HTMLDivElement, {
+		maxZoom: 3,
+		minZoom: 1,
+		bounds: true,
+		boundsPadding: 0.8,
+		// autocenter:true
+	})
+})
 </script>
 
 <template>
-	<div>
-		<img @load="onImageLoaded" class="mapImg" :src="
-			$route.path.length > 1
-				? `/src/assets/maps/webp/${$route.path.slice(1)}.webp`
-				: ''
-		" :alt="imgMapError" />
-		<div class="pointContainer" v-for="point in points" :style="{
-			top: `${point.position.y}%`,
-			left: `${point.position.x}%`,
-		}">
-			<button></button>
-			<img class="sprite" src="@/assets/smoke_sprite.webp" alt="Smoke effect image downloading error" />
+	<div class="mapContainer-outer">
+		<div class="mapContainer-inner" ref="innerContainerRef">
+			<div class="cmsShadowMap" v-if="store.isCmsModeOn" @click="mylog">
+
+			</div>
+			<img @load="onImageLoaded" class="mapImg" :src="
+				$route.path.length > 1
+					? `/src/assets/maps/webp/${$route.path.slice(1)}.webp`
+					: ''
+			" :alt="imgMapError" />
+			<div class="pointContainer" v-for="point in points" :style="{
+				top: `${point.position.y}%`,
+				left: `${point.position.x}%`,
+			}">
+				<button></button>
+				<img class="sprite" src="@/assets/smoke_sprite.webp" alt="Smoke effect image downloading error" />
+			</div>
 		</div>
-		<Teleport to="body">
-			<Loading_goldsource v-if="isLoading" :nSegmentsVisible="nSegmentsVisible">
-				<template #title>
-					Loading...
-				</template>
-				<template #message>
-					Downloading {{ $route.path.slice(1) }} map image...
-				</template>
-			</Loading_goldsource>
-		</Teleport>
-</div>
+	</div>
+	<Teleport to="body">
+		<Loading_goldsource v-if="isLoading" :nSegmentsVisible="nSegmentsVisible">
+			<template #title>
+				Loading...
+			</template>
+			<template #message>
+				Downloading de_{{ $route.path.slice(1) }} image...
+			</template>
+		</Loading_goldsource>
+		<cmsOverlay>
+		</cmsOverlay>
+	</Teleport>
 </template>
 
 <style lang="scss" scoped>
-.mapContainer {
+.cmsShadowMap {
+	background-color: rgba(38, 0, 255, 0.133);
+	width: 100%;
+	height: 100%;
+	position: absolute;
+}
+
+.mapContainer-outer {
+	overflow: hidden;
+	position: relative; // "offsetX/Y are the position of the mouse relatively to the 'closest positioned element'"
+	background-color: var(--bg_dark);
+	box-shadow: -1px -1px 0 0 var(--border_dark),
+		1px 1px 0 0 var(--border_light);
+}
+
+.mapContainer-inner {
 	min-height: 0;
 	margin: 0 auto;
 	max-height: 100%;
@@ -77,8 +111,6 @@ async function preloadRestImages() {
 	border: 5px solid orange;
 	border: 15px solid var(--bg_dark);
 	position: relative;
-	box-shadow: -1px -1px 0 0 var(--border_dark),
-		1px 1px 0 0 var(--border_light);
 
 	.mapImg {
 		// border: 5px solid yellow;
@@ -87,6 +119,7 @@ async function preloadRestImages() {
 		// aspect-ratio: 1/1;
 		background-color: var(--bg_dark);
 		text-align: center;
+		cursor:grab
 	}
 }
 
