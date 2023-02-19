@@ -49,6 +49,7 @@ $border_dark: rgb(35, 41, 27);
 	// max-height: 100vh;
 	.mapNav {
 		max-height: 100vh;
+		max-width: min-content;
 		border: 5px solid rgb(101, 22, 63);
 		display: flex;
 		flex-direction: column;

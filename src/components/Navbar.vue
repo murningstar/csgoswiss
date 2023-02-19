@@ -35,6 +35,7 @@ nav {
 	background-color: rgb(75, 87, 67);
 	justify-self: center;
 	max-width: 100%;
+	max-width: fit-content;
 	border: 8px solid var(--bg_light);
 	min-width: 0;
 	height: 35px;
