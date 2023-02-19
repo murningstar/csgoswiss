@@ -45,17 +45,15 @@ onMounted(() => {
 	panzoom(innerContainerRef.value as HTMLDivElement, {
 		maxZoom: 3,
 		minZoom: 1,
-		bounds: true,
-		boundsPadding: 0.8,
-		// autocenter:true
+		bounds: true
 	})
 })
 </script>
 
 <template>
 	<div class="mapContainer-outer">
-		<div class="mapContainer-inner" ref="innerContainerRef">
-			<div class="cmsShadowMap" v-if="store.isCmsModeOn" @click="mylog">
+		<div class="mapContainer-inner" ref="innerContainerRef" @wheel.prevent>
+			<div class="cmsShadowMap" v-if="store.isCmsModeOn">
 
 			</div>
 			<img @load="onImageLoaded" class="mapImg" :src="
@@ -68,7 +66,8 @@ onMounted(() => {
 				left: `${point.position.x}%`,
 			}">
 				<button></button>
-				<img class="sprite" src="@/assets/smoke_sprite.webp" alt="Smoke effect image downloading error" />
+				<img class="sprite" src="@/assets/smoke_sprite.webp" alt="Smoke effect image downloading error"
+					@wheel.prevent />
 			</div>
 		</div>
 	</div>
@@ -119,7 +118,8 @@ onMounted(() => {
 		// aspect-ratio: 1/1;
 		background-color: var(--bg_dark);
 		text-align: center;
-		cursor:grab
+		cursor: grab;
+		pointer-events: none;
 	}
 }
 
@@ -158,6 +158,7 @@ button {
 	animation: rotateSprite 16s linear infinite,
 		scaleSprite 5s ease-in-out infinite;
 	transform-origin: 6% 7%;
+	pointer-events: none;
 }
 
 @keyframes rotateSprite {
