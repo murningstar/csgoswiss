@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { onMounted } from "vue";
-import { useLoadingGoldsourceLogic } from "@/composables/loading_goldsource"
+import { useLoadingGoldsourceLogic } from "@/components/Loading_goldsource/loading_goldsource"
 const { isLoading, nSegmentsVisible, startLoading, endLoading } = useLoadingGoldsourceLogic()
 startLoading();
 onMounted(() => {
