@@ -4,7 +4,6 @@ export const maplist:string[] = [
   "inferno",
   "nuke",
   "overpass",
-  "train",
   "ancient",
   "vertigo",
 ];
