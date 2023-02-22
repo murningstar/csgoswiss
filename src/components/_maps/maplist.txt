@@ -1,8 +1,0 @@
-1. mirage
-2. dust2
-3. inferno
-4. nuke
-5. overpass
-6. vertigo
-7. train
-8. ancient
