@@ -1,6 +1,6 @@
-import { ref } from "vue";
 // Логика только для работы с окном загрузки Loading_goldsource.js
 // Этот файл по сути миксин
+import { ref } from "vue";
 export function useLoadingGoldsourceLogic() {
     const isLoading = ref(false);
     const nSegmentsVisible = ref(0);
@@ -41,5 +41,24 @@ export function useLoadingGoldsourceLogic() {
             nSegmentsVisible.value = 0;
         }, 40);
     }
-    return { isLoading, nSegmentsVisible, startLoading, endLoading };
+    /* --=<{ Комедия }>=--
+    С точки зрения визуала
+    И с точки зрения кода */
+    async function onImageLoadError(){
+        await new Promise((res) => setTimeout(()=>{nSegmentsVisible.value-=1;res('')}, 250))
+        await new Promise((res) => setTimeout(()=>{nSegmentsVisible.value-=1;res('')}, 500))
+        await new Promise((res) => setTimeout(()=>{nSegmentsVisible.value-=1;res('')}, 250))
+        await new Promise((res) => setTimeout(()=>{nSegmentsVisible.value-=1;res('')}, 200))
+        await new Promise((res) => setTimeout(()=>{nSegmentsVisible.value-=1;res('')}, 150))
+        await new Promise((res) => setTimeout(()=>{nSegmentsVisible.value-=1;res('')}, 100))
+        await new Promise((res) => setTimeout(()=>{nSegmentsVisible.value-=1;res('')}, 75))
+        await new Promise((res) => setTimeout(()=>{nSegmentsVisible.value-=1;res('')}, 55))
+        await new Promise((res) => setTimeout(()=>{nSegmentsVisible.value-=1;res('')}, 45))
+        await new Promise((res) => setTimeout(()=>{nSegmentsVisible.value-=1;res('')}, 35))
+        await new Promise((res) => setTimeout(()=>{nSegmentsVisible.value-=1;res('')}, 25))
+        await new Promise((res) => setTimeout(()=>{nSegmentsVisible.value-=1;res('')}, 15))
+        await new Promise((res) => setTimeout(()=>{nSegmentsVisible.value-=1;res('')}, 10))
+        await new Promise((res) => setTimeout(()=>{nSegmentsVisible.value-=1;res('')}, 10))        
+    }
+    return { isLoading, nSegmentsVisible, startLoading, endLoading, onImageLoadError };
 }
