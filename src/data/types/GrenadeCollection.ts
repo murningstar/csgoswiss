@@ -1,7 +1,7 @@
-import type { Smoke } from "@/data/classes/Smoke";
-import type { Molotov } from "@/data/classes/Motolov";
-import type { Flash } from "@/data/classes/Flash";
-import type { He } from "@/data/classes/He";
+import type { Smoke } from "@/data/interfaces/Smoke";
+import type { Molotov } from "@/data/interfaces/Motolov";
+import type { Flash } from "@/data/interfaces/Flash";
+import type { He } from "@/data/interfaces/He";
 
 export type GrenadeCollection = {
     smokes: Smoke[];
