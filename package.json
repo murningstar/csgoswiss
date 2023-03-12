@@ -11,10 +11,14 @@
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore"
   },
   "dependencies": {
+    "@xstate/vue": "^2.0.0",
+    "axios": "^1.3.4",
     "panzoom": "^9.4.3",
     "pinia": "^2.0.28",
     "vue": "^3.2.45",
-    "vue-router": "^4.1.6"
+    "vue-router": "^4.1.6",
+    "xstate": "^4.37.0",
+    "zod": "^3.21.4"
   },
   "devDependencies": {
     "@rushstack/eslint-patch": "^1.1.4",

@@ -10,4 +10,5 @@ import type {
 export interface Molotov extends Grenade {
     isOnewayMolotov: boolean;
     isFakeMolotov:boolean;
+    isBugMolotov:boolean;
 }

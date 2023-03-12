@@ -5,10 +5,20 @@ import vue from "@vitejs/plugin-vue";
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [vue()],
-  resolve: {
-    alias: {
-      "@": fileURLToPath(new URL("./src", import.meta.url)),
+    plugins: [vue()],
+    resolve: {
+        alias: {
+            "@": fileURLToPath(new URL("./src", import.meta.url)),
+        },
     },
-  },
+    server: {
+        // host: "192.168.0.102"
+    },
+    css: {
+        preprocessorOptions: {
+            scss: {
+                additionalData: `@import "@/style-vars-mixins.scss";`,
+            },
+        },
+    },
 });

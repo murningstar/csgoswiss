@@ -1,0 +1,20 @@
+$bg_light: rgb(76, 88, 68);
+$bg_dark: rgb(53, 61, 46);
+$border_light: rgb(135, 147, 127);
+$border_dark: rgb(35, 41, 27);
+$progress_yellow: rgb(198, 178, 80);
+$text_regular: #d8ded3;
+$text_disabled: #a0aa95;
+$text_active: #c4b550;
+@mixin gs-bd {
+    border-top: 1px solid $border_light;
+    border-left: 1px solid $border_light;
+    border-bottom: 1px solid $border_dark;
+    border-right: 1px solid $border_dark;
+}
+@mixin gs-bd-clicked {
+    border-top: 1px solid $border_dark;
+    border-left: 1px solid $border_dark;
+    border-right: 1px solid $border_light;
+    border-bottom: 1px solid $border_light;
+}

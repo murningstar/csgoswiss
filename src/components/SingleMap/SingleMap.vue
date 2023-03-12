@@ -6,6 +6,7 @@ import Smoke from "@/components/SingleMap/Smoke/SmokeComponent.vue"
 import Molotov from "@/components/SingleMap/Molotov/MolotovComponent.vue"
 import Flash from "@/components/SingleMap/Flash/FlashComponent.vue"
 import He from "@/components/SingleMap/He/HeComponent.vue"
+import CMS from "../cms/CMS.vue";
 import panzoom from "panzoom"
 
 import { mirageGrenades } from "@/data/mirageGrenades";
@@ -16,14 +17,14 @@ import { nukeGrenades } from "@/data/nukeGrenades";
 import { overpassGrenades } from "@/data/overpassGrenades";
 import { vertigoGrenades } from "@/data/vertigoGrenades";
 
-import { maplist } from "@/maplist"
 import { useLoadingGoldsourceLogic } from "@/components/Loading_goldsource/loading_goldsource"
-import cmsOverlay from "../cms/cmsOverlay.vue";
+import { maplist } from "@/maplist"
 import type { GrenadeCollection } from "@/data/types/GrenadeCollection";
 const { isLoading, nSegmentsVisible, startLoading, endLoading, onImageLoadError } = useLoadingGoldsourceLogic()
 const store = useSomestore()
 const route = useRoute()
 const currentRoute = computed(() => route.path.slice(1))
+
 /* Возможно нужно вынести склеивание этого объекта в отдельный файл и импортировать его,
 если склеивание происходит каждый раз при загрузке приложения.*/
 const allMapsGrenadeCollections: any = {
@@ -44,7 +45,7 @@ const currentMapGrenadeCollection = computed(() => {
 		}
 	}
 })
-// Сделал каждой текущей гранате по computed для визуального облегчения template
+// Сделал каждой гранате текущей карты по computed для визуального облегчения template
 const smokes = computed(() => currentMapGrenadeCollection.value.smokes)
 const molotovs = computed(() => currentMapGrenadeCollection.value.molotovs)
 const flashes = computed(() => currentMapGrenadeCollection.value.flashes)
@@ -70,9 +71,8 @@ watch(() => route.path, (newPath, oldPath) => {
 })
 function onImageLoaded() {
 	store.isFirstLoadTrue()
-	console.log("%cimage loaded", "color:green", performance.now());
+	// console.log("%cimage loaded", "color:green", performance.now());
 	endLoading()
-	preloadRestImages()
 }
 /* Т.к. пользователь может при первом заходе открыть любую из карт, можно просто
 попытаться подгрузить все карты и пикча текущей карты загружена не будет т.к.
@@ -81,12 +81,18 @@ async function preloadRestImages() {
 	maplist.forEach((map) => {
 		let img = new Image()
 		img.src = `/src/assets/maps/webp/${map}.webp`
-		img.onload = (e) => { console.log(`%c ${map} image loaded`, "color:blue") }
+		// img.onload = (e) => { console.log(`%c ${map} image loaded`, "color:blue") }
 	})
 }
-const innerContainerRef = ref<HTMLDivElement | null>(null)
 onMounted(() => {
-	panzoom(innerContainerRef.value as HTMLDivElement, {
+	preloadRestImages()
+})
+
+
+
+const outerContainerRef = ref<HTMLDivElement | null>(null)
+onMounted(() => {
+	panzoom(outerContainerRef.value as HTMLDivElement, {
 		maxZoom: 3,
 		minZoom: 1,
 		bounds: true,
@@ -96,24 +102,27 @@ onMounted(() => {
 </script>
 
 <template>
-	<div class="mapContainer-outer">
-		<div class="mapContainer-inner" ref="innerContainerRef" @wheel.prevent>
-			<div class="cmsShadowMap" v-if="store.isCmsModeOn" @click="">
-
-			</div>
-			<img @load="onImageLoaded" @error="onImageLoadError" class="mapImg" :src="
-				currentRoute.length > 1
-					? `/src/assets/maps/webp/${currentRoute}.webp`
-					: ''
-			" :alt="imgMapError" />
-			<Smoke v-for="smoke in smokes" :smoke="smoke" />
-			<Molotov v-for="molotov in molotovs" :molotov="molotov" />
-			<Flash v-for="flash in flashes" :flash="flash" />
-			<He v-for="he in hes" :he="he" />
+	<div class="mapBoundaries">
+		<div class="mapContainer-outer" ref="outerContainerRef">
+			<main class="mapContainer-inner" @wheel.prevent>
+				<CMS />
+				<img @load="onImageLoaded" @error="onImageLoadError"
+					class="mapImg" :src="
+						currentRoute.length > 1
+							? `/src/assets/maps/webp/${currentRoute}.webp`
+							: ''
+					" :alt="imgMapError" />
+				<Smoke v-for="smoke in smokes" :smoke="smoke" />
+				<Molotov v-for="molotov in molotovs" :molotov="molotov" />
+				<Flash v-for="flash in flashes" :flash="flash" />
+				<He v-for="he in hes" :he="he" />
+			</main>
 		</div>
 	</div>
+
 	<Teleport to="body">
-		<Loading_goldsource v-if="isLoading" :nSegmentsVisible="nSegmentsVisible">
+		<Loading_goldsource v-if="isLoading"
+			:nSegmentsVisible="nSegmentsVisible">
 			<template #title>
 				Loading...
 			</template>
@@ -121,43 +130,61 @@ onMounted(() => {
 				Downloading de_{{ currentRoute }} image...
 			</template>
 		</Loading_goldsource>
-		<cmsOverlay>
-		</cmsOverlay>
 	</Teleport>
 </template>
 
 <style lang="scss" scoped>
-.cmsShadowMap {
-	background-color: rgba(38, 0, 255, 0.133);
+.mapBoundaries {
 	width: 100%;
 	height: 100%;
-	position: absolute;
-}
-
-.mapContainer-outer {
+	// border: 5px solid rgb(255, 0, 98);
 	overflow: hidden;
-	position: relative; // "offsetX/Y are the position of the mouse relatively to the 'closest positioned element'"
+	position: relative;
+	min-width: 0;
+	min-height: 0;
+	flex-grow: 1;
 	background-color: var(--bg_dark);
 	box-shadow: -1px -1px 0 0 var(--border_dark),
 		1px 1px 0 0 var(--border_light);
-	// cursor: grab;
+	cursor: grab;
+
+	&:active {
+		cursor: grabbing;
+	}
+
+	display: flex;
+	flex-direction: column;
+}
+
+.mapContainer-outer {
+	min-height: 0;
+	max-height: 0;
+	max-height: 100%;
+	// border: 3px solid yellow;
+	display: flex;
+	flex-direction: column;
 }
 
 .mapContainer-inner {
-	min-height: 0;
-	margin: 0 auto;
-	max-height: 100%;
-	aspect-ratio: 1/1;
-	display: flex;
-	border: 5px solid orange;
-	border: 15px solid var(--bg_dark);
 	position: relative;
+	border: 15px solid var(--bg_dark);
+	// border: 5px solid rgb(29, 183, 55);
+	aspect-ratio: 1/1;
+	height: 100%;
+
+	margin: auto;
+	min-height: 0;
+	min-width: 0;
 
 	.mapImg {
-		// border: 5px solid yellow;
-		max-width: 100%;
-		max-height: 100%;
-		// aspect-ratio: 1/1;
+		// min-height: 100%;
+		// max-height: 100%;
+		object-fit: contain;
+		width: 100%;
+		height: 100%;
+		margin: auto;
+		display: block;
+		// border: 5px solid rgb(0, 89, 255);
 		background-color: var(--bg_dark);
 		text-align: center;
 		pointer-events: none;

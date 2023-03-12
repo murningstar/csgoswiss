@@ -8,13 +8,13 @@ import type {
 } from "@/data/types/GrenadeProperties";
 export interface Grenade {
     idCrypto: string;
-    name: string;
     coords: CoordsObj;
-    comboIds:string[];
+    name: string;
     throwSpotsIds:string[];
-    difficulty: Difficulty;
     side: Side;
     tickrate: Tickrate;
+    comboIds?:string[]; //optional
     throwClick: ThrowClick;
     throwMovement: ThrowMovement;
+    difficulty: Difficulty;
 }

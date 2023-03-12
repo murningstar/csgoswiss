@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { onMounted } from "vue";
 import { useLoadingGoldsourceLogic } from "@/components/Loading_goldsource/loading_goldsource"
+import GS_Window from "@/components/UI/GS_Window.vue"
 const { isLoading, nSegmentsVisible, startLoading, endLoading } = useLoadingGoldsourceLogic()
 startLoading();
 onMounted(() => {
@@ -17,7 +18,8 @@ onMounted(() => {
 			<!-- <Navbar style="grid-area: nav;"/> -->
 			<!-- <Maps style="grid-area: maps;"/>  -->
 			<Teleport to="body">
-				<Loading_goldsource v-if="isLoading" :nSegmentsVisible="nSegmentsVisible">
+				<Loading_goldsource v-if="isLoading"
+					:nSegmentsVisible="nSegmentsVisible">
 					<template #title>
 						Loading...
 					</template>
@@ -27,7 +29,8 @@ onMounted(() => {
 				</Loading_goldsource>
 			</Teleport>
 		</div>
-</div>
+	</div>
+	<div>someCOntent</div>
 </template>
 
 <style lang="scss">
@@ -37,7 +40,8 @@ $bg_dark: rgba(53, 61, 46, 1);
 $border_dark: rgb(35, 41, 27);
 
 .layout-gridContainer {
-	border: 5px solid green;
+	border: 1px solid rgb(102, 0, 255);
+	min-height: 100vh;
 
 	// background-color: $bg_light;
 	// display: grid;
@@ -49,8 +53,8 @@ $border_dark: rgb(35, 41, 27);
 	// max-height: 100vh;
 	.mapNav {
 		max-height: 100vh;
-		max-width: min-content;
-		border: 5px solid rgb(101, 22, 63);
+		width: 100%;
+		// border: 5px dashed rgb(248, 13, 13);
 		display: flex;
 		flex-direction: column;
 		background-color: var(--bg_light);

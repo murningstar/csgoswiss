@@ -23,18 +23,16 @@ $bg_light: rgb(75, 87, 67);
 $bg_dark: rgba(53, 61, 46, 1);
 
 .mapsWrapper {
-    // justify-self: center;
-    border-top: 1px solid var(--border_light);
-    border-left: 1px solid var(--border_light);
-    border-bottom: 1px solid var(--border_dark);
-    border-right: 1px solid var(--border_dark);
-    // border: 5px solid red;
+    flex-grow: 1;
+    min-height: 0;
+    @include gs-bd;
     margin: 8px;
     padding: 10px;
     background-color: var(--bg_light);
-    max-height: 100%;
-    min-height: 0;
-    aspect-ratio: 1/1;
-    max-width: fit-content;
+    // border: orange 5px solid;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 }
 </style>
