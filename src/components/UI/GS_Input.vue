@@ -12,7 +12,8 @@ const modelHandler = (event:Event)=>{
 
 <style scoped lang="scss">
     input{
-        height: 1.5rem;
+        font-size: 1rem;
+        height: 1.8rem;
         padding-left: 3px;
         width: 7.5rem;
         background-color: $bg_dark;

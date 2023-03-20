@@ -41,7 +41,7 @@ $border_dark: rgb(35, 41, 27);
 
 .layout-gridContainer {
 	border: 1px solid rgb(102, 0, 255);
-	min-height: 100vh;
+	height: 100vh;
 
 	// background-color: $bg_light;
 	// display: grid;
@@ -52,6 +52,7 @@ $border_dark: rgb(35, 41, 27);
 	// grid-template-rows: auto minmax(0, 1fr);
 	// max-height: 100vh;
 	.mapNav {
+		min-height: 100%;
 		max-height: 100vh;
 		width: 100%;
 		// border: 5px dashed rgb(248, 13, 13);

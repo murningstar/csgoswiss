@@ -6,14 +6,15 @@ import type {
     ThrowMovement,
     Difficulty,
 } from "@/data/types/GrenadeProperties";
+import type { ThrowSpot } from "@/data/interfaces/ThrowSpot";
 export interface Grenade {
-    idCrypto: string;
+    id: string;
     coords: CoordsObj;
     name: string;
-    throwSpotsIds:string[];
+    throwSpotsIds: [ThrowSpot["id"], ...ThrowSpot["id"][]]; // min 1 string
     side: Side;
     tickrate: Tickrate;
-    comboIds?:string[]; //optional
+    comboIds?: Grenade["id"][];
     throwClick: ThrowClick;
     throwMovement: ThrowMovement;
     difficulty: Difficulty;

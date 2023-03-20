@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { ref, computed } from "vue";
 import { useRoute } from "vue-router";
-import { maplist } from "@/maplist"
+import { maplist } from "@/data/maplist"
 const route = useRoute();
 const currentMap = computed(() => route.path.slice(1));
 </script>
@@ -9,10 +9,8 @@ const currentMap = computed(() => route.path.slice(1));
 <template>
 	<nav>
 		<li class="listOfMapLinks">
-			<ul
-				v-for="map in maplist"
-				:class="{ activeMap: currentMap == map }"
-			>
+			<ul v-for="map in maplist"
+				:class="{ activeMap: currentMap == map }">
 				<router-link :to="`/${map}`">
 					{{ map }}
 				</router-link>
@@ -29,6 +27,7 @@ const currentMap = computed(() => route.path.slice(1));
   a|.mapLink-active|::first-letter
 */
 nav {
+	transform: translateY(1px);
 	// width: fit-content;
 	// border-color: rgb(74, 89, 66);
 	box-sizing: content-box;
@@ -36,9 +35,11 @@ nav {
 	justify-self: center;
 	max-width: 100%;
 	max-width: fit-content;
-	border: 8px solid var(--bg_light);
+	margin: 8px;
+	margin-bottom: 0;
 	min-width: 0;
 	height: 35px;
+
 	.listOfMapLinks {
 		// border: 3px solid cyan;
 		max-width: fit-content;
@@ -48,6 +49,7 @@ nav {
 		align-items: center;
 		height: 100%;
 		border-bottom: 1px solid rgb(135, 147, 127);
+
 		/*
   nav > 
   li|.listOfMapLinks > 
@@ -74,6 +76,7 @@ nav {
 			border-right: 1px solid rgb(35, 41, 27);
 			margin-right: 1px;
 			cursor: pointer;
+
 			// border: 1px cyan solid;
 			/* 
         dynamic class for link text highlighing
@@ -84,9 +87,11 @@ nav {
 				border-left: 1px solid rgb(135, 147, 127);
 				border-right: 1px solid rgb(35, 41, 27);
 				border-bottom: none;
-				transform: scaleY(1.06);
+				transform: scaleY(1.1);
+
 				a {
-					transform: scaleY(0.95) translateY(-2px);
+					transform: scaleY(0.9) translateY(-2px);
+					color: $text_active;
 				}
 			}
 
@@ -100,21 +105,21 @@ nav {
 				display: block;
 				// border: 2px solid rgba(128, 0, 128, 1);
 				// text-align: center;
-				color: rgb(220, 220, 220);
+				color: rgb(255, 255, 255);
+
 				&::first-letter {
 					text-transform: capitalize;
 				}
-				&.mapLink-active {
-					color: rgb(255, 255, 255);
-				}
+
+				// &.mapLink-active {}
 			}
 		}
 	}
 }
+
 /*
   nav > 
   li|.listOfMapLinks > 
   ul|.activeMap > 
   a|.mapLink-active|::first-letter
-*/
-</style>
+*/</style>

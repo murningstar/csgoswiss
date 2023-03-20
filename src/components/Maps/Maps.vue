@@ -26,7 +26,7 @@ $bg_dark: rgba(53, 61, 46, 1);
     flex-grow: 1;
     min-height: 0;
     @include gs-bd;
-    margin: 8px;
+    margin: 0px 8px 8px 8px;
     padding: 10px;
     background-color: var(--bg_light);
     // border: orange 5px solid;

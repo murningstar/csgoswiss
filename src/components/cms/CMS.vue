@@ -8,8 +8,10 @@ import GS_Input from "@/components/UI/GS_Input.vue"
 import GS_Window from '@/components/UI/GS_Window.vue';
 import { useMachine } from "@xstate/vue"
 import { createMachine } from "xstate"
+import { nanoid } from "nanoid"
 import type { CoordsObj, Difficulty, ForWhom, Side, ThrowClick, ThrowMovement, Tickrate } from '@/data/types/GrenadeProperties';
 import type { Placeholder } from '@/data/interfaces/Placeholder'
+import { nadeTypeList } from '@/data/nadeTypeList';
 
 /* Placeholder называется как называется, так как точка прилёта гранаты
 при создании не имеет никакого типа. То есть она ни smoke, ни molotov и т.д. */
@@ -123,8 +125,6 @@ const cmsStateMachine = createMachine<{
     }
 })
 
-const nadeTypeList = ["Smoke", "Molotov", "Flash", "He"]
-
 const isDragging = ref(false)
 
 const { state, send } = useMachine(cmsStateMachine)
@@ -144,7 +144,7 @@ function pushNewPlaceholder(event: MouseEvent) {
         let clickOnRect_yPercent = (clickOnRect_y * 100) / boundClRect.height
 
         placeholders.value.push({
-            idCrypto: crypto.randomUUID(),
+            id: nanoid(),
             coords: {
                 x: clickOnRect_xPercent,
                 y: clickOnRect_yPercent
@@ -162,13 +162,13 @@ function pushNewPlaceholder(event: MouseEvent) {
     }
 }
 
-function onClickPlaceholder(phIdCrypto: string) {
-    /* Аргумент - placeholder.idCrypto(полученный из v-for="Placeholder in Placeholders") 
+function onClickPlaceholder(phId: string) {
+    /* Аргумент - placeholder.id(полученный из v-for="Placeholder in Placeholders") 
     Нажатия по этому споту - переход на выбор типа для этого спота*/
 
     // phIndex передаваемый в send почему-то подсвечивается белым а не оранж, хотя это 100% он.
     let phIndex = placeholders.value.findIndex((placeholder) => {
-        return placeholder.idCrypto == phIdCrypto
+        return placeholder.id == phId
     })
     if (isDragging.value === false) {
         if (placeholders.value[phIndex].type === '') {
@@ -218,7 +218,7 @@ function getBgColor(placeholderType: string) {
 
 function deletePlaceholder(rightClickedPlaceholder: Placeholder) {
     placeholders.value.splice(
-        placeholders.value.findIndex((placeholderObj) => placeholderObj.idCrypto == rightClickedPlaceholder.idCrypto),
+        placeholders.value.findIndex((placeholderObj) => placeholderObj.id == rightClickedPlaceholder.id),
         1
     )
 }
@@ -269,7 +269,7 @@ onUnmounted(() => {
             left: `${placeholder.coords.x}%`,
             boxShadow: getShadowColor(placeholder.type),
             backgroundColor: getBgColor(placeholder.type)
-        }" @click.left="onClickPlaceholder(placeholder.idCrypto)"
+        }" @click.left="onClickPlaceholder(placeholder.id)"
             @contextmenu.prevent="deletePlaceholder(placeholder)">
         </div>
 
@@ -357,8 +357,8 @@ onUnmounted(() => {
     align-items: center;
     margin: 0;
     padding: 0;
-    width: 50px;
-    height: 50px;
+    width: 33px;
+    height: 33px;
     border-radius: 10px;
     border: 3px solid rgb(0, 0, 0);
     font-size: 18px;
@@ -376,7 +376,7 @@ onUnmounted(() => {
 
 .shadowMap {
     background-color: rgba(38, 0, 255, 0.133);
-    box-shadow: 0 0 500px -10px rgba(255, 226, 147, 0.25), 0 0 21px 7px rgba(3, 14, 53, 0.26);
+    // box-shadow: inset 0 0 500px -10px rgba(255, 226, 147, 0.25), 0 0 21px 7px rgba(3, 14, 53, 0.26);
     width: 100%;
     height: 100%;
     position: absolute;

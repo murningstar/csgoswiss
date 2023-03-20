@@ -1,16 +1,21 @@
 <script setup lang="ts">
-defineProps(['flash'])
+import type { He } from '@/data/interfaces/He';
+import { reactive } from 'vue';
+const props = defineProps<{
+	he: He
+}>()
+const he = reactive(props.he)
 </script>
 
 <template>
-    <div class="flashContainer" :style="{
-        top: `${flash.coords.y}%`,
-        left: `${flash.coords.x}%`,
+    <div class="heContainer" :style="{
+        top: `${he.coords.y}%`,
+        left: `${he.coords.x}%`,
     }"></div>
 </template>
 
 <style scoped>
-.flashContainer {
+.heContainer {
 	position: absolute;
 	border-radius: 50%;
 	aspect-ratio: 1;

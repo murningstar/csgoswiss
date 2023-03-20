@@ -8,13 +8,13 @@
                 <GS_ContainerLight>
                     <form action="" enctype="">
                         <div class="generated">
-                            <!-- idCrypto -->
+                            <!-- id -->
                             <div class="formItem">
                                 <div class="formItem__label">
                                     ID
                                 </div>
                                 <div class="formItem__content disabled">
-                                    {{ clickedPlaceholder?.idCrypto }}
+                                    {{ clickedPlaceholder?.id }}
                                 </div>
                             </div>
                             <!-- coords -->
@@ -308,7 +308,7 @@ export default {
     data(): { formData: Placeholder } {
         return {
             formData: {
-                idCrypto: this.clickedPlaceholder!.idCrypto,
+                id: this.clickedPlaceholder!.id,
                 coords: this.clickedPlaceholder!.coords,
                 type: this.clickedPlaceholder!.type,
                 name: this.clickedPlaceholder?.name,
@@ -381,7 +381,7 @@ form {
     .formItem {
         display: flex;
         width: 100%;
-        margin-bottom: 0.625rem;
+        margin-bottom: 0.75rem;
 
         &__content {
             display: flex;

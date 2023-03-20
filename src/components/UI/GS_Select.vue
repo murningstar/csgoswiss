@@ -20,8 +20,8 @@ select {
     font-size: 1rem;
     background-color: $bg_dark;
     @include gs-bd-clicked;
-    height: 1.5rem;
-    width: 7.5rem;
+    height: 1.9rem;
+    width: 8rem;
     padding-left: 3px;
     color: var(--text_regular);
     cursor: pointer;

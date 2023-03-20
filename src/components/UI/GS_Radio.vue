@@ -24,18 +24,20 @@ const emit = defineEmits(['update:modelValue'])
 
 <style scoped lang="scss">
 .gs_radio {
-    width: 7.5rem;
+    min-width: 8rem;
     @include gs-bd-clicked;
-    padding: 2px 5px;
+    padding: 2px 8px;
     color: $text_disabled;
     display: flex;
     justify-content: center;
     align-items: center;
+    background-color: $bg_light;
 
     &__elem {
+        flex: 1 1 0px;
         display: flex;
         align-items: center;
-        margin: 0 0.625rem;
+        margin-right: 0.625rem;
 
         input {
             appearance: none;

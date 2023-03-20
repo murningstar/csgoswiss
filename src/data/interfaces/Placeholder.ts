@@ -22,35 +22,35 @@ import type {
 */
 
 export type Placeholder = {
-    idCrypto: string; //              RTS
-    coords: CoordsObj; //             RTS
-    type: string; //                  RTS
+    id: string; //                              RTS
+    coords: CoordsObj; //                       RTS
+    type: string; //                            RTS
     /* type-уникальное поле. Выбирается при инициализации объекта.
     Возможно уберу инициализацию и сделаю выбор типа создаваемой гранаты прямо в форме  */
-    name?: string; //                 ORTS
-    throwSpotsIds?: string[]; //      ORTS
-    side?: Side; //                   ORTS
-    tickrate?: Tickrate; //           ORTS
-    comboIds?: string[]; //           O
-    throwClick?: ThrowClick; //       ORTS
-    throwMovement?: ThrowMovement; // ORTS
-    difficulty?: Difficulty; //       ORTS
+    name?: string; //                           ORTS
+    throwSpotsIds?: [string, ...string[]]; //   ORTS
+    side?: Side; //                             ORTS
+    tickrate?: Tickrate; //                     ORTS
+    comboIds?: string[]; //                     O
+    throwClick?: ThrowClick; //                 ORTS
+    throwMovement?: ThrowMovement; //           ORTS
+    difficulty?: Difficulty; //                 ORTS
     /* Далее свойства от всех типов гранат, т.к. я еще не решил, буду ли
     делать раздельные Placeholder(временные) типы для каждого типа гранат.
     Проверка на "какой текущий тип гранаты" осуществляется в момент сабмита 
     на основе поля <<type>> */
     //Смоки:
-    isOnewaySmoke?: boolean; //       ORTSs
-    isFakeSmoke?: boolean; //         ORTSs
-    isBugSmoke?: boolean; //          ORTSs
+    isOnewaySmoke?: boolean; //                 ORTSs
+    isFakeSmoke?: boolean; //                   ORTSs
+    isBugSmoke?: boolean; //                    ORTSs
     //Флешки:
-    forWhom?: ForWhom; //             ORTSs
+    forWhom?: ForWhom; //                       ORTSs
     //Молики:
-    isOnewayMolotov?: boolean; //     ORTSs
-    isFakeMolotov?: boolean; //       ORTSs
-    isBugMolotov?: boolean; //        ORTSs
+    isOnewayMolotov?: boolean; //               ORTSs
+    isFakeMolotov?: boolean; //                 ORTSs
+    isBugMolotov?: boolean; //                  ORTSs
     //Хаешки:
-    isBugHe?: boolean; //             ORTSs
+    isBugHe?: boolean; //                       ORTSs
 };
 
 /* Позже --(позже, потому что сейчас у меня только фронтенд и я не боюсь за валидацию, т.к. 
