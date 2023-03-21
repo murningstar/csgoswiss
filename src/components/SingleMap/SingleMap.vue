@@ -9,6 +9,7 @@ import He from "@/components/SingleMap/He.vue"
 import CMS from "@/components/cms/CMS.vue";
 import FilterPanel from "@/components/SingleMap/FilterPanel.vue"
 import panzoom from "panzoom"
+import {gsap} from "gsap"
 
 import { mirageGrenades } from "@/data/mirageGrenades";
 import { ancientGrenades } from "@/data/ancientGrenades";
@@ -80,19 +81,34 @@ watch(() => route.path, (newPath, oldPath) => {
 		startLoading()
 	}
 })
+
+const smokeSpritesRef = ref(null)
 function onImageLoaded() {
-	store.isFirstLoadTrue()
 	// console.log("%cimage loaded", "color:green", performance.now());
 	endLoading()
-	let mapside = getElemSide(imgRef.value!)
-	let mapCoefd = mapside * pxCoef
-	if (mapside > 450) {
-		pointSide.value = Math.ceil(mapCoefd * 10) // 10px это по дефолту(пересчитываю этот размер для ресайза)
-	} else {
-		pointSide.value = Math.ceil(mapCoefd * 10) // 10px это по дефолту(пересчитываю этот размер для ресайза)
-		// pointSide.value = Math.ceil(mapCoefd) * 10
+	if (store.isFirstLoad) {
+		let mapside = getElemSide(imgRef.value!)
+		let mapCoefd = mapside * pxCoef
+		if (mapside > 450) {
+			pointSide.value = Math.ceil(mapCoefd * 10) // 10px это по дефолту(пересчитываю этот размер для ресайза)
+		} else {
+			pointSide.value = Math.ceil(mapCoefd * 10) // 10px это по дефолту(пересчитываю этот размер для ресайза)
+			// pointSide.value = Math.ceil(mapCoefd) * 10
+		}
+		store.isFirstLoadTrue();
 	}
-	smokeShadow.value = `box-shadow: 0 0 ${Math.ceil(mapCoefd * 5)}px ${Math.ceil(mapCoefd * 2)}px rgba(0, 0, 0, 0.4), 0 0 ${Math.ceil(mapCoefd * 5)}px ${Math.ceil(mapCoefd * 12)}px rgba(237, 237, 237, 0.7)`
+	smokeSpritesRef.value.forEach((sprite) => {
+		console.log((sprite.spriteRef as HTMLImageElement).style.animationPlayState)
+		sprite.spriteRef.style.animationPlayState = 'running'
+		console.log((sprite.spriteRef as HTMLImageElement).style.animationPlayState)
+		gsap.to(sprite.spriteRef, {
+			rotate:360,
+			duration:20,
+			repeat: -1,
+			ease: 'linear'
+		})
+	});
+	// smokeShadow.value = `box-shadow: 0 0 ${Math.ceil(mapCoefd * 5)}px ${Math.ceil(mapCoefd * 2)}px rgba(0, 0, 0, 0.4), 0 0 ${Math.ceil(mapCoefd * 5)}px ${Math.ceil(mapCoefd * 12)}px rgba(237, 237, 237, 0.7)`
 }
 
 
@@ -118,6 +134,7 @@ function getElemSide(elem: HTMLDivElement) {
 	return elem.getBoundingClientRect().height
 }
 onMounted(() => {
+
 	preloadRestImages();
 
 	panzoom(outerContainerRef.value as HTMLDivElement, {
@@ -227,7 +244,8 @@ const changeBugHe = (newVal: any) => {
 							:difficultiesState="filterState.difficultiesState"
 							:onewayOption="filterState.onewaySmokeOption"
 							:fakeOption="filterState.fakeSmokeOption"
-							:bugOption="filterState.bugSmokeOption" />
+							:bugOption="filterState.bugSmokeOption"
+							ref="smokeSpritesRef" />
 					</template>
 					<template v-for="molotov in molotovs">
 						<Molotov :molotov="molotov"
@@ -247,13 +265,13 @@ const changeBugHe = (newVal: any) => {
 							:forWhom="filterState.forWhom" />
 					</template>
 					<!-- <template v-for="he in hes">
-																				<He :he="he" v-show="
-																					(filterState.nadeType === 'All' ||
-																						filterState.nadeType === 'He') &&
-																					filterState.side === he.side &&
-																					filterState.tickrate === he.tickrate &&
-																					filterState.difficultiesState[`${he.difficulty}Visible`]" />
-																			</template> -->
+																								<He :he="he" v-show="
+																									(filterState.nadeType === 'All' ||
+																										filterState.nadeType === 'He') &&
+																									filterState.side === he.side &&
+																									filterState.tickrate === he.tickrate &&
+																									filterState.difficultiesState[`${he.difficulty}Visible`]" />
+																							</template> -->
 				</main>
 			</div>
 		</div>
@@ -331,7 +349,7 @@ const changeBugHe = (newVal: any) => {
 
 .mapContainer-inner {
 	position: relative;
-	border: 15px solid var(--bg_dark);
+	// border: 15px solid var(--bg_dark);
 	// border: 5px solid rgb(29, 183, 55);
 	aspect-ratio: 1/1;
 	height: 100%;
