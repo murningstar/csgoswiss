@@ -137,7 +137,7 @@ onMounted(() => {
 	top: 50%;
 	left: 50%;
 	translate: -50% -50%;
-	border: 1px green solid;
+	/* border: 1px green solid; */
 	z-index: -1;
 	opacity: 16%;
 	/* opacity: 100%; */
