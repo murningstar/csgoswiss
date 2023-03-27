@@ -39,9 +39,9 @@ export const mirageGrenades: MapItems = {
             },
         ],
         [
-            "q0ER3vmNRSe7a-9Zvyk",
+            "DnpCe37cuAIGY",
             {
-                id: "q0ER3vmNRSe7a-9Zvyk",
+                id: "DnpCe37cuAIGY",
                 coords: { x: 18.1, y: 35.1 },
                 name: "b_kitchen_window",
                 throwSpotsIds: ["gNx6wmZRJX_dv"],
