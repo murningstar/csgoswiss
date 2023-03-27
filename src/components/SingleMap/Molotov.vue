@@ -16,6 +16,7 @@ const props = defineProps<{
 	onewayOption: string,
 	fakeOption: string,
 	bugOption: string,
+	pointSize: number,
 }>()
 const molotov = reactive(props.molotov)
 const showIf = computed(() => {
@@ -60,6 +61,8 @@ const showIf = computed(() => {
 	<div class="molotovContainer" v-show="showIf" :style="{
 		top: `${molotov.coords.y}%`,
 		left: `${molotov.coords.x}%`,
+		width: `${pointSize}px`,
+		height: `${pointSize}px`,
 	}">
 		<button></button>
 	</div>

@@ -2,16 +2,20 @@
 import type { He } from '@/data/interfaces/He';
 import { reactive } from 'vue';
 const props = defineProps<{
-	he: He
+	he: He,
+	// ...
+	pointSize: number,
 }>()
 const he = reactive(props.he)
 </script>
 
 <template>
-    <div class="heContainer" :style="{
-        top: `${he.coords.y}%`,
-        left: `${he.coords.x}%`,
-    }"></div>
+	<div class="heContainer" :style="{
+		top: `${he.coords.y}%`,
+		left: `${he.coords.x}%`,
+		width: `${pointSize}px`,
+		height: `${pointSize}px`,
+	}"></div>
 </template>
 
 <style scoped>

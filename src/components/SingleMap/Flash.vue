@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Flash } from '@/data/interfaces/Flash';
 import type { ForWhom, Side, Tickrate } from '@/data/types/GrenadeProperties';
-  import { reactive, computed } from 'vue';
+import { reactive, computed } from 'vue';
 const props = defineProps<{
 	flash: Flash,
 	nadeType: string,
@@ -14,7 +14,8 @@ const props = defineProps<{
 		hardVisible: boolean,
 		pixelPerfectVisible: boolean,
 	},
-	forWhom: string
+	forWhom: string,
+	pointSize: number,
 }>()
 const flash = reactive(props.flash)
 const showIf = computed(() => {
@@ -26,10 +27,12 @@ const showIf = computed(() => {
 </script>
 
 <template>
-    <div class="flashContainer" :style="{
-        top: `${flash.coords.y}%`,
-        left: `${flash.coords.x}%`,
-    }"></div>
+	<div class="flashContainer" :style="{
+		top: `${flash.coords.y}%`,
+		left: `${flash.coords.x}%`,
+		width: `${pointSize}px`,
+		height: `${pointSize}px`,
+	}"></div>
 </template>
 
 <style scoped>

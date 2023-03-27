@@ -1,8 +1,9 @@
-import type { GrenadeCollection } from "@/data/types/MapItems";
+import type { MapItems } from "@/data/types/MapItems";
 
-export const vertigoGrenades: GrenadeCollection = {
+export const vertigoGrenades: MapItems = {
     smokes: [],
     molotovs: [],
     flashes: [],
     hes: [],
+    throwSpots: [],
 };

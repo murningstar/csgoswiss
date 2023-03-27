@@ -1,19 +1,32 @@
 <script lang="ts" setup>
 import { ref, computed } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { maplist } from "@/data/maplist"
+import { useSomestore } from "@/stores/somestore";
+const router = useRouter()
 const route = useRoute();
+const store = useSomestore()
 const currentMap = computed(() => route.path.slice(1));
+function purgeActiveNades(mapName:string) {
+	if (currentMap.value!==mapName){
+		store.activeGrenadeItems.clear()
+		router.push('/'+mapName)
+	}
+}
 </script>
 
 <template>
 	<nav>
 		<li class="listOfMapLinks">
 			<ul v-for="map in maplist"
-				:class="{ activeMap: currentMap == map }">
-				<router-link :to="`/${map}`">
+				:class="{ activeMap: currentMap == map }"
+				@click="purgeActiveNades(map)">
+				<!-- <router-link :to="`/${map}`">
 					{{ map }}
-				</router-link>
+				</router-link> -->
+				<a>
+					{{ map }}
+				</a>
 			</ul>
 		</li>
 	</nav>
@@ -122,4 +135,5 @@ nav {
   li|.listOfMapLinks > 
   ul|.activeMap > 
   a|.mapLink-active|::first-letter
-*/</style>
+*/
+</style>

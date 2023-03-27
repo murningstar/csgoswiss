@@ -17,8 +17,9 @@ const props = defineProps<{
 	onewayOption: string,
 	fakeOption: string,
 	bugOption: string,
-	pointSide: number,
-	smokeShadow: string
+	pointSize: number,
+
+	isSelected: boolean,
 }>()
 const smoke = reactive(props.smoke)
 const showIf = computed(() => {
@@ -62,6 +63,7 @@ defineExpose({
 	spriteRef
 })
 onMounted(() => {
+	console.log('smoke mounte');
 	// spriteRef.value!.style.animationPlayState = "running"
 })
 </script>
@@ -70,18 +72,19 @@ onMounted(() => {
 	<div class="smokeContainer" :style="{
 		top: `${smoke.coords.y}%`,
 		left: `${smoke.coords.x}%`,
-		width: `${pointSide}px`,
-		height: `${pointSide}px`,
-	}" v-show="showIf"> <button class="button"></button>
+		width: `${pointSize}px`,
+		height: `${pointSize}px`,
+	}" v-show="showIf || isSelected">
+		<button class="button" :class="{ clicked: isSelected }"></button>
 		<img class="sprite" src="@/assets/ui/smoke_sprite2.webp"
 			alt="Smoke effect image downloading error" ref="spriteRef" />
 	</div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .smokeContainer {
 	position: absolute;
-	z-index: 2;
+	z-index: 3;
 	width: 10px;
 	/* Потом нужно будет поменять на вычислинные в js значения */
 	height: 10px;
@@ -93,6 +96,7 @@ onMounted(() => {
 
 .button {
 	position: absolute;
+	z-index: 10;
 	top: 50%;
 	left: 50%;
 	width: 100%;
@@ -104,7 +108,7 @@ onMounted(() => {
 	/* border: 1px rgb(0, 114, 0) solid; */
 	cursor: pointer;
 	transform-style: preserve-3d;
-	translate:-50% -50%;
+	translate: -50% -50%;
 }
 
 .button::before {
@@ -123,12 +127,32 @@ onMounted(() => {
 	transform: translateZ(-1px);
 }
 
+.button:hover {
+	border: white 1px dashed;
+	background-color: rgb(43, 45, 46);
+	animation: rotateSprite 5s linear infinite;
+
+	@keyframes rotateSprite {
+		from {
+			rotate: 0deg;
+		}
+
+		to {
+			rotate: 360deg;
+		}
+	}
+}
+
 .button:hover::before {
-	background: radial-gradient(circle, rgba(237, 237, 237, 1) 0%, rgba(237, 237, 237, 1) 14%, rgba(255, 237, 237, 0.95) 55%, rgba(255, 237, 237, 0.6) 62%, rgba(237, 237, 237, 0) 70.71%);
+	background: radial-gradient(circle, rgba(237, 237, 237, 1) 0%, rgba(237, 237, 237, 1) 14%, rgba(237, 237, 237, 0.95) 55%, rgba(237, 237, 237, 0.6) 62%, rgba(237, 237, 237, 0) 70.71%);
 }
 
 .sprite:hover~.button {
 	/* box-shadow: 0 0 5px 2px rgba(0, 0, 0, 0.25), 0 0 4px 16px rgba(237, 237, 237, 1); */
+}
+.button:active{
+	background-color: #767c80;
+	// border:
 }
 
 .sprite {
@@ -159,6 +183,24 @@ onMounted(() => {
 	}
 }
 
+.clicked {
+	background-color: #ead75e;
+	border: 1px dashed #3f3f3f;
+	animation: rotateSprite 5s linear infinite;
+}
+
+.clicked::before {
+	background: radial-gradient(circle, rgba(237, 237, 237, 1) 0%, rgba(237, 237, 237, 1) 14%, rgba(237, 237, 237, 0.95) 55%, rgba(237, 237, 237, 0.6) 62%, rgba(237, 237, 237, 0) 70.71%);
+}
+
+.clicked:hover {
+	background-color: #ead75e;
+}
+.clicked:active{
+
+	background-color: #ffe14c;
+	
+}
 
 /* @keyframes scaleSprite {
 	0% {
