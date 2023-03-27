@@ -1,6 +1,6 @@
-import type { Lineup } from "../Lineup";
+import type { Lineup } from "@/data/v2_spotSvyaz/Lineup";
 
-export const lineups_mirage = new Map<Lineup["lineupId"], Lineup>([
+export const lineups_dust2 = new Map<Lineup["lineupId"], Lineup>([
     [
         "fJVy8KdHSz2mE", // somewhere near b ->  b first arch
         {

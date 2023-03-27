@@ -1,7 +1,14 @@
 <script lang="ts" setup>
+// vue
 import { ref, computed, watch, onMounted, type StyleValue, reactive } from "vue";
 import { onBeforeRouteLeave, useRoute } from 'vue-router'
 import { useSomestore } from "@/stores/somestore";
+// libs
+import panzoom from "panzoom"
+import { gsap } from "gsap"
+import { random } from "nanoid";
+import { createMachine } from "xstate";
+// components
 import SmokeComponent from "@/components/SingleMap/Smoke.vue"
 import MolotovComponent from "@/components/SingleMap/Molotov.vue"
 import FlashComponent from "@/components/SingleMap/Flash.vue"
@@ -9,27 +16,27 @@ import HeComponent from "@/components/SingleMap/He.vue"
 import ThrowSpotComponent from "@/components/SingleMap/ThrowSpot.vue"
 import CMS from "@/components/cms/CMS.vue";
 import FilterPanel from "@/components/SingleMap/FilterPanel.vue"
-import panzoom from "panzoom"
-import { gsap } from "gsap"
-
-import { mirageGrenades } from "@/data/mirageGrenades";
-import { ancientGrenades } from "@/data/ancientGrenades";
-import { dust2Grenades } from "@/data/dust2Grenades";
-import { infernoGrenades } from "@/data/infernoGrenades";
-import { nukeGrenades } from "@/data/nukeGrenades";
-import { overpassGrenades } from "@/data/overpassGrenades";
-import { vertigoGrenades } from "@/data/vertigoGrenades";
-
+import Grenade from "@/components/SingleMap/_Grenade.vue"
+// data
+import { mirageGrenades } from "@/data/v2_spotSvyaz/mirage/mirageGrenadesV2";
+import { ancientGrenades } from "@/data/v2_spotSvyaz/ancient/ancientGrenadesV2";
+import { dust2Grenades } from "@/data/v2_spotSvyaz/dust2/dust2GrenadesV2";
+import { infernoGrenades } from "@/data/v2_spotSvyaz/inferno/infernoGrenadesV2";
+import { nukeGrenades } from "@/data/v2_spotSvyaz/nuke/nukeGrenadesV2";
+import { overpassGrenades } from "@/data/v2_spotSvyaz/overpass/overpassGrenadesV2";
+import { vertigoGrenades } from "@/data/v2_spotSvyaz/vertigo/vertigoGrenadesV2";
+// other
 import { useLoadingGoldsourceLogic } from "@/components/Loading_goldsource/loading_goldsource"
 import { maplist } from "@/data/maplist"
-import type { MapItems } from "@/data/types/MapItems"
+import type { MapItems } from "@/data/v2_spotSvyaz/MapItemsV2"
 import { nadeTypeList } from "@/data/nadeTypeList";
 import type { Smoke as SmokeType } from "@/data/interfaces/Smoke";
-import type { Grenade } from "@/data/interfaces/Grenade";
+// import type { Grenade } from "@/data/interfaces/Grenade";
 import type { ForWhom } from "@/data/types/GrenadeProperties";
 import type { ThrowSpot } from "@/data/interfaces/ThrowSpot";
-import { random } from "nanoid";
-import { createMachine } from "xstate";
+import type { Lineup } from "@/data/v2_spotSvyaz/Lineup";
+
+
 const { isLoading, nSegmentsVisible, startLoading, endLoading, onImageLoadError } = useLoadingGoldsourceLogic()
 const store = useSomestore()
 
@@ -54,16 +61,17 @@ const currentRouteMapItems = computed(() => {
 		return allMapItems[`${currentRoute.value}Grenades`] as MapItems
 	}
 	else {
-		return { smokes: new Map(), flashes: new Map(), molotovs: new Map(), hes: new Map(), throwSpots: new Map() } as MapItems
+		return { lineups: new Map(), spots: new Map() } as MapItems
 	}
 })
 // Сделал каждой гранате текущей карты по computed для визуального облегчения template
-const smokes = computed(() => currentRouteMapItems.value.smokes)
-const molotovs = computed(() => currentRouteMapItems.value.molotovs)
-const flashes = computed(() => currentRouteMapItems.value.flashes)
-const hes = computed(() => currentRouteMapItems.value.hes)
-const throwSpots = computed(() => currentRouteMapItems.value.throwSpots)
-
+// const smokes = computed(() => currentRouteMapItems.value.smokes)
+// const molotovs = computed(() => currentRouteMapItems.value.molotovs)
+// const flashes = computed(() => currentRouteMapItems.value.flashes)
+// const hes = computed(() => currentRouteMapItems.value.hes)
+// const throwSpots = computed(() => currentRouteMapItems.value.throwSpots)
+const spots = computed(() => currentRouteMapItems.value.spots)
+const lineups = computed(() => currentRouteMapItems.value.lineups)
 
 
 /* computed alt attribute value for images of maps */
@@ -182,7 +190,7 @@ onMounted(() => {
 
 const isFiltersVisible = ref(false)
 const toggleFilters = () => { isFiltersVisible.value = !isFiltersVisible.value }
-nadeTypeList.unshift('All')
+
 const filtersPropData = reactive({
 	nadeTypeList: nadeTypeList,
 
@@ -299,7 +307,7 @@ function onGrenadeClick(event: Event, smoke: SmokeType) {
 
 /* 
 ***************************************************************************************************
-Если у меня есть две гранаты, у которых есть один общий спот, то НЕЛЬЗЯ ДЕЛАТЬ ФУНКЦИОНАЛ ДЛЯ
+Если у меня есть две гранаты, у которых есть один общий спот, то НЕЛЬЗЯ СДЕЛАТЬ ФУНКЦИОНАЛ ДЛЯ
 одновременного выбора спотов для обеих сразу, т.к. при нажатии на их общий спот непонятно
 ---
 Еще мысль: 
@@ -308,41 +316,51 @@ function onGrenadeClick(event: Event, smoke: SmokeType) {
 
 ***************************************************************************************************
 */
-const selectableSpots = computed(() => {
-	const res = new Map<ThrowSpot['id'], {
-		throwSpot: ThrowSpot,
-	}>()
-	store.activeGrenadeItems.forEach((grenadeItem) => {
-		if (grenadeItem.selectedSpots.length < 1) {
-			grenadeItem.grenade.throwSpotsIds.forEach((spotId) => {
-				const spot = throwSpots.value.get(spotId)
-				// if (!selectedSpots.has(spotId)) {
-				// 	res.set(spotId, spot)
-				// }
-				if (!store.activeGrenadeItems.has(spotId)) {
-					res.set(spotId, spot)
-				}
-			})
-		}
+// spots и lineups
+const toSpotsView = computed(() => {
+	const res = new Map<Lineup['lineupId'], Lineup>()
+	lineups.value.forEach((lineup, lineupId) => {
+		const spot = spots.value.get(lineup.toId)
+		// console.log(spot);
+		res.set(spot!.spotId, spot)
 	})
 	return res
 })
+// const selectableSpots = computed(() => {
+// 	const res = new Map<ThrowSpot['id'], {
+// 		throwSpot: ThrowSpot,
+// 	}>()
+// 	store.activeGrenadeItems.forEach((grenadeItem) => {
+// 		if (grenadeItem.selectedSpots.length < 1) {
+// 			grenadeItem.grenade.throwSpotsIds.forEach((spotId) => {
+// 				const spot = throwSpots.value.get(spotId)
+// 				// if (!selectedSpots.has(spotId)) {
+// 				// 	res.set(spotId, spot)
+// 				// }
+// 				if (!store.activeGrenadeItems.has(spotId)) {
+// 					res.set(spotId, spot)
+// 				}
+// 			})
+// 		}
+// 	})
+// 	return res
+// })
 
-function onSpotClick(event: Event, id: string, throwSpot: ThrowSpot) {
-	const nade = store.activeGrenadeItems.get(id);
-	if (!store.activeGrenadeItems.has(id)) {
-		nade?.selectedSpots.push(throwSpot)
-	}
-}
+// function onSpotClick(event: Event, id: string, throwSpot: ThrowSpot) {
+// 	const nade = store.activeGrenadeItems.get(id);
+// 	if (!store.activeGrenadeItems.has(id)) {
+// 		nade?.selectedSpots.push(throwSpot)
+// 	}
+// }
 
 
-// const selectedSpots = reactive(new Map<ThrowSpot['id'], ThrowSpot>())
+// // const selectedSpots = reactive(new Map<ThrowSpot['id'], ThrowSpot>())
 
 
 // const lineUps = 
-watch(selectableSpots, (nv) => {
-	console.log(nv);
-})
+// watch(selectableSpots, (nv) => {
+// 	console.log(nv);
+// })
 /* // Когда-то потом нужно будет добавить коллекцию Selected Spots и на ее основе
 // выбирать что именно вставлять в res (selectableSpotsAndSvgItems)
 const selectableSpotsAndSvgItems = computed(() => {
@@ -499,38 +517,43 @@ type SvgItem = {
 								? `/src/assets/maps/webp/${currentRoute}.webp`
 								: ''
 						" :alt="imgMapError" />
-					<template v-for="[id, smoke] in smokes">
-						<SmokeComponent @click="onGrenadeClick($event, smoke)"
-							:smoke="smoke" :pointSize="pointSize"
-							:nadeType="filterState.nadeType"
-							:side="filterState.side"
-							:tickrate="filterState.tickrate"
-							:difficultiesState="filterState.difficultiesState"
-							:onewayOption="filterState.onewaySmokeOption"
-							:fakeOption="filterState.fakeSmokeOption"
-							:bugOption="filterState.bugSmokeOption"
-							ref="smokeSpritesRef"
-							:isSelected="store.activeGrenadeItems.has(smoke.id) ? true : false" />
+					<template v-for="[spotId,spot] in toSpotsView">
+						<Grenade :spot="spot" :pointSize="pointSize" />
 					</template>
-					<template v-for="[id, molotov] in molotovs">
-						<MolotovComponent :molotov="molotov"
-							:pointSize="pointSize"
-							:nadeType="filterState.nadeType"
-							:side="filterState.side"
-							:tickrate="filterState.tickrate"
-							:difficultiesState="filterState.difficultiesState"
-							:onewayOption="filterState.onewayMolotovOption"
-							:fakeOption="filterState.fakeMolotovOption"
-							:bugOption="filterState.bugMolotovOption" />
-					</template>
-					<template v-for="[id, flash] in flashes">
-						<FlashComponent :flash="flash" :pointSize="pointSize"
-							:nadeType="filterState.nadeType"
-							:side="filterState.side"
-							:tickrate="filterState.tickrate"
-							:difficultiesState="filterState.difficultiesState"
-							:forWhom="filterState.forWhom" />
-					</template>
+
+					<!-- <template v-for="[id, smoke] in smokes"> -->
+					<!-- <SmokeComponent @click="onGrenadeClick($event, smoke)" -->
+					<!-- :smoke="smoke" :pointSize="pointSize" -->
+					<!-- :nadeType="filterState.nadeType" -->
+					<!-- :side="filterState.side" -->
+					<!-- :tickrate="filterState.tickrate" -->
+					<!-- :difficultiesState="filterState.difficultiesState" -->
+					<!-- :onewayOption="filterState.onewaySmokeOption" -->
+					<!-- :fakeOption="filterState.fakeSmokeOption" -->
+					<!-- :bugOption="filterState.bugSmokeOption" -->
+					<!-- ref="smokeSpritesRef" -->
+					<!-- :isSelected="store.activeGrenadeItems.has(smoke.id) ? true : false" /> -->
+					<!-- </template> -->
+
+					<!-- <template v-for="[id, molotov] in molotovs"> -->
+					<!-- <MolotovComponent :molotov="molotov" -->
+					<!-- :pointSize="pointSize" -->
+					<!-- :nadeType="filterState.nadeType" -->
+					<!-- :side="filterState.side" -->
+					<!-- :tickrate="filterState.tickrate" -->
+					<!-- :difficultiesState="filterState.difficultiesState" -->
+					<!-- :onewayOption="filterState.onewayMolotovOption" -->
+					<!-- :fakeOption="filterState.fakeMolotovOption" -->
+					<!-- :bugOption="filterState.bugMolotovOption" /> -->
+					<!-- </template> -->
+					<!-- <template v-for="[id, flash] in flashes"> -->
+					<!-- <FlashComponent :flash="flash" :pointSize="pointSize" -->
+					<!-- :nadeType="filterState.nadeType" -->
+					<!-- :side="filterState.side" -->
+					<!-- :tickrate="filterState.tickrate" -->
+					<!-- :difficultiesState="filterState.difficultiesState" -->
+					<!-- :forWhom="filterState.forWhom" /> -->
+					<!-- </template> -->
 					<!-- <template v-for="he in hes"> -->
 					<!-- <HeComponent :he="he" v-show=" -->
 					<!-- (filterState.nadeType === 'All' || -->
@@ -541,37 +564,42 @@ type SvgItem = {
 					<!-- </template> -->
 
 
-					<template v-for="[id, throwSpot] in ">
-						<ThrowSpotComponent
-							@click="onSpotClick($event, id, throwSpot)"
-							v-show="selectableSpots.has(throwSpot.id)"
-							:throwSpot="throwSpot" />
-					</template>
+					<!-- <template v-for="[id, throwSpot] in "> -->
+					<!-- <ThrowSpotComponent -->
+					<!-- @click="onSpotClick($event, id, throwSpot)" -->
+					<!-- v-show="selectableSpots.has(throwSpot.id)" -->
+					<!-- :throwSpot="throwSpot" /> -->
+					<!-- </template> -->
 
 
-					<!-- <div class="svgItemWrapper" v-for="svgItem in svgArr">
-																	<svg>
-																		<line :x1="`${svgItem.spotX}%`"
-																			:y1="`${svgItem.spotY}%`"
-																			:x2="`${svgItem.nadeX}%`"
-																			:y2="`${svgItem.nadeY}%`"
-																			:stroke="`hsl(${svgItem.colorStr}, 88%, 56%)`" />
-																	</svg>
-																	<img ref="smokeexecIcon"
-																		src="@/assets/icons/smokeicon.png" alt=""
-																		class="smokeexecIcon" :style="{
-																			'--spotX': `${svgItem.spotX}%`,
-																			'--spotY': `${svgItem.spotY}%`,
-																			'--nadeX': `${svgItem.nadeX}%`,
-																			'--nadeY': `${svgItem.nadeY}%`,
-																			'--duration': `${svgItem.duration}s`,
-																			// '--rotate-from': `${-Math.random() * 72 * svgItem.duration - Math.random()*270}deg`,
-																			// '--rotate-to': `${Math.random() * 72 * svgItem.duration}deg`,
-																			'--rotate-from': '0',
-																			'--rotate-to': '0',
-																			// filter: `hue-rotate(${Number(svgItem.colorStr)+360-40}deg) sepia(33%)`,
-																		}">
-																</div> -->
+					<!-- <div class="svgItemWrapper" v-for="svgItem in svgArr"> -->
+					<!-- <svg> -->
+					<!-- <line :x1="`${svgItem.spotX}%`" -->
+					<!-- :y1="`${svgItem.spotY}%`" -->
+					<!-- :x2="`${svgItem.nadeX}%`" -->
+					<!-- :y2="`${svgItem.nadeY}%`" -->
+					<!-- :stroke="`hsl(${svgItem.colorStr}, 88%, 56%)`" /> -->
+					<!-- </svg> -->
+					<!-- <img ref="smokeexecIcon" -->
+					<!-- src="@/assets/icons/smokeicon.png" alt="" -->
+					<!-- class="smokeexecIcon" :style="{ -->
+
+					<!-- // '--spotX': `${svgItem.spotX}%`, -->
+					<!-- // '--spotY': `${svgItem.spotY}%`, -->
+					<!-- // '--nadeX': `${svgItem.nadeX}%`, -->
+					<!-- // '--nadeY': `${svgItem.nadeY}%`, -->
+					<!-- // '--duration': `${svgItem.duration}s`, -->
+					<!-- '--rotate-from': `${-Math.random() * 72 * svgItem.duration -->
+					<!-- - Math.random()*270}deg`, -->
+					<!-- '--rotate-to': `${Math.random() * 72 * -->
+					<!-- svgItem.duration}deg`, -->
+					<!-- // '--rotate-from': '0', -->
+					<!-- // '--rotate-to': '0', -->
+					<!-- filter: `hue-rotate(${Number(svgItem.colorStr)+360-40}deg) -->
+					<!-- sepia(33%)`, -->
+					<!-- // }"> -->
+
+					<!-- </div> -->
 				</main>
 			</div>
 		</div>

@@ -1,4 +1,4 @@
-import type { Spot } from "@/data/interfaces/v2_spotSvyaz/Spot";
+import type { Spot } from "@/data/v2_spotSvyaz/Spot";
 import type {
     Difficulty,
     NadeType,

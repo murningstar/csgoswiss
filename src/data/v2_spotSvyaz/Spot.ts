@@ -1,4 +1,4 @@
-import type { CoordsObj } from "../../types/GrenadeProperties";
+import type { CoordsObj } from "../types/GrenadeProperties";
 
 export interface Spot {
     spotId: string;
