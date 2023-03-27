@@ -9,13 +9,13 @@ import type {
 } from "@/data/types/GrenadeProperties";
 
 export interface Lineup {
-    id: string;
-    land: Spot["id"];
-    throw: Spot["id"];
+    lineupId: string;
+    toId: Spot["spotId"];
+    fromId: Spot["spotId"];
     nadeType: NadeType;
     side: Side;
     tickrate: Tickrate;
-    comboIds?: Lineup["id"][];
+    comboLineupIds?: Lineup["lineupId"][];
     throwClick: ThrowClick;
     throwMovement: ThrowMovement;
     difficulty: Difficulty;

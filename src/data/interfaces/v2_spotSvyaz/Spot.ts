@@ -1,7 +1,7 @@
 import type { CoordsObj } from "../../types/GrenadeProperties";
 
 export interface Spot {
-    id: string;
+    spotId: string;
     name: string;
     // type: 'land' | 'throw'
     coords: CoordsObj;
