@@ -35,6 +35,7 @@ import type { Smoke as SmokeType } from "@/data/interfaces/Smoke";
 import type { ForWhom } from "@/data/types/GrenadeProperties";
 import type { ThrowSpot } from "@/data/interfaces/ThrowSpot";
 import type { Lineup } from "@/data/v2_spotSvyaz/Lineup";
+import type { Spot } from "@/data/v2_spotSvyaz/Spot";
 
 
 const { isLoading, nSegmentsVisible, startLoading, endLoading, onImageLoadError } = useLoadingGoldsourceLogic()
@@ -289,19 +290,28 @@ const isDragging = ref(false)
 // 	}
 // })
 
-function onGrenadeClick(event: Event, smoke: SmokeType) {
+function toggleNade(event: Event, toId: Spot['spotId']) {
 	if (isDragging.value == false &&
 		(event.target as HTMLButtonElement).tagName == 'BUTTON') {
 
-		if (!store.activeGrenadeItems.has(smoke.id)) {
-			store.activeGrenadeItems.set(smoke.id, {
-				grenade: smoke,
-				colorStr: (Math.random() * 359).toFixed(0),
-				selectedSpots: []
+		if (!store.activeToSpots.has(toId)) {
+			store.activeToSpots.set(toId, {
+				toSpot: spots.value.get(toId)!,
+				hslColor: store.activeToSpots.size == 0 ? '50' : (Math.random() * 359).toFixed(0),
+				lineupIds: toSpots.value.get(toId)!.lineupIds
 			})
 		} else {
-			store.activeGrenadeItems.delete(smoke.id)
+			store.activeToSpots.delete(toId)
 		}
+		// if (!store.activeGrenadeItems.has(toId)) {
+		// 	store.activeGrenadeItems.set(toId, {
+		// 		toSpot: ,
+		// 		colorStr: (Math.random() * 359).toFixed(0),
+		// 		selectedSpots: []
+		// 	})
+		// } else {
+		// 	store.activeGrenadeItems.delete(smoke.id)
+		// }
 	}
 }
 
@@ -317,14 +327,84 @@ function onGrenadeClick(event: Event, smoke: SmokeType) {
 ***************************************************************************************************
 */
 // spots и lineups
-const toSpotsView = computed(() => {
-	const res = new Map<Lineup['lineupId'], Lineup>()
-	lineups.value.forEach((lineup, lineupId) => {
-		const spot = spots.value.get(lineup.toId)
-		// console.log(spot);
-		res.set(spot!.spotId, spot)
+const lineupBased_toSpots = computed(() => {
+	const res = new Map<Spot['spotId'], { toSpot: Spot, lineups: Map<Lineup['lineupId'], [Lineup, Spot]> }>()
+	lineups.value.forEach((lineup) => {
+		if (res.has(lineup.toId)) {
+			const existingToSpot = res.get(lineup.toId)
+			const fromSpot = spots.value.get(lineup.fromId)!
+			existingToSpot!.lineups.set(lineup.lineupId, [lineup, fromSpot])
+			res.set(lineup.toId, existingToSpot!)
+		}
+		else {
+			const toSpot = spots.value.get(lineup.toId)!
+			const fromSpot = spots.value.get(lineup.fromId)!
+			res.set(toSpot!.spotId, {
+				toSpot: toSpot,
+				lineups: new Map([
+					[lineup.lineupId, [lineup, fromSpot]]
+				])
+			})
+		} 5
 	})
 	return res
+})
+
+type toSpotItem = {
+	toSpot: Spot,
+	lineupIds: Lineup['lineupId'][]
+}
+const toSpots = computed(() => {
+	const res = new Map<Spot['spotId'], toSpotItem>()
+	lineups.value.forEach((lineup) => {
+		if (!res.has(lineup.toId)) {
+			const toSpot = spots.value.get(lineup.toId)!
+			res.set(lineup.toId, {
+				toSpot: toSpot,
+				lineupIds: [lineup.lineupId]
+			})
+		} else {
+			const toSpot = res.get(lineup.toId)!
+			toSpot.lineupIds.push(lineup.lineupId)
+			res.set(lineup.toId, toSpot)
+		}
+	})
+	return res
+})
+const activeLineups = computed(() => {
+	const res: Lineup[] = []
+	store.activeToSpots.forEach((activeToSpotItem, activeToSpotId) => {
+		activeToSpotItem.lineupIds.forEach((lineupId) => {
+			console.log(lineupId);
+			const activeLineup = lineups.value.get(lineupId)!
+			res.push(activeLineup)
+		})
+	})
+	return res
+})
+const activeFromSpots = computed(() => {
+	const res = new Map<Spot['spotId'], {
+		fromSpot: Spot,
+		lineupIds: Lineup['lineupId'][]
+	}>()
+	activeLineups.value.forEach((activeLineup) => {
+		if (!res.has(activeLineup.fromId)) {
+			const fromSpot = spots.value.get(activeLineup.fromId)!
+			res.set(activeLineup.fromId, {
+				fromSpot: fromSpot,
+				lineupIds: [activeLineup.lineupId]
+			})
+		} else {
+			const fromSpot = res.get(activeLineup.toId)!
+			fromSpot.lineupIds.push(activeLineup.lineupId)
+			res.set(activeLineup.toId, fromSpot)
+		}
+	})
+	return res
+})
+
+watch(activeFromSpots, (nv) => {
+	console.log(nv);
 })
 // const selectableSpots = computed(() => {
 // 	const res = new Map<ThrowSpot['id'], {
@@ -335,7 +415,7 @@ const toSpotsView = computed(() => {
 // 			grenadeItem.grenade.throwSpotsIds.forEach((spotId) => {
 // 				const spot = throwSpots.value.get(spotId)
 // 				// if (!selectedSpots.has(spotId)) {
-// 				// 	res.set(spotId, spot)
+// 				// 	res.set(spotId, spo t)
 // 				// }
 // 				if (!store.activeGrenadeItems.has(spotId)) {
 // 					res.set(spotId, spot)
@@ -508,8 +588,7 @@ type SvgItem = {
 		<div class="wrapperInner">
 			<div class="mapContainer-outer" ref="outerContainerRef" @wheel="">
 				<main class="mapContainer-inner" ref="innerContainerRef"
-					@mousedown="isDragging = false"
-					@mousemove="isDragging = true">
+					@mousedown="isDragging = false" @mousemove="isDragging = true">
 					<CMS />
 					<img ref="imgRef" @load="onImageLoaded"
 						@error="onImageLoadError" class="mapImg" :src="
@@ -517,8 +596,53 @@ type SvgItem = {
 								? `/src/assets/maps/webp/${currentRoute}.webp`
 								: ''
 						" :alt="imgMapError" />
-					<template v-for="[spotId,spot] in toSpotsView">
-						<Grenade :spot="spot" :pointSize="pointSize" />
+
+					<template v-for="[toId, toItem] in toSpots">
+						<Grenade :spot="toItem.toSpot" :pointSize="pointSize"
+							@click="toggleNade($event, toId)"
+							:isToggled="store.activeToSpots.has(toItem.toSpot.spotId)" />
+
+						<template v-for="[lineupId, lineupItem] in toItem.lineups">
+							<div class="svgItemWrapper">
+								<svg>
+									<line :x1="`${lineupItem[1].coords.x}%`"
+										:y1="`${lineupItem[1].coords.y}%`"
+										:x2="`${toItem.toSpot.coords.x}%`"
+										:y2="`${toItem.toSpot.coords.y}%`"
+										:stroke="`hsl(${(Math.random() * 359).toFixed(0)}, 88%, 56%)`" />
+									<!-- :stroke="`hsl(${svgItem.colorStr}, 88%, 56%)`" /> -->
+								</svg>
+								<img ref="smokeexecIcon"
+									src="@/assets/icons/smokeicon.png" alt=""
+									class="smokeexecIcon" :style="{
+
+										'--spotX': `${lineupItem[1].coords.x}%`,
+										'--spotY': `${lineupItem[1].coords.y}%`,
+										'--nadeX': `${toItem.toSpot.coords.x}%`,
+										'--nadeY': `${toItem.toSpot.coords.y}%`,
+										'--duration': `${2.5}s`,
+										'--rotate-from': `${-Math.random() * 72 * 10
+											- Math.random() * 270}deg`,
+										'--rotate-to': `${Math.random() * 72 *
+											10}deg`,
+
+										// '--spotX': `${svgItem.spotX}%`,
+										// '--spotY': `${svgItem.spotY}%`,
+										// '--nadeX': `${svgItem.nadeX}%`,
+										// '--nadeY': `${svgItem.nadeY}%`,
+										// '--duration': `${svgItem.duration}s`,
+										// '--rotate-from': `${-Math.random() * 72 * svgItem.duration
+										// 	- Math.random() * 270}deg`,
+										// '--rotate-to': `${Math.random() * 72 *
+										// 	svgItem.duration}deg`,
+										// '--rotate-from': '0',
+										// '--rotate-to': '0',
+										filter: `hue-rotate(${Number((Math.random() * 359).toFixed(0)) + 360 - 40}deg) sepia(33%)`,
+									}">
+
+							</div>
+						</template>
+
 					</template>
 
 					<!-- <template v-for="[id, smoke] in smokes"> -->
@@ -572,34 +696,7 @@ type SvgItem = {
 					<!-- </template> -->
 
 
-					<!-- <div class="svgItemWrapper" v-for="svgItem in svgArr"> -->
-					<!-- <svg> -->
-					<!-- <line :x1="`${svgItem.spotX}%`" -->
-					<!-- :y1="`${svgItem.spotY}%`" -->
-					<!-- :x2="`${svgItem.nadeX}%`" -->
-					<!-- :y2="`${svgItem.nadeY}%`" -->
-					<!-- :stroke="`hsl(${svgItem.colorStr}, 88%, 56%)`" /> -->
-					<!-- </svg> -->
-					<!-- <img ref="smokeexecIcon" -->
-					<!-- src="@/assets/icons/smokeicon.png" alt="" -->
-					<!-- class="smokeexecIcon" :style="{ -->
 
-					<!-- // '--spotX': `${svgItem.spotX}%`, -->
-					<!-- // '--spotY': `${svgItem.spotY}%`, -->
-					<!-- // '--nadeX': `${svgItem.nadeX}%`, -->
-					<!-- // '--nadeY': `${svgItem.nadeY}%`, -->
-					<!-- // '--duration': `${svgItem.duration}s`, -->
-					<!-- '--rotate-from': `${-Math.random() * 72 * svgItem.duration -->
-					<!-- - Math.random()*270}deg`, -->
-					<!-- '--rotate-to': `${Math.random() * 72 * -->
-					<!-- svgItem.duration}deg`, -->
-					<!-- // '--rotate-from': '0', -->
-					<!-- // '--rotate-to': '0', -->
-					<!-- filter: `hue-rotate(${Number(svgItem.colorStr)+360-40}deg) -->
-					<!-- sepia(33%)`, -->
-					<!-- // }"> -->
-
-					<!-- </div> -->
 				</main>
 			</div>
 		</div>
@@ -607,8 +704,7 @@ type SvgItem = {
 			isFiltersVisible,
 			filtersPropData,
 			filterState
-		}" @toggle="toggleFilters"
-			@changeNadeType="filterHandlers.changeNadeType"
+		}" @toggle="toggleFilters" @changeNadeType="filterHandlers.changeNadeType"
 			@changeSide="filterHandlers.changeSide"
 			@changeTickrate="filterHandlers.changeTickrate"
 			@changeDifficulty="filterHandlers.changeDifficulty"
@@ -624,8 +720,7 @@ type SvgItem = {
 
 
 	<Teleport to="body">
-		<Loading_goldsource v-if="isLoading"
-			:nSegmentsVisible="nSegmentsVisible">
+		<Loading_goldsource v-if="isLoading" :nSegmentsVisible="nSegmentsVisible">
 			<template #title>
 				Loading...
 			</template>

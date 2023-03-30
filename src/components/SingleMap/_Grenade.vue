@@ -22,7 +22,7 @@ import { reactive, computed, ref, onMounted } from 'vue';
 //     isSelected: boolean,
 // }>()
 
-const props = defineProps(['spot','pointSize'])
+const props = defineProps(['spot', 'pointSize', 'isToggled'])
 
 // const grenade = reactive(props.grenade)
 // const showIf = computed(() => {
@@ -74,23 +74,23 @@ console.log(props.spot);
 
 <template>
     <!-- <div class="smokeContainer" :style="{
-        top: `${grenade.coords.y}%`,
-        left: `${grenade.coords.x}%`,
-        width: `${pointSize}px`,
-        height: `${pointSize}px`,
-    }" v-show="showIf || isSelected">
-        <button class="button" :class="{ clicked: isSelected }"></button>
-        <img class="sprite" src="@/assets/ui/smoke_sprite2.webp"
-            alt="Smoke effect image downloading error" ref="spriteRef" />
-    </div> -->
+            top: `${grenade.coords.y}%`,
+            left: `${grenade.coords.x}%`,
+            width: `${pointSize}px`,
+            height: `${pointSize}px`,
+        }" v-show="showIf || isSelected">
+            <button class="button" :class="{ clicked: isSelected }"></button>
+            <img class="sprite" src="@/assets/ui/smoke_sprite2.webp"
+                alt="Smoke effect image downloading error" ref="spriteRef" />
+        </div> -->
     <div class="smokeContainer" :style="{
         top: `${props.spot.coords.y}%`,
         left: `${props.spot.coords.x}%`,
         width: `${props.pointSize}px`,
         height: `${props.pointSize}px`,
     }">
-        <button class="button"></button>
-        <img class="sprite" src="@/assets/ui/smoke_sprite2.webp"
+        <button class="button" :class="{ clicked: isToggled }"></button>
+        <img class="sprite" src="@/assets/ui/Smoke circle.png"
             alt="Smoke effect image downloading error" ref="spriteRef" />
     </div>
 </template>
@@ -180,6 +180,7 @@ console.log(props.spot);
     z-index: -1;
     opacity: 16%;
     /* opacity: 100%; */
+
     width: 400%;
     height: 400%;
 }
