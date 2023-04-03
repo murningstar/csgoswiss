@@ -1,21 +1,26 @@
 <script setup lang="ts">
-import type { ThrowSpot } from '@/data/interfaces/ThrowSpot';
+import type { Lineup } from '@/data/v2_spotSvyaz/Lineup';
+import type { Spot } from '@/data/v2_spotSvyaz/Spot';
 
 const props = defineProps<{
-    throwSpot: ThrowSpot
+    fromSpotItem: {
+        fromSpot: Spot;
+        lineupIds: Set<Lineup['lineupId']>;
+    }
 }>()
+const emit = defineEmits(['myclick'])
 
 function onclick() {
-    console.log(123);
+    // console.log(123);
 }
 </script>
 
 <template>
     <div class="spotContainer" :style="{
-        top: `${throwSpot.coords.y}%`,
-        left: `${throwSpot.coords.x}%`
+        top: `${fromSpotItem.fromSpot.coords.y}%`,
+        left: `${fromSpotItem.fromSpot.coords.x}%`
     }" @click="onclick">
-        <button class="throwSpot">
+        <button class="throwSpot" @click="emit('myclick',)">
         </button>
         <svg>
             <circle class="outerCircle" cx='50%' cy='50%' r="48%" />
@@ -30,6 +35,8 @@ function onclick() {
     box-sizing: content-box;
     width: 5px;
     height: 5px;
+    width: 0.77%;
+    height: 0.77%;
 }
 
 .throwSpot {
@@ -50,9 +57,8 @@ function onclick() {
 }
 
 svg {
-    cursor: pointer;
-    width: 800%;
-    height: 800%;
+    width: 420%;
+    height: 420%;
     position: absolute;
     top: 50%;
     left: 50%;

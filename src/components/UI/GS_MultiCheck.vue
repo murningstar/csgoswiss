@@ -1,85 +1,89 @@
 <script setup lang="ts">
 import type { Grenade } from '@/data/interfaces/Grenade';
 import type { Difficulty } from '@/data/types/GrenadeProperties';
-import { computed, reactive, watch } from 'vue';
+import { computed, reactive, ref, watch, watchEffect } from 'vue';
 import { gsap } from "gsap"
 
 const props = defineProps<{
     options: Grenade['difficulty'][],
-    state: {}
-    // state - объект из boolean флажков.
-    // options - опции, соответствующие этим флажкам.
+    modelValue: Set<Difficulty>
 }>()
+
 const emit = defineEmits(['update:modelValue'])
+
 function onChange(event: Event, option: Difficulty) {
-    emit('update:modelValue', (event.target as HTMLInputElement).checked, option)
-    // console.log((event.target as HTMLInputElement).checked, option);
+    emit('update:modelValue', option, (event.target as HTMLInputElement).checked)
 }
 
+const multicheck = ref(null)
+/* Используется для динамического красного фона
+
+(т.е. только когда выключены все флаги) */
 const warningActive = computed(() => {
-    for (let flagName in props.state) {
-        if (props.state[flagName as keyof typeof props.state] === true) {
-            // console.log(flagName);
-            return false
-        }
-    }
-    return true
-})
-const unTogglabelOption = computed(() => {
-    let trueArr = []
-    let trueCounter = 0
-    for (let flagName in props.state) {
-        if (props.state[flagName as keyof typeof props.state] === true) {
-            trueCounter++
-            trueArr.push(flagName)
-        }
-    }
-    if (trueCounter === 1) {
-        return trueArr[0]
-    }
-    else {
-        return null
-    }
+    return props.modelValue.size > 0 ? false : true
 })
 
+/* Используется для динамического класса с pointer-events:none.
+(Больше контекста внутри unTogglabelEffect) */
+const lastUnclickable = ref(true)
+
+/* Проигрыш анимации после первого нажатия на последний флажок */
 function unTogglabelEffect(event: Event, option: Difficulty) {
-    if (unTogglabelOption.value?.includes(option) &&
-        (
-            (event.target as HTMLDivElement).className == 'inputWrapper' ||
-            (event.target as HTMLDivElement).className == 'labelWrapper'
-        )
+    if (props.modelValue.has(option) && (
+        /* Логика здесь вроде следующая:
+        Если элемент - последний в массиве, то на инпут будет навешен untogglabel.
+        Это значит, что таргетом клика будет находящийся под инпутом inputWrapper. */
+        (event.target as HTMLDivElement).className == 'inputWrapper' ||
+        (event.target as HTMLDivElement).className == 'labelWrapper'
+    )
     ) {
-        const parent = (event.target as HTMLDivElement).parentElement
-        gsap.to(parent, {
+        // const parent = (event.target as HTMLDivElement).parentElement!.parentElement
+        gsap.to((multicheck.value! as HTMLDivElement), {
             backgroundColor: "#ca202668",
             duration: 0.09,
             onComplete: () => {
-                gsap.to(parent, {
-                    backgroundColor: "transparent",
+                gsap.to((multicheck.value! as HTMLDivElement), {
+                    backgroundColor: "rgb(76, 88, 68)",
                     duration: 0.09,
+                    onComplete: () => {
+                        (multicheck.value! as HTMLDivElement).attributes.removeNamedItem('style')
+                    }
                 })
             }
-        }
-        )
+        })
+        lastUnclickable.value = false
     }
 }
+
+/* watchEffect ставит в true значение lastUnclickable, которое необходимо, чтобы
+сработала защита от выключения последнего флажка после первого клика */
+watchEffect(() => {
+    if (props.modelValue.size === 1) {
+        lastUnclickable.value = true
+    }
+})
 </script>
 
 <template>
-    <div class="multicheck" :class="{ warnbg: warningActive }">
+    <div ref="multicheck" class="multicheck" :class="{ warnbg: warningActive }">
         <div class="multicheck__option" v-for="option in options"
             @click="unTogglabelEffect($event, option)">
             <div class="inputWrapper">
-                <input type="checkbox" :id="option"
-                    :checked="props.state[`${option}Visible` as keyof typeof state]"
+                <input type="checkbox" :id="option" :value="option"
+                    :checked="modelValue.has(option)"
                     @change="onChange($event, option)" :class="{
                         warninput: warningActive,
-                        untogglabel: `${option}Visible` === unTogglabelOption
+                        untogglabel: (modelValue.size === 1
+                            && modelValue.has(option)
+                            && lastUnclickable)
                     }">
             </div>
             <div class="labelWrapper">
-                <label :for="option"
-                    :class="{ untogglabel: `${option}Visible` === unTogglabelOption }">
+                <label :for="option" :class="{
+                    untogglabel: (modelValue.size === 1
+                        && modelValue.has(option)
+                        && lastUnclickable)
+                }">
                     {{ option }}
                 </label>
             </div>

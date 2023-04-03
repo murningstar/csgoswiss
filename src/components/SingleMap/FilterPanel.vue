@@ -4,7 +4,7 @@ import GS_Radio from '@/components/UI/GS_Radio.vue';
 import GS_MultiCheck from '@/components/UI/GS_MultiCheck.vue';
 import GS_Switch from '@/components/UI/GS_Switch.vue';
 import { computed } from 'vue';
-import type { ForWhom } from '@/data/types/GrenadeProperties';
+import type { Difficulty, ForWhom, NadeType, Side, Tickrate } from '@/data/types/GrenadeProperties';
 
 // const props = defineProps({
 //     isFiltersVisible: Boolean,
@@ -17,20 +17,14 @@ const props = defineProps<{
         nadeTypeList: string[]
     },
     filterState: {
-        nadeType: string,
-        side: string,
-        tickrate: number,
-        difficultiesState: {
-            easyVisible: boolean,
-            normalVisible: boolean,
-            mediumVisible: boolean,
-            hardVisible: boolean,
-            pixelPerfectVisible: boolean,
-        },
+        nadeType: NadeType | "all",
+        side: Side,
+        tickrate: Tickrate,
+        difficulties: Set<Difficulty>,
         onewaySmokeOption: string,
         fakeSmokeOption: string,
         bugSmokeOption: string,
-        forWhom: string,
+        forWhom: ForWhom,
         onewayMolotovOption: string,
         fakeMolotovOption: string,
         bugMolotovOption: string,
@@ -54,17 +48,18 @@ const emit = defineEmits([
     'changeBugHe',
 ])
 const trueCounter = computed(() => {
-    //Difficulties multiselect 
-    let counter = 0;
-    for (let flagName in props.filterState.difficultiesState) {
-        if (
-            props.filterState.difficultiesState[flagName as keyof typeof props.filterState.difficultiesState]
-            === true
-        ) {
-            counter++
-        }
-    }
-    return counter
+    // //Difficulties multiselect 
+    // let counter = 0;
+    // for (let flagName in props.filterState.difficultiesState) {
+    //     if (
+    //         props.filterState.difficultiesState[flagName as keyof typeof props.filterState.difficultiesState]
+    //         === true
+    //     ) {
+    //         counter++
+    //     }
+    // }
+    // return counter
+    return props.filterState.difficulties.size
 })
 function changeOnewaySmoke(newVal: string) {
     emit('changeOnewaySmoke', newVal);
@@ -86,6 +81,10 @@ function changeBugMolotov(newVal: string) {
 }
 function changeBugHe(newVal: string) {
     emit('changeBugHe', newVal);
+}
+
+function log(message: string, value: any) {
+    console.log(message + ' ' + value);
 }
 </script>
 
@@ -123,8 +122,7 @@ function changeBugHe(newVal: string) {
                 <li>
                     <div class="menu__element">
                         <GS_Radio :options="['ct', 't']"
-                            :modelValue="filterState.side"
-                            :radioName="'sideRadio'"
+                            :modelValue="filterState.side" :radioName="'sideRadio'"
                             @update:modelValue="(newVal) => { emit('changeSide', newVal) }" />
                         <div class="menu__label">Side</div>
                     </div>
@@ -146,19 +144,19 @@ function changeBugHe(newVal: string) {
                             'medium',
                             'hard',
                             'pixelPerfect'
-                        ]" :state="filterState.difficultiesState"
-                            @update:modelValue="(value, option) => {
-                                emit('changeDifficulty', value, option)
+                        ]" :modelValue="filterState.difficulties"
+                            @update:modelValue="(option, value) => {
+                                emit('changeDifficulty', option, value)
                             }" />
                         <div class="menu__label">
                             Difficulty
-                            (<span :class="{ lowCount: trueCounter < 2 }">
+                            (<span :class="{ lowCount: trueCounter < 1 }">
                                 {{ trueCounter }}
                             </span>)
                         </div>
                     </div>
                 </li>
-                <li v-show="filterState.nadeType === 'Smoke'">
+                <li v-show="filterState.nadeType === 'smoke'">
                     <div class="menu__element">
                         <GS_Switch :options="[
                             'Oneways only',
@@ -169,7 +167,7 @@ function changeBugHe(newVal: string) {
                         <!-- <div class="menu__label"></div> -->
                     </div>
                 </li>
-                <li v-show="filterState.nadeType === 'Smoke'">
+                <li v-show="filterState.nadeType === 'smoke'">
                     <div class="menu__element">
                         <GS_Switch :options="[
                             'Fake smokes only',
@@ -180,7 +178,7 @@ function changeBugHe(newVal: string) {
                         <!-- <div class="menu__label"></div> -->
                     </div>
                 </li>
-                <li v-show="filterState.nadeType === 'Smoke'">
+                <li v-show="filterState.nadeType === 'smoke'">
                     <div class="menu__element">
                         <GS_Switch :options="[
                             'Bug smokes only',
@@ -191,7 +189,7 @@ function changeBugHe(newVal: string) {
                         <!-- <div class="menu__label"></div> -->
                     </div>
                 </li>
-                <li v-show="filterState.nadeType === 'Molotov'">
+                <li v-show="filterState.nadeType === 'molotov'">
                     <div class="menu__element">
                         <GS_Switch :options="[
                             'Oneway molotovs only',
@@ -202,7 +200,7 @@ function changeBugHe(newVal: string) {
                         <div class="menu__label"></div>
                     </div>
                 </li>
-                <li v-show="filterState.nadeType === 'Molotov'">
+                <li v-show="filterState.nadeType === 'molotov'">
                     <div class="menu__element">
                         <GS_Switch :options="[
                             'Fake molotovs only',
@@ -213,7 +211,7 @@ function changeBugHe(newVal: string) {
                         <div class="menu__label"></div>
                     </div>
                 </li>
-                <li v-show="filterState.nadeType === 'Molotov'">
+                <li v-show="filterState.nadeType === 'molotov'">
                     <div class="menu__element">
                         <GS_Switch :options="[
                             'Bug molotovs only',
@@ -224,7 +222,7 @@ function changeBugHe(newVal: string) {
                         <div class="menu__label"></div>
                     </div>
                 </li>
-                <li v-show="filterState.nadeType === 'Flash'">
+                <li v-show="filterState.nadeType === 'flash'">
                     <div class="menu__element">
                         <GS_Radio :options="['yourself', 'teammate']"
                             :modelValue="filterState.forWhom"
@@ -233,7 +231,7 @@ function changeBugHe(newVal: string) {
                         <div class="menu__label">For whom?</div>
                     </div>
                 </li>
-                <li v-show="filterState.nadeType === 'HE'">
+                <li v-show="filterState.nadeType === 'he'">
                     <div class="menu__element">
                         <GS_Switch :options="[
                             `Bug HEs only`,

@@ -1,66 +1,90 @@
 
 <script setup lang="ts">
 import type { Grenade } from '@/data/interfaces/Grenade';
+import type { Difficulty, ForWhom, NadeType, Side, Tickrate } from '@/data/types/GrenadeProperties';
+import type { Spot } from '@/data/v2_spotSvyaz/Spot';
 import { reactive, computed, ref, onMounted } from 'vue';
-// const props = defineProps<{
-//     grenade: Grenade,
-//     nadeType: string,
-//     side: string,
-//     tickrate: number,
-//     difficultiesState: {
-//         easyVisible: boolean,
-//         normalVisible: boolean,
-//         mediumVisible: boolean,
-//         hardVisible: boolean,
-//         pixelPerfectVisible: boolean,
-//     },
-//     onewayOption: string,
-//     fakeOption: string,
-//     bugOption: string,
-//     pointSize: number,
+const props = defineProps<{
+    toItem: {
+        toSpot: Spot;
+        filter: {
+            nadeType: Set<NadeType>;
+            side: Set<Side>;
+            tickrate: Set<Tickrate>;
+            difficulties: Set<Difficulty>;
+        };
+        lineupIds: string[];
+    },
+    pointSize: number,
+    isToggled: boolean,
+    isSelected: boolean,
+    filter: {
+        nadeType: "all" | "smoke" | "molotov" | "flash" | "he",
+        side: Side,
+        tickrate: Tickrate,
+        difficulties: Set<Difficulty>,
+        onewaySmokeOption: string,
+        fakeSmokeOption: string,
+        bugSmokeOption: string,
+        forWhom: ForWhom,
+        onewayMolotovOption: string,
+        fakeMolotovOption: string,
+        bugMolotovOption: string,
+        bugHeOption: string,
+    },
+}>()
 
-//     isSelected: boolean,
-// }>()
+const spot = reactive(props.toItem)
 
-const props = defineProps(['spot', 'pointSize', 'isToggled'])
-
-// const grenade = reactive(props.grenade)
-// const showIf = computed(() => {
-//     return (props.nadeType === 'All' || props.nadeType === 'Smoke') &&
-//         props.side === grenade.side &&
-//         props.tickrate === grenade.tickrate &&
-//         props.difficultiesState[`${grenade.difficulty}Visible` as keyof typeof props.difficultiesState] &&
-//         (
-//             grenade.isOnewaySmoke === true && (
-//                 props.onewayOption === 'Oneways only' ||
-//                 props.onewayOption === 'All'
-//             ) ||
-//             grenade.isOnewaySmoke === false && (
-//                 props.onewayOption === 'Regular only' ||
-//                 props.onewayOption === 'All'
-//             )
-//         ) &&
-//         (
-//             grenade.isFakeSmoke === true && (
-//                 props.fakeOption === 'FakeSmokes only' ||
-//                 props.fakeOption === 'All'
-//             ) ||
-//             grenade.isFakeSmoke === false && (
-//                 props.fakeOption === 'Regular only' ||
-//                 props.fakeOption === 'All'
-//             )
-//         ) &&
-//         (
-//             grenade.isFakeSmoke === true && (
-//                 props.bugOption === 'BugSmokes only' ||
-//                 props.bugOption === 'All'
-//             ) ||
-//             grenade.isFakeSmoke === false && (
-//                 props.bugOption === 'Regular only' ||
-//                 props.bugOption === 'All'
-//             )
-//         )
-// })
+const difficultyIntersection = computed(() => {
+    const filterDifficulties: Difficulty[] = []
+    props.filter.difficulties.forEach((dif) => {
+        filterDifficulties.push(dif)
+    })
+    const res = filterDifficulties.some((value) => {
+        return spot.filter.difficulties.has(value)
+    })
+    return res
+})
+const showIf = computed(() => {
+    console.log('difficultyIntersection ', difficultyIntersection.value);
+    return ((spot.filter.nadeType.has(props.filter.nadeType) ||
+        props.filter.nadeType == 'all') &&
+        spot.filter.side.has(props.filter.side) &&
+        spot.filter.tickrate.has(props.filter.tickrate) &&
+        difficultyIntersection.value)
+    // &&
+    // (
+    //     spot.isOnewaySmoke === true && (
+    //         props.onewayOption === 'Oneways only' ||
+    //         props.onewayOption === 'All'
+    //     ) ||
+    //     spot.isOnewaySmoke === false && (
+    //         props.onewayOption === 'Regular only' ||
+    //         props.onewayOption === 'All'
+    //     )
+    // ) &&
+    // (
+    //     spot.isFakeSmoke === true && (
+    //         props.fakeOption === 'FakeSmokes only' ||
+    //         props.fakeOption === 'All'
+    //     ) ||
+    //     spot.isFakeSmoke === false && (
+    //         props.fakeOption === 'Regular only' ||
+    //         props.fakeOption === 'All'
+    //     )
+    // ) &&
+    // (
+    //     spot.isFakeSmoke === true && (
+    //         props.bugOption === 'BugSmokes only' ||
+    //         props.bugOption === 'All'
+    //     ) ||
+    //     spot.isFakeSmoke === false && (
+    //         props.bugOption === 'Regular only' ||
+    //         props.bugOption === 'All'
+    //     )
+    // )
+})
 const spriteRef = ref(null)
 defineExpose({
     spriteRef
@@ -69,39 +93,38 @@ onMounted(() => {
     console.log('smoke mounte');
     // spriteRef.value!.style.animationPlayState = "running"
 })
-console.log(props.spot);
+console.log(props.toItem);
+
+
+// v-show="showIf || isToggled"
 </script>
 
+
 <template>
-    <!-- <div class="smokeContainer" :style="{
-            top: `${grenade.coords.y}%`,
-            left: `${grenade.coords.x}%`,
-            width: `${pointSize}px`,
-            height: `${pointSize}px`,
-        }" v-show="showIf || isSelected">
-            <button class="button" :class="{ clicked: isSelected }"></button>
-            <img class="sprite" src="@/assets/ui/smoke_sprite2.webp"
-                alt="Smoke effect image downloading error" ref="spriteRef" />
-        </div> -->
-    <div class="smokeContainer" :style="{
-        top: `${props.spot.coords.y}%`,
-        left: `${props.spot.coords.x}%`,
-        width: `${props.pointSize}px`,
-        height: `${props.pointSize}px`,
-    }">
-        <button class="button" :class="{ clicked: isToggled }"></button>
+    <div class="grenadeContainer" :style="{
+        top: `${spot.toSpot.coords.y}%`,
+        left: `${spot.toSpot.coords.x}%`,
+        // width: `${pointSize}px`,
+        // height: `${pointSize}px`,
+    }" v-show="showIf || isToggled || isSelected">
+        <button class="button" :class="{
+            clicked: isToggled,
+            selected: isSelected
+        }"></button>
         <img class="sprite" src="@/assets/ui/Smoke circle.png"
             alt="Smoke effect image downloading error" ref="spriteRef" />
     </div>
 </template>
 
 <style scoped lang="scss">
-.smokeContainer {
+.grenadeContainer {
     position: absolute;
     z-index: 3;
     width: 10px;
-    /* Потом нужно будет поменять на вычислинные в js значения */
     height: 10px;
+    width: 1.54%;
+    height: 1.54%;
+    /* Потом нужно будет поменять на вычислинные в js значения */
     /* в зависимости от текущего размера картинки  */
     /* border: 15px solid rgb(255, 0, 0); */
     box-sizing: content-box;
@@ -201,7 +224,7 @@ console.log(props.spot);
 
 .clicked {
     background-color: #ead75e;
-    border: 1px dashed #3f3f3f;
+    border: 1px dashed #ebf3f7;
     animation: rotateSprite 5s linear infinite;
 }
 
@@ -214,9 +237,24 @@ console.log(props.spot);
 }
 
 .clicked:active {
-
     background-color: #ffe14c;
+}
+.selected {
+    background-color: #ead75e;
+    border: 1px solid #3f3f3f;
+    animation: rotateSprite 5s linear infinite;
+}
 
+.selected::before {
+    background: radial-gradient(circle, rgba(237, 237, 237, 1) 0%, rgba(237, 237, 237, 1) 14%, rgba(237, 237, 237, 0.95) 55%, rgba(237, 237, 237, 0.6) 62%, rgba(237, 237, 237, 0) 70.71%);
+}
+
+.selected:hover {
+    background-color: #ead75e;
+}
+
+.selected:active {
+    background-color: #ffe14c;
 }
 
 /* @keyframes scaleSprite {

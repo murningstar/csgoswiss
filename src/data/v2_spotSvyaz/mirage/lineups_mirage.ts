@@ -138,13 +138,43 @@ export const lineups_mirage = new Map<Lineup["lineupId"], Lineup>([
     ],
 
     [
-        "Y8pQ1sCXrdNWb", // near top mid somewhere -> window
+        "Y8pQ1sCXrdNWbs", // near top mid somewhere -> window
         {
-            lineupId: "Y8pQ1sCXrdNWb",
+            lineupId: "Y8pQ1sCXrdNWbs",
             fromId: "P6xMszIS5iqTD",
             toId: "bozR5AccXBfmM",
             nadeType: "smoke",
             side: "t",
+            tickrate: 128,
+            comboLineupIds: [],
+            throwClick: "leftclick",
+            throwMovement: "regular",
+            difficulty: "easy",
+        },
+    ],
+    [
+        "Y8pQ1sCXrdNWbd", // near top mid somewhere -> window
+        {
+            lineupId: "Y8pQ1sCXrdNWbd",
+            fromId: "P6xMszIS5iqTD",
+            toId: "bozR5AccXBfmM",
+            nadeType: "smoke",
+            side: "t",
+            tickrate: 128,
+            comboLineupIds: [],
+            throwClick: "leftclick",
+            throwMovement: "regular",
+            difficulty: "easy",
+        },
+    ],
+    [
+        "Y8pQ1sCXrdNWbc", // near top mid somewhere -> window
+        {
+            lineupId: "Y8pQ1sCXrdNWbc",
+            fromId: "P6xMszIS5iqTD",
+            toId: "bozR5AccXBfmM",
+            nadeType: "smoke",
+            side: "ct",
             tickrate: 128,
             comboLineupIds: [],
             throwClick: "leftclick",

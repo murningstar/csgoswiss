@@ -1,1 +1,1 @@
-export const nadeTypeList: string[] = ["All","Smoke", "Molotov", "Flash", "HE"];
+export const nadeTypeList: string[] = ["all","smoke", "molotov", "flash", "he"];

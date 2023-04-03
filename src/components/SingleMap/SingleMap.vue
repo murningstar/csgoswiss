@@ -13,7 +13,7 @@ import SmokeComponent from "@/components/SingleMap/Smoke.vue"
 import MolotovComponent from "@/components/SingleMap/Molotov.vue"
 import FlashComponent from "@/components/SingleMap/Flash.vue"
 import HeComponent from "@/components/SingleMap/He.vue"
-import ThrowSpotComponent from "@/components/SingleMap/ThrowSpot.vue"
+import FromSpot from "@/components/SingleMap/FromSpot.vue"
 import CMS from "@/components/cms/CMS.vue";
 import FilterPanel from "@/components/SingleMap/FilterPanel.vue"
 import Grenade from "@/components/SingleMap/_Grenade.vue"
@@ -32,7 +32,7 @@ import type { MapItems } from "@/data/v2_spotSvyaz/MapItemsV2"
 import { nadeTypeList } from "@/data/nadeTypeList";
 import type { Smoke as SmokeType } from "@/data/interfaces/Smoke";
 // import type { Grenade } from "@/data/interfaces/Grenade";
-import type { ForWhom } from "@/data/types/GrenadeProperties";
+import type { Difficulty, ForWhom, NadeType, Side, Tickrate } from "@/data/types/GrenadeProperties";
 import type { ThrowSpot } from "@/data/interfaces/ThrowSpot";
 import type { Lineup } from "@/data/v2_spotSvyaz/Lineup";
 import type { Spot } from "@/data/v2_spotSvyaz/Spot";
@@ -43,7 +43,6 @@ const store = useSomestore()
 
 const route = useRoute()
 const currentRoute = computed(() => route.path.slice(1))
-
 
 
 /* Возможно нужно вынести склеивание этого объекта в отдельный файл и импортировать его,
@@ -75,6 +74,7 @@ const spots = computed(() => currentRouteMapItems.value.spots)
 const lineups = computed(() => currentRouteMapItems.value.lineups)
 
 
+
 /* computed alt attribute value for images of maps */
 const imgMapError = computed(() => {
 	if (maplist.includes(currentRoute.value)) {
@@ -83,9 +83,6 @@ const imgMapError = computed(() => {
 		return `There isn't such map in active pool, please choose another map`
 	}
 })
-
-
-
 /* открывает окно загрузки когда путь изменился */
 watch(() => route.path, (newPath, oldPath) => {
 	/* если убрать условие, то всё все равно будет работать, а именно
@@ -100,11 +97,9 @@ watch(() => route.path, (newPath, oldPath) => {
 const imgRef = ref(null)
 const smokeSpritesRef = ref([])
 
-
 function onImageLoaded(event: Event) {
 	// console.log("%cimage loaded", "color:green", performance.now());
 	endLoading()
-
 	/* ПОСЧИТАТЬ РАЗМЕР ТОЧКИ ПРИ ЗАГРУЗКЕ КАРТЫ */
 	if (store.isFirstLoad) {
 		/* Условие нужно, чтобы ресайз не происходил при зуме и переходе на другой роут */
@@ -120,7 +115,6 @@ function onImageLoaded(event: Event) {
 		}
 		store.isFirstLoadToFalse();
 	}
-
 	/* Запуск анимаций вращений смоков.
 	Применяются здесь, т.к. иначе при загрузке пикчи карты происходит 
 	какая-то подкапотная поебень, связанная с множественными транслэйтами 
@@ -135,7 +129,6 @@ function onImageLoaded(event: Event) {
 		})
 	});
 }
-
 /* ИЗМЕНИТЬ РАЗМЕР ТОЧКИ НА РЕСАЙЗЕ */
 const imgResizeObs = new ResizeObserver((obsedElements) => {
 	if (!store.isFirstLoad) {
@@ -151,11 +144,9 @@ const imgResizeObs = new ResizeObserver((obsedElements) => {
 	}
 
 })
-
-
-/* Т.к. пользователь может при первом заходе открыть любую из карт, можно просто
-попытаться подгрузить все карты и пикча текущей карты загружена не будет т.к.
-браузер увидит, что она есть в кэше => функционал для отслеживания уже загруженных карт не нужен */
+/* Можно спокойно подгружать все карты и пикча текущей карты
+загружена не будет, т.к. браузер увидит, что она есть в кэше => 
+функционал для отслеживания уже загруженных карт не нужен */
 async function preloadRestImages() {
 	maplist.forEach((map) => {
 		let img = new Image()
@@ -197,16 +188,16 @@ const filtersPropData = reactive({
 
 })
 const filterState = reactive({
-	nadeType: 'Smoke',
-	side: 't',
-	tickrate: 128,
-	difficultiesState: {
-		easyVisible: true,
-		normalVisible: true,
-		mediumVisible: true,
-		hardVisible: true,
-		pixelPerfectVisible: true,
-	},
+	nadeType: 'smoke' as NadeType | 'all',
+	side: 't' as Side,
+	tickrate: 128 as Tickrate,
+	difficulties: new Set([
+		'easy',
+		'normal',
+		'medium',
+		'hard',
+		'pixelPerfect',
+	]) as Set<Difficulty>,
 	onewaySmokeOption: 'All',
 	fakeSmokeOption: 'All',
 	bugSmokeOption: 'All',
@@ -217,7 +208,7 @@ const filterState = reactive({
 	bugHeOption: 'All',
 })
 watch(filterState, (newval) => {
-	console.log(newval.nadeType);
+	console.log(newval.difficulties);
 })
 const filterHandlers = {
 	changeNadeType: (newVal: any) => {
@@ -229,10 +220,18 @@ const filterHandlers = {
 	changeTickrate: (newVal: any) => {
 		filterState.tickrate = newVal
 	},
-	changeDifficulty: (newVal: any, option: string) => {
-		filterState.difficultiesState[`${option}Visible` as keyof typeof filterState.difficultiesState] = newVal
-		console.log(filterState.difficultiesState[`${option}Visible` as keyof typeof filterState.difficultiesState]);
+	changeDifficulty: (option: Difficulty, newVal: any) => {
+		if (newVal === true) {
+			filterState.difficulties.add(option)
+		} else {
+			filterState.difficulties.delete(option)
+		}
+		console.log('difficulty modelValue SINGLEMAP: ', newVal);
 	},
+	// changeDifficulty: (newVal: any, option: string) => {
+	// 	filterState.difficultiesState[`${option}Visible` as keyof typeof filterState.difficultiesState] = newVal
+	// 	console.log(filterState.difficultiesState[`${option}Visible` as keyof typeof filterState.difficultiesState]);
+	// },
 	changeOnewaySmoke: (newVal: any) => {
 		filterState.onewaySmokeOption = newVal
 	},
@@ -290,246 +289,214 @@ const isDragging = ref(false)
 // 	}
 // })
 
+
+/* onClick TOSPOT */
 function toggleNade(event: Event, toId: Spot['spotId']) {
 	if (isDragging.value == false &&
 		(event.target as HTMLButtonElement).tagName == 'BUTTON') {
 
 		if (!store.activeToSpots.has(toId)) {
+			const toSpotItem = renderToSpots.value.get(toId)!
+
+			console.log(299);
+			const fromSpots: Spot[] = []
+			const durations: number[] = []
+			console.log(302);
+			toSpotItem?.lineupIds.forEach((lineupid, ix) => {
+				try {
+					const lineup = lineups.value.get(lineupid)!
+					fromSpots.push(spots.value.get(lineup.fromId)!)
+				}
+				catch (error) {
+					console.log('Probably problem is Bad/Damaged Lineup Data;');
+					console.log("Most probably Map key Id is not the same as Item's Id");
+					console.log('Error: ');
+					console.error(error)
+				}
+			})
+			fromSpots.forEach((fromSpot) => {
+				const length = Math.sqrt((fromSpot.coords.x - toSpotItem?.toSpot.coords.x) ** 2
+					+ (fromSpot.coords.y - toSpotItem?.toSpot.coords.y) ** 2)
+				const duration = 2.2 + length * 0.01
+				durations.push(duration)
+			})
+			const avgDuration =
+				(durations.reduce((acc, next) => acc + next, 0) / durations.length).toFixed(2)
+
 			store.activeToSpots.set(toId, {
 				toSpot: spots.value.get(toId)!,
-				hslColor: store.activeToSpots.size == 0 ? '50' : (Math.random() * 359).toFixed(0),
-				lineupIds: toSpots.value.get(toId)!.lineupIds
+				hslColor: store.activeToSpots.size == 0 ? '52' : (Math.random() * 359).toFixed(0),
+				avgDuration: avgDuration,
+				lineupIds: renderToSpots.value.get(toId)!.lineupIds,
 			})
 		} else {
 			store.activeToSpots.delete(toId)
 		}
-		// if (!store.activeGrenadeItems.has(toId)) {
-		// 	store.activeGrenadeItems.set(toId, {
-		// 		toSpot: ,
-		// 		colorStr: (Math.random() * 359).toFixed(0),
-		// 		selectedSpots: []
-		// 	})
-		// } else {
-		// 	store.activeGrenadeItems.delete(smoke.id)
-		// }
 	}
 }
 
-/* 
-***************************************************************************************************
-Если у меня есть две гранаты, у которых есть один общий спот, то НЕЛЬЗЯ СДЕЛАТЬ ФУНКЦИОНАЛ ДЛЯ
-одновременного выбора спотов для обеих сразу, т.к. при нажатии на их общий спот непонятно
----
-Еще мысль: 
-Добавление спотов в Map, а не в Array приводит к потере связи того, какая именно граната
-вызвала показываение спота, если две разных гранаты кидаются из одного спота
+/* RENDER TOSPOTS */
+/* Почему добавлять активные споты лучше в отдельный массив, а не помечать флажками,
+такими как isActive или isSelected внутри каждого?
+Потому что в таком случае придется искать среди всех toСпотов те у которых есть этот флажок.
+Например, если мы хотим отрисовать лайнапы только для активных toСпотов, то нам нужно сделать
+computed на основе всех toСпотов, т.е. при каждой активации спота будет совершен проход
+по всем toСпотам. Засунув активный спот в отдельный массив, для отрисовки нужных лайнапов
+мы итерируемся только по этому массиву. */
 
-***************************************************************************************************
-*/
-// spots и lineups
-const lineupBased_toSpots = computed(() => {
-	const res = new Map<Spot['spotId'], { toSpot: Spot, lineups: Map<Lineup['lineupId'], [Lineup, Spot]> }>()
-	lineups.value.forEach((lineup) => {
-		if (res.has(lineup.toId)) {
-			const existingToSpot = res.get(lineup.toId)
-			const fromSpot = spots.value.get(lineup.fromId)!
-			existingToSpot!.lineups.set(lineup.lineupId, [lineup, fromSpot])
-			res.set(lineup.toId, existingToSpot!)
-		}
-		else {
-			const toSpot = spots.value.get(lineup.toId)!
-			const fromSpot = spots.value.get(lineup.fromId)!
-			res.set(toSpot!.spotId, {
-				toSpot: toSpot,
-				lineups: new Map([
-					[lineup.lineupId, [lineup, fromSpot]]
-				])
-			})
-		} 5
-	})
-	return res
-})
+/* TOSPOT ПОКАЗЫВАЕТСЯ, ЕСЛИ ПОДХОДИТ ПО ФИЛЬРАМ **ХОТЯ БЫ ОДИН** СВЯЗАННЫЙ С НИМИ ЛАЙНАП
+(А ЛАЙНАПОВ СВЯЗАННЫХ С НИМ - НЕСКОЛЬКО)
+ТО ЕСТЬ ОТОБРАЖЕНИЕ **КОНКРЕТНОГО** ЛАЙНАПА НЕ МОЖЕТ БЫТЬ СВЯЗАНО С ОТОБРАЖЕНИЕМ toСПОТА.
+То есть то что сам toSpot подходит по фильтрам не значит, что все связанные с ним лайнапы
+подходят по фильтрам. Это значит, что вне зависимости от фильтров будут отрисованы все связанные 
+toSpotы.
+Поэтому сами лайнапы тоже необходимо фильтровать. Попробовать сделать это можно двумя способами:
+1) Отрисовать все лайнапы и включать только подходящие по фильтру с помощью v-if/v-show
+2) Добавлять в toSpot ...  */
+/* 3) Я ПОХОДУ КОНЧ. ВЕДЬ МНЕ ВООБЩЕ НЕ НУЖНА УСЛОВНАЯ ОТРИСОВКА ДЛЯ ЛАЙНАПОВ,
+т.к. лайнапы появляются, когда  */
+const renderToSpots = computed(() => {
+	/* В один спот может прилетать несколько разных лайнапов. Информацию о каждом
+	нужно хранить в этом споте для условной отрисовки на основе фильтров */
 
-type toSpotItem = {
-	toSpot: Spot,
-	lineupIds: Lineup['lineupId'][]
-}
-const toSpots = computed(() => {
-	const res = new Map<Spot['spotId'], toSpotItem>()
+	/* На 1 лайнап делать 1 спот - нельзя, т.к. споты будут наслаиваться на миникарте, если
+	у 2 и более лайнапов один и тот же toSpot. */
+
+	/* По сути renderToSpots содержит в себе все возможные точки, куда летят гранаты.
+	В template нужно только показать нужные на основе фильтров  */
+
+	/* Из renderToSpots я выбираю спот нажатием кнопки и делаю его активным
+	(помещаю в activeSpots) */
+	const res = new Map<Spot['spotId'], {
+		toSpot: Spot,
+		filter: {
+			nadeType: Set<NadeType>, side: Set<Side>, tickrate: Set<Tickrate>, difficulties: Set<Difficulty>,
+		},
+		lineupIds: Lineup['lineupId'][],
+	}>()
 	lineups.value.forEach((lineup) => {
 		if (!res.has(lineup.toId)) {
 			const toSpot = spots.value.get(lineup.toId)!
 			res.set(lineup.toId, {
 				toSpot: toSpot,
-				lineupIds: [lineup.lineupId]
+				lineupIds: [lineup.lineupId],
+				filter: {
+					nadeType: new Set([lineup.nadeType]),
+					side: new Set([lineup.side]),
+					tickrate: new Set([lineup.tickrate]),
+					difficulties: new Set([lineup.difficulty]),
+					// onewaySmokeOption:[],
+					// fakeSmokeOption:[],
+					// bugSmokeOption:[],
+					// forWhom:[],
+					// onewayMolotovOption:[],
+					// fakeMolotovOption:[],
+					// bugMolotovOption:[],
+					// bugHeOption:[],
+				}
 			})
 		} else {
 			const toSpot = res.get(lineup.toId)!
 			toSpot.lineupIds.push(lineup.lineupId)
+			toSpot.filter.nadeType.add(lineup.nadeType)
+			toSpot.filter.side.add(lineup.side)
+			toSpot.filter.tickrate.add(lineup.tickrate)
+			toSpot.filter.difficulties.add(lineup.difficulty)
 			res.set(lineup.toId, toSpot)
 		}
 	})
 	return res
 })
+
+/* ACTIVE LINEUPS */
 const activeLineups = computed(() => {
-	const res: Lineup[] = []
+	const res: Set<Lineup> = new Set()
 	store.activeToSpots.forEach((activeToSpotItem, activeToSpotId) => {
 		activeToSpotItem.lineupIds.forEach((lineupId) => {
 			console.log(lineupId);
 			const activeLineup = lineups.value.get(lineupId)!
-			res.push(activeLineup)
+			if (!selectedLineups.value.has(activeLineup)) {
+				/*  */
+				res.add(activeLineup)
+			}
 		})
 	})
 	return res
 })
+/* SELECTED LINEUPS */
+const selectedLineups = computed(() => {
+	const res: Set<Lineup> = new Set()
+	store.selectedToSpots.forEach((selectedToSpotItem, selectedToSpotId) => {
+		selectedToSpotItem.lineupIds.forEach((lineupId) => {
+			console.log(lineupId);
+			const selectedLineup = lineups.value.get(lineupId)!
+			/*  */
+			res.add(selectedLineup)
+		})
+	})
+	return res
+})
+
+/* ACTIVE FROM SPOTS */
 const activeFromSpots = computed(() => {
+	/* Сохраняет id лайнапов в Set */
 	const res = new Map<Spot['spotId'], {
 		fromSpot: Spot,
-		lineupIds: Lineup['lineupId'][]
+		lineupIds: Set<Lineup['lineupId']>, /* Лайнапов к одному fromСпоту 
+		может быть несколько, когда включено несколько toСпотов */
+		filter: {
+			nadeType: Set<NadeType>, side: Set<Side>, tickrate: Set<Tickrate>, difficulties: Set<Difficulty>,
+		},
 	}>()
 	activeLineups.value.forEach((activeLineup) => {
 		if (!res.has(activeLineup.fromId)) {
-			const fromSpot = spots.value.get(activeLineup.fromId)!
+			const newFromSpot = spots.value.get(activeLineup.fromId)!
 			res.set(activeLineup.fromId, {
-				fromSpot: fromSpot,
-				lineupIds: [activeLineup.lineupId]
+				fromSpot: newFromSpot,
+				lineupIds: new Set([activeLineup.lineupId]),
+				filter: {
+					nadeType: new Set([activeLineup.nadeType]),
+					side: new Set([activeLineup.side]),
+					tickrate: new Set([activeLineup.tickrate]),
+					difficulties: new Set([activeLineup.difficulty]),
+				}
 			})
 		} else {
-			const fromSpot = res.get(activeLineup.toId)!
-			fromSpot.lineupIds.push(activeLineup.lineupId)
-			res.set(activeLineup.toId, fromSpot)
+			const existingFromSpot = res.get(activeLineup.fromId)!
+			existingFromSpot.lineupIds.add(activeLineup.lineupId)
+			existingFromSpot.filter.nadeType.add(activeLineup.nadeType)
+			existingFromSpot.filter.side.add(activeLineup.side)
+			existingFromSpot.filter.tickrate.add(activeLineup.tickrate)
+			existingFromSpot.filter.difficulties.add(activeLineup.difficulty)
+			res.set(activeLineup.fromId, existingFromSpot)
 		}
 	})
 	return res
 })
 
-watch(activeFromSpots, (nv) => {
-	console.log(nv);
-})
-// const selectableSpots = computed(() => {
-// 	const res = new Map<ThrowSpot['id'], {
-// 		throwSpot: ThrowSpot,
-// 	}>()
-// 	store.activeGrenadeItems.forEach((grenadeItem) => {
-// 		if (grenadeItem.selectedSpots.length < 1) {
-// 			grenadeItem.grenade.throwSpotsIds.forEach((spotId) => {
-// 				const spot = throwSpots.value.get(spotId)
-// 				// if (!selectedSpots.has(spotId)) {
-// 				// 	res.set(spotId, spo t)
-// 				// }
-// 				if (!store.activeGrenadeItems.has(spotId)) {
-// 					res.set(spotId, spot)
-// 				}
-// 			})
-// 		}
-// 	})
-// 	return res
-// })
-
-// function onSpotClick(event: Event, id: string, throwSpot: ThrowSpot) {
-// 	const nade = store.activeGrenadeItems.get(id);
-// 	if (!store.activeGrenadeItems.has(id)) {
-// 		nade?.selectedSpots.push(throwSpot)
-// 	}
-// }
-
-
-// // const selectedSpots = reactive(new Map<ThrowSpot['id'], ThrowSpot>())
-
-
-// const lineUps = 
-// watch(selectableSpots, (nv) => {
-// 	console.log(nv);
-// })
-/* // Когда-то потом нужно будет добавить коллекцию Selected Spots и на ее основе
-// выбирать что именно вставлять в res (selectableSpotsAndSvgItems)
-const selectableSpotsAndSvgItems = computed(() => {
-	// ключ-spotId, значение - [ThrowSpot,SvgItem]
-	const res = new Map<string, [ThrowSpot, SvgItem]>()
-	if (store.activeGrenades.size > 0) {
-		store.activeGrenades.forEach((value, aNadeId) => {
-			const aNade = value[0]
-			const aNadeColor = value[1]
-			const aSpotsArray: ThrowSpot[] = []
-			const aSpotSvgitemArray: SvgItem[] = []
-			const durations: number[] = []
-			aNade.throwSpotsIds.forEach((throwSpotId, index) => {
-				const spot = throwSpots.value.find((ts) => ts.id == throwSpotId)
-	
-				const spotX = spot!.coords.y
-				const spotY = spot!.coords.y
-				const aNadeX = aNade.coords.x
-				const aNadeY = aNade.coords.y
-				const length = Math.sqrt((spotX - aNadeX) ** 2 + (spotY - aNadeY) ** 2)
-				const l2r = spotX < aNadeX ? true : false
-				const ownDuration = 2.2 + length * 0.01
-				durations.push(ownDuration)
-	
-				aSpotSvgitemArray.push({
-					nadeX: aNadeX,
-					nadeY: aNadeY,
-					spotX,
-					spotY,
-					l2r,
-					colorStr: aNadeColor,
-					duration: undefined // avgDuration потом
-				})
-			})
-			const aNade_AvgDuration = Number((durations.reduce((acc, next) => {
-				return acc + next
-			}, 0) / durations.length).toFixed(2))
-	
-	
-			// map.set(throwSpotId, throwSpots.value.find((ts) => ts.id == throwSpotId))
+function onFromSpotSelect(activeFromSpotId: string) {
+	const activeFromSpot = activeFromSpots.value.get(activeFromSpotId)!
+	/* Если из этого спота летит несколько лайнапов, то нужно
+	выбрать один конкретный */
+	if (activeFromSpot?.lineupIds.size == 1) {
+		const lineupId = activeFromSpot.lineupIds.values().next().value
+		activeLineups.value.forEach((activeLineup) => {
+			if (activeLineup.lineupId === lineupId) {
+				const activeToSpot = store.activeToSpots.get(activeLineup.toId)!
+				store.selectedToSpots.set(activeToSpot?.toSpot.spotId, activeToSpot)
+				store.activeToSpots.delete(activeToSpot?.toSpot.spotId)
+			}
 		})
-	
 	}
-	return res
-}) */
 
-// const svgArr = computed(() => {
-// 	const res:any = []
-// 	store.activeGrenades.forEach((grenade, grenadeId) => {
-// 		const grenadeSpots:[] = [];
-// 		const durations:number[] = []
-// 		grenade.throwSpotsIds.forEach((spotId) => {
-// 			const spot = selectableSpotsAndSvgItems.value.get(spotId)
-// 			const nadeX = grenade.coords.x
-// 			const nadeY = grenade.coords.y
-// 			const spotX = spot.coords.y
-// 			const spotY = spot.coords.y
-// 			const length = Math.sqrt((spotX - nadeX) ** 2 + (spotY - nadeY) ** 2)
-// 			const l2r = spotX < nadeX ? true : false
-// 			const duration = 2.2 + length * 0.01
-// 			durations.push(duration)
-// 			const svgItem = { 
-// 				spot, 
-// 				nadeX, 
-// 				nadeY, 
-// 				spotX, 
-// 				spotY, 
-// 				length, 
-// 				l2r,
-// 				duration: null,
-// 				lineColor: null
-// 			}
-// 			grenadeSpots.push(svgItem)
-// 		})
-// 		const lineColor = 'hsl(' + (Math.random() * 359).toFixed(0) + ', 88%, 56%)'
-// 		const avgDuration =
-// 			(durations.reduce((acc, next) => acc + next, 0) / durations.length).toFixed(2)
-// 		grenadeSpots.forEach((value) => {
-// 			value.lineColor = lineColor
-// 			value.duration = avgDuration
-// 			res.push(...grenadeSpots)
-// 		})
-// 	})
-// 	return res
-// })
+	if (activeFromSpot?.lineupIds.size > 1) {
+		console.log("> 1");
+	}
+}
 
+// 'hsl(' + (Math.random() * 359).toFixed(0) + ', 88%, 56%)'
 // 'hsl(52, 88%, 56%)'
-//
-
+// const l2r = spotX < nadeX ? true : false
 type SvgItem = {
 	nadeX: number,
 	nadeY: number,
@@ -539,43 +506,67 @@ type SvgItem = {
 	l2r: boolean,
 	colorStr: string
 }
-// const svgArr = computed(() => {
-// 	let svgArr: SvgItem[] = []
-// 	if (store.activeGrenades.size > 0) {
-// 		for (const [grenadeId, [grenade, colorStr]] of store.activeGrenades) {
-// 			const nadeX = grenade.coords.x
-// 			const nadeY = grenade.coords.y
-// 			let durations: any[] = []
-// 			let singleNadeLines: any[] = []
-// 			grenade.throwSpotsIds.forEach((spotId) => {
-// 				const spot = selectableSpotsAndSvgItems.value.get(spotId)
-// 				const spotX = spot!.coords.x
-// 				const spotY = spot!.coords.y
-// 				const length = Math.sqrt((spotX - nadeX) ** 2 + (spotY - nadeY) ** 2)
-// 				const duration = 2.2 + length * 0.01
-// 				durations.push(duration)
-// 				const l2r = spotX < nadeX ? true : false
-// 				singleNadeLines.push({
-// 					nadeX,
-// 					nadeY,
-// 					spotX,
-// 					spotY,
-// 					l2r,
-// 					colorStr
-// 				})
-// 			})
-// 			singleNadeLines.forEach((line) => {
-// 				line.duration = (durations.reduce((acc, next) => {
-// 					return acc + next
-// 				}, 0) / durations.length).toFixed(2)
-// 			})
-// 			console.log(singleNadeLines);
-// 			svgArr.push(...singleNadeLines)
-// 		}
-// 	}
-// 	return svgArr
-// })
 
+const renderToSpots2 = computed(() => {
+	/* В один спот может прилетать несколько разных лайнапов. Информацию о каждом
+	нужно хранить в этом споте для условной отрисовки на основе фильтров */
+
+	/* На 1 лайнап делать 1 спот - нельзя, т.к. споты будут наслаиваться на миникарте, если
+	у 2 и более лайнапов один и тот же toSpot. */
+
+	/* По сути renderToSpots содержит в себе все возможные точки, куда летят гранаты.
+	В template нужно только показать нужные на основе фильтров  */
+
+	/* Из renderToSpots я выбираю спот нажатием кнопки и делаю его активным
+	(помещаю в activeSpots) */
+	const res = new Map<Spot['spotId'], {
+		toSpot: Spot,
+		filter: {
+			nadeType: Set<NadeType>, side: Set<Side>, tickrate: Set<Tickrate>, difficulties: Set<Difficulty>,
+		},
+		lineupIds: Lineup['lineupId'][],
+		isActive: boolean,
+		isSelected: boolean,
+		activeLineupsIds: Lineup['lineupId'][],
+		selectedLineupsIds: Lineup['lineupId'][]
+	}>()
+	lineups.value.forEach((lineup) => {
+		if (!res.has(lineup.toId)) {
+			const toSpot = spots.value.get(lineup.toId)!
+			res.set(lineup.toId, {
+				toSpot: toSpot,
+				lineupIds: [lineup.lineupId],
+				filter: {
+					nadeType: new Set([lineup.nadeType]),
+					side: new Set([lineup.side]),
+					tickrate: new Set([lineup.tickrate]),
+					difficulties: new Set([lineup.difficulty]),
+					// onewaySmokeOption:[],
+					// fakeSmokeOption:[],
+					// bugSmokeOption:[],
+					// forWhom:[],
+					// onewayMolotovOption:[],
+					// fakeMolotovOption:[],
+					// bugMolotovOption:[],
+					// bugHeOption:[],
+				},
+				isActive: false,
+				isSelected: false,
+				activeLineupsIds: [],
+				selectedLineupsIds: []
+			})
+		} else {
+			const toSpot = res.get(lineup.toId)!
+			toSpot.lineupIds.push(lineup.lineupId)
+			toSpot.filter.nadeType.add(lineup.nadeType)
+			toSpot.filter.side.add(lineup.side)
+			toSpot.filter.tickrate.add(lineup.tickrate)
+			toSpot.filter.difficulties.add(lineup.difficulty)
+			res.set(lineup.toId, toSpot)
+		}
+	})
+	return res
+})
 </script>
 
 <template>
@@ -597,105 +588,112 @@ type SvgItem = {
 								: ''
 						" :alt="imgMapError" />
 
-					<template v-for="[toId, toItem] in toSpots">
-						<Grenade :spot="toItem.toSpot" :pointSize="pointSize"
-							@click="toggleNade($event, toId)"
-							:isToggled="store.activeToSpots.has(toItem.toSpot.spotId)" />
-
-						<template v-for="[lineupId, lineupItem] in toItem.lineups">
-							<div class="svgItemWrapper">
-								<svg>
-									<line :x1="`${lineupItem[1].coords.x}%`"
-										:y1="`${lineupItem[1].coords.y}%`"
-										:x2="`${toItem.toSpot.coords.x}%`"
-										:y2="`${toItem.toSpot.coords.y}%`"
-										:stroke="`hsl(${(Math.random() * 359).toFixed(0)}, 88%, 56%)`" />
-									<!-- :stroke="`hsl(${svgItem.colorStr}, 88%, 56%)`" /> -->
-								</svg>
-								<img ref="smokeexecIcon"
-									src="@/assets/icons/smokeicon.png" alt=""
-									class="smokeexecIcon" :style="{
-
-										'--spotX': `${lineupItem[1].coords.x}%`,
-										'--spotY': `${lineupItem[1].coords.y}%`,
-										'--nadeX': `${toItem.toSpot.coords.x}%`,
-										'--nadeY': `${toItem.toSpot.coords.y}%`,
-										'--duration': `${2.5}s`,
-										'--rotate-from': `${-Math.random() * 72 * 10
-											- Math.random() * 270}deg`,
-										'--rotate-to': `${Math.random() * 72 *
-											10}deg`,
-
-										// '--spotX': `${svgItem.spotX}%`,
-										// '--spotY': `${svgItem.spotY}%`,
-										// '--nadeX': `${svgItem.nadeX}%`,
-										// '--nadeY': `${svgItem.nadeY}%`,
-										// '--duration': `${svgItem.duration}s`,
-										// '--rotate-from': `${-Math.random() * 72 * svgItem.duration
-										// 	- Math.random() * 270}deg`,
-										// '--rotate-to': `${Math.random() * 72 *
-										// 	svgItem.duration}deg`,
-										// '--rotate-from': '0',
-										// '--rotate-to': '0',
-										filter: `hue-rotate(${Number((Math.random() * 359).toFixed(0)) + 360 - 40}deg) sepia(33%)`,
-									}">
-
-							</div>
-						</template>
+					<template v-for="[toId, toItem] in renderToSpots">
+						<Grenade @click="toggleNade($event, toId)" :toItem="toItem"
+							ref="smokeSpritesRef" :pointSize="pointSize"
+							:isToggled="store.activeToSpots.has(toItem.toSpot.spotId)"
+							:isSelected="store.selectedToSpots.has(toItem.toSpot.spotId)"
+							:filter="filterState" />
 
 					</template>
 
-					<!-- <template v-for="[id, smoke] in smokes"> -->
-					<!-- <SmokeComponent @click="onGrenadeClick($event, smoke)" -->
-					<!-- :smoke="smoke" :pointSize="pointSize" -->
-					<!-- :nadeType="filterState.nadeType" -->
-					<!-- :side="filterState.side" -->
-					<!-- :tickrate="filterState.tickrate" -->
-					<!-- :difficultiesState="filterState.difficultiesState" -->
-					<!-- :onewayOption="filterState.onewaySmokeOption" -->
-					<!-- :fakeOption="filterState.fakeSmokeOption" -->
-					<!-- :bugOption="filterState.bugSmokeOption" -->
-					<!-- ref="smokeSpritesRef" -->
-					<!-- :isSelected="store.activeGrenadeItems.has(smoke.id) ? true : false" /> -->
-					<!-- </template> -->
+					<!-- <template v-for="[toId, toItem] in renderToSpots">
+																																											<Grenade @click="toggleNade($event, toId)"
+																																												:spot="toItem.toSpot" ref="smokeSpritesRef"
+																																												:pointSize="pointSize"
+																																												:isToggled="store.activeToSpots.has(toItem.toSpot.spotId)"
+																																												:filter="filterState" v-show="(props.nadeType === 'All' || props.nadeType === 'Smoke') &&
+																																													props.side === spot.side &&
+																																													props.tickrate === spot.tickrate &&
+																																													props.difficultiesState[`${spot.difficulty}Visible` as keyof typeof props.difficultiesState] &&
+																																													(
+																																														spot.isOnewaySmoke === true && (
+																																															props.onewayOption === 'Oneways only' ||
+																																															props.onewayOption === 'All'
+																																														) ||
+																																														spot.isOnewaySmoke === false && (
+																																															props.onewayOption === 'Regular only' ||
+																																															props.onewayOption === 'All'
+																																														)
+																																													) &&
+																																													(
+																																														spot.isFakeSmoke === true && (
+																																															props.fakeOption === 'FakeSmokes only' ||
+																																															props.fakeOption === 'All'
+																																														) ||
+																																														spot.isFakeSmoke === false && (
+																																															props.fakeOption === 'Regular only' ||
+																																															props.fakeOption === 'All'
+																																														)
+																																													) &&
+																																													(
+																																														spot.isFakeSmoke === true && (
+																																															props.bugOption === 'BugSmokes only' ||
+																																															props.bugOption === 'All'
+																																														) ||
+																																														spot.isFakeSmoke === false && (
+																																															props.bugOption === 'Regular only' ||
+																																															props.bugOption === 'All'
+																																														)
+																																													)" />
+																																										</template> -->
 
-					<!-- <template v-for="[id, molotov] in molotovs"> -->
-					<!-- <MolotovComponent :molotov="molotov" -->
-					<!-- :pointSize="pointSize" -->
-					<!-- :nadeType="filterState.nadeType" -->
-					<!-- :side="filterState.side" -->
-					<!-- :tickrate="filterState.tickrate" -->
-					<!-- :difficultiesState="filterState.difficultiesState" -->
-					<!-- :onewayOption="filterState.onewayMolotovOption" -->
-					<!-- :fakeOption="filterState.fakeMolotovOption" -->
-					<!-- :bugOption="filterState.bugMolotovOption" /> -->
-					<!-- </template> -->
-					<!-- <template v-for="[id, flash] in flashes"> -->
-					<!-- <FlashComponent :flash="flash" :pointSize="pointSize" -->
-					<!-- :nadeType="filterState.nadeType" -->
-					<!-- :side="filterState.side" -->
-					<!-- :tickrate="filterState.tickrate" -->
-					<!-- :difficultiesState="filterState.difficultiesState" -->
-					<!-- :forWhom="filterState.forWhom" /> -->
-					<!-- </template> -->
-					<!-- <template v-for="he in hes"> -->
-					<!-- <HeComponent :he="he" v-show=" -->
-					<!-- (filterState.nadeType === 'All' || -->
-					<!-- filterState.nadeType === 'He') && -->
-					<!-- filterState.side === he.side && -->
-					<!-- filterState.tickrate === he.tickrate && -->
-					<!-- filterState.difficultiesState[`${he.difficulty}Visible`]" /> -->
-					<!-- </template> -->
+					<!-- <template v-for="[id, smoke] in smokes">
+																																									<SmokeComponent @click="onGrenadeClick($event, smoke)"
+																																										:smoke="smoke" :pointSize="pointSize"
+																																										:nadeType="filterState.nadeType"
+																																										:side="filterState.side"
+																																										:tickrate="filterState.tickrate"
+																																										:difficultiesState="filterState.difficultiesState"
+																																										:onewayOption="filterState.onewaySmokeOption"
+																																										:fakeOption="filterState.fakeSmokeOption"
+																																										:bugOption="filterState.bugSmokeOption"
+																																										ref="smokeSpritesRef"
+																																										:isSelected="store.activeGrenadeItems.has(smoke.id) ? true : false" />
+																																								</template> -->
 
+					<template v-for="activeLineup in activeLineups">
+						<div class="svgItemWrapper" v-show="(
+							(activeLineup.nadeType === filterState.nadeType
+								|| filterState.nadeType === 'all') &&
+							filterState.side === activeLineup.side &&
+							filterState.tickrate === activeLineup.tickrate &&
+							filterState.difficulties.has(activeLineup.difficulty)
+						)">
+							<svg>
+								<line
+									:x1="`${activeFromSpots.get(activeLineup.fromId)?.fromSpot.coords.x}%`"
+									:y1="`${activeFromSpots.get(activeLineup.fromId)?.fromSpot.coords.y}%`"
+									:x2="`${store.activeToSpots.get(activeLineup.toId)?.toSpot.coords.x}%`"
+									:y2="`${store.activeToSpots.get(activeLineup.toId)?.toSpot.coords.y}%`"
+									:stroke="`hsl(${store.activeToSpots.get(activeLineup.toId)?.hslColor}, 88%, 56%)`" />
+							</svg>
+							<img ref="smokeexecIcon"
+								src="@/assets/icons/smokeicon.png" alt=""
+								class="smokeexecIcon" :style="{
+									'--spotX': `${activeFromSpots.get(activeLineup.fromId)?.fromSpot.coords.x}%`,
+									'--spotY': `${activeFromSpots.get(activeLineup.fromId)?.fromSpot.coords.y}%`,
+									'--nadeX': `${store.activeToSpots.get(activeLineup.toId)?.toSpot.coords.x}%`,
+									'--nadeY': `${store.activeToSpots.get(activeLineup.toId)?.toSpot.coords.y}%`,
+									'--duration':
+										`${store.activeToSpots.get(activeLineup.toId)?.avgDuration}s`,
+									'--rotate-from': `${-Math.random() * 72 * 10 - Math.random() * 270}deg`,
+									'--rotate-to': `${Math.random() * 72 * 10}deg`,
+									filter: `hue-rotate(${Number(store.activeToSpots.get(activeLineup.toId)?.hslColor) + 360 - 40}deg) sepia(33%)`
+								}">
+						</div>
+					</template>
 
-					<!-- <template v-for="[id, throwSpot] in "> -->
-					<!-- <ThrowSpotComponent -->
-					<!-- @click="onSpotClick($event, id, throwSpot)" -->
-					<!-- v-show="selectableSpots.has(throwSpot.id)" -->
-					<!-- :throwSpot="throwSpot" /> -->
-					<!-- </template> -->
-
-
+					<template
+						v-for="[activeFromId, activeFromItem] in activeFromSpots">
+						<FromSpot :fromSpotItem="activeFromItem" v-show="(
+							(activeFromItem.filter.nadeType.has(filterState.nadeType)
+								|| filterState.nadeType === 'all') &&
+							activeFromItem.filter.side.has(filterState.side) &&
+							activeFromItem.filter.tickrate.has(filterState.tickrate)
+							// activeFromItem.filter.difficulties.has( filterState.difficulties)
+						)" @myclick="onFromSpotSelect(activeFromId)" />
+					</template>
 
 				</main>
 			</div>
