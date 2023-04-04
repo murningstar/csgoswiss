@@ -164,7 +164,7 @@ export const mirageGrenades: MapItems = {
             {
                 id: "gNx6wmZRJX_dv",
                 coords: { x: 25, y: 25 },
-                toIds: [
+                landIds: [
                     "EOOfF3gTmzrL2",
                     "T81rq8FeVnKFg",
                     "q0ER3vmNRSe7a-9Zvyk",
@@ -179,7 +179,7 @@ export const mirageGrenades: MapItems = {
             {
                 id: "c2ZW10Z85iese",
                 coords: { x: 50, y: 50 },
-                toIds: ["lRdZnqs18HiLW"],
+                landIds: ["lRdZnqs18HiLW"],
                 isSpecial: false,
             },
         ],
@@ -188,7 +188,7 @@ export const mirageGrenades: MapItems = {
             {
                 id: "BfHgp4IsQezko",
                 coords: { x: 75, y: 75 },
-                toIds: ["Ug5qL_LbcBY1k"],
+                landIds: ["Ug5qL_LbcBY1k"],
                 isSpecial: false,
             },
         ],

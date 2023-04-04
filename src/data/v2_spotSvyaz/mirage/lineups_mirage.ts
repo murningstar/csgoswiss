@@ -5,8 +5,8 @@ export const lineups_mirage = new Map<Lineup["lineupId"], Lineup>([
         "fJVy8KdHSz2mE", // somewhere near b ->  b first arch
         {
             lineupId: "fJVy8KdHSz2mE",
-            fromId: "gNx6wmZRJX_dv",
-            toId: "EOOfF3gTmzrL2",
+            throwId: "gNx6wmZRJX_dv",
+            landId: "EOOfF3gTmzrL2",
             nadeType: "smoke",
             side: "t",
             tickrate: 128,
@@ -20,8 +20,8 @@ export const lineups_mirage = new Map<Lineup["lineupId"], Lineup>([
         "hdydF8AsNgPRm", // somewhere near b -> b second arch
         {
             lineupId: "hdydF8AsNgPRm",
-            fromId: "gNx6wmZRJX_dv",
-            toId: "T81rq8FeVnKFg",
+            throwId: "gNx6wmZRJX_dv",
+            landId: "T81rq8FeVnKFg",
             nadeType: "smoke",
             side: "t",
             tickrate: 128,
@@ -35,8 +35,8 @@ export const lineups_mirage = new Map<Lineup["lineupId"], Lineup>([
         "Jc_iTnlLSgQ9f", // somewhere near b -> b kitchen window
         {
             lineupId: "Jc_iTnlLSgQ9f",
-            fromId: "gNx6wmZRJX_dv",
-            toId: "DnpCe37cuAIGY",
+            throwId: "gNx6wmZRJX_dv",
+            landId: "DnpCe37cuAIGY",
             nadeType: "smoke",
             side: "t",
             tickrate: 128,
@@ -50,8 +50,8 @@ export const lineups_mirage = new Map<Lineup["lineupId"], Lineup>([
         "KBlpeRYpcsI4c", // somewhere near b -> window
         {
             lineupId: "KBlpeRYpcsI4c",
-            fromId: "gNx6wmZRJX_dv",
-            toId: "bozR5AccXBfmM",
+            throwId: "gNx6wmZRJX_dv",
+            landId: "bozR5AccXBfmM",
             nadeType: "smoke",
             side: "t",
             tickrate: 128,
@@ -65,8 +65,8 @@ export const lineups_mirage = new Map<Lineup["lineupId"], Lineup>([
         "nA8LtLGcWfHVo", // somewhere near b -> jungle
         {
             lineupId: "nA8LtLGcWfHVo",
-            fromId: "gNx6wmZRJX_dv",
-            toId: "Bcn__DOHHfUT4",
+            throwId: "gNx6wmZRJX_dv",
+            landId: "Bcn__DOHHfUT4",
             nadeType: "smoke",
             side: "t",
             tickrate: 128,
@@ -80,8 +80,8 @@ export const lineups_mirage = new Map<Lineup["lineupId"], Lineup>([
         "T5bwRsMq8si2k", // center -> jungle
         {
             lineupId: "T5bwRsMq8si2k",
-            fromId: "c2ZW10Z85iese",
-            toId: "Bcn__DOHHfUT4",
+            throwId: "c2ZW10Z85iese",
+            landId: "Bcn__DOHHfUT4",
             nadeType: "smoke",
             side: "t",
             tickrate: 128,
@@ -95,8 +95,8 @@ export const lineups_mirage = new Map<Lineup["lineupId"], Lineup>([
         "m7F1GhjUpjf94", // palace texture -> jungle
         {
             lineupId: "m7F1GhjUpjf94",
-            fromId: "BfHgp4IsQezko",
-            toId: "Bcn__DOHHfUT4",
+            throwId: "BfHgp4IsQezko",
+            landId: "Bcn__DOHHfUT4",
             nadeType: "smoke",
             side: "t",
             tickrate: 128,
@@ -110,8 +110,8 @@ export const lineups_mirage = new Map<Lineup["lineupId"], Lineup>([
         "vosMfcX1tt9e3", // somewhere near b -> stairs
         {
             lineupId: "vosMfcX1tt9e3",
-            fromId: "c2ZW10Z85iese",
-            toId: "lRdZnqs18HiLW",
+            throwId: "c2ZW10Z85iese",
+            landId: "lRdZnqs18HiLW",
             nadeType: "smoke",
             side: "t",
             tickrate: 128,
@@ -125,8 +125,8 @@ export const lineups_mirage = new Map<Lineup["lineupId"], Lineup>([
         "OOf0lfLtQzG65", // palace texture -> ct
         {
             lineupId: "OOf0lfLtQzG65",
-            fromId: "BfHgp4IsQezko",
-            toId: "Ug5qL_LbcBY1k",
+            throwId: "BfHgp4IsQezko",
+            landId: "Ug5qL_LbcBY1k",
             nadeType: "smoke",
             side: "t",
             tickrate: 128,
@@ -141,8 +141,8 @@ export const lineups_mirage = new Map<Lineup["lineupId"], Lineup>([
         "Y8pQ1sCXrdNWbs", // near top mid somewhere -> window
         {
             lineupId: "Y8pQ1sCXrdNWbs",
-            fromId: "P6xMszIS5iqTD",
-            toId: "bozR5AccXBfmM",
+            throwId: "P6xMszIS5iqTD",
+            landId: "bozR5AccXBfmM",
             nadeType: "smoke",
             side: "t",
             tickrate: 128,
@@ -156,8 +156,8 @@ export const lineups_mirage = new Map<Lineup["lineupId"], Lineup>([
         "Y8pQ1sCXrdNWbd", // near top mid somewhere -> window
         {
             lineupId: "Y8pQ1sCXrdNWbd",
-            fromId: "P6xMszIS5iqTD",
-            toId: "bozR5AccXBfmM",
+            throwId: "P6xMszIS5iqTD",
+            landId: "bozR5AccXBfmM",
             nadeType: "smoke",
             side: "t",
             tickrate: 128,
@@ -171,8 +171,8 @@ export const lineups_mirage = new Map<Lineup["lineupId"], Lineup>([
         "Y8pQ1sCXrdNWbc", // near top mid somewhere -> window
         {
             lineupId: "Y8pQ1sCXrdNWbc",
-            fromId: "P6xMszIS5iqTD",
-            toId: "bozR5AccXBfmM",
+            throwId: "P6xMszIS5iqTD",
+            landId: "bozR5AccXBfmM",
             nadeType: "smoke",
             side: "ct",
             tickrate: 128,

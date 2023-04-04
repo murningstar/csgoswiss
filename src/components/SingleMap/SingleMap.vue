@@ -291,12 +291,12 @@ const isDragging = ref(false)
 
 
 /* onClick TOSPOT */
-function toggleNade(event: Event, toId: Spot['spotId']) {
+function toggleNade(event: Event, landId: Spot['spotId']) {
 	if (isDragging.value == false &&
 		(event.target as HTMLButtonElement).tagName == 'BUTTON') {
 
-		if (!store.activeToSpots.has(toId)) {
-			const toSpotItem = renderToSpots.value.get(toId)!
+		if (!store.activeToSpots.has(landId)) {
+			const toSpotItem = renderToSpots.value.get(landId)!
 
 			console.log(299);
 			const fromSpots: Spot[] = []
@@ -305,7 +305,7 @@ function toggleNade(event: Event, toId: Spot['spotId']) {
 			toSpotItem?.lineupIds.forEach((lineupid, ix) => {
 				try {
 					const lineup = lineups.value.get(lineupid)!
-					fromSpots.push(spots.value.get(lineup.fromId)!)
+					fromSpots.push(spots.value.get(lineup.throwId)!)
 				}
 				catch (error) {
 					console.log('Probably problem is Bad/Damaged Lineup Data;');
@@ -323,14 +323,14 @@ function toggleNade(event: Event, toId: Spot['spotId']) {
 			const avgDuration =
 				(durations.reduce((acc, next) => acc + next, 0) / durations.length).toFixed(2)
 
-			store.activeToSpots.set(toId, {
-				toSpot: spots.value.get(toId)!,
+			store.activeToSpots.set(landId, {
+				toSpot: spots.value.get(landId)!,
 				hslColor: store.activeToSpots.size == 0 ? '52' : (Math.random() * 359).toFixed(0),
 				avgDuration: avgDuration,
-				lineupIds: renderToSpots.value.get(toId)!.lineupIds,
+				lineupIds: renderToSpots.value.get(landId)!.lineupIds,
 			})
 		} else {
-			store.activeToSpots.delete(toId)
+			store.activeToSpots.delete(landId)
 		}
 	}
 }
@@ -375,9 +375,9 @@ const renderToSpots = computed(() => {
 		lineupIds: Lineup['lineupId'][],
 	}>()
 	lineups.value.forEach((lineup) => {
-		if (!res.has(lineup.toId)) {
-			const toSpot = spots.value.get(lineup.toId)!
-			res.set(lineup.toId, {
+		if (!res.has(lineup.landId)) {
+			const toSpot = spots.value.get(lineup.landId)!
+			res.set(lineup.landId, {
 				toSpot: toSpot,
 				lineupIds: [lineup.lineupId],
 				filter: {
@@ -396,13 +396,13 @@ const renderToSpots = computed(() => {
 				}
 			})
 		} else {
-			const toSpot = res.get(lineup.toId)!
+			const toSpot = res.get(lineup.landId)!
 			toSpot.lineupIds.push(lineup.lineupId)
 			toSpot.filter.nadeType.add(lineup.nadeType)
 			toSpot.filter.side.add(lineup.side)
 			toSpot.filter.tickrate.add(lineup.tickrate)
 			toSpot.filter.difficulties.add(lineup.difficulty)
-			res.set(lineup.toId, toSpot)
+			res.set(lineup.landId, toSpot)
 		}
 	})
 	return res
@@ -449,9 +449,9 @@ const activeFromSpots = computed(() => {
 		},
 	}>()
 	activeLineups.value.forEach((activeLineup) => {
-		if (!res.has(activeLineup.fromId)) {
-			const newFromSpot = spots.value.get(activeLineup.fromId)!
-			res.set(activeLineup.fromId, {
+		if (!res.has(activeLineup.throwId)) {
+			const newFromSpot = spots.value.get(activeLineup.throwId)!
+			res.set(activeLineup.throwId, {
 				fromSpot: newFromSpot,
 				lineupIds: new Set([activeLineup.lineupId]),
 				filter: {
@@ -462,13 +462,13 @@ const activeFromSpots = computed(() => {
 				}
 			})
 		} else {
-			const existingFromSpot = res.get(activeLineup.fromId)!
+			const existingFromSpot = res.get(activeLineup.throwId)!
 			existingFromSpot.lineupIds.add(activeLineup.lineupId)
 			existingFromSpot.filter.nadeType.add(activeLineup.nadeType)
 			existingFromSpot.filter.side.add(activeLineup.side)
 			existingFromSpot.filter.tickrate.add(activeLineup.tickrate)
 			existingFromSpot.filter.difficulties.add(activeLineup.difficulty)
-			res.set(activeLineup.fromId, existingFromSpot)
+			res.set(activeLineup.throwId, existingFromSpot)
 		}
 	})
 	return res
@@ -482,7 +482,7 @@ function onFromSpotSelect(activeFromSpotId: string) {
 		const lineupId = activeFromSpot.lineupIds.values().next().value
 		activeLineups.value.forEach((activeLineup) => {
 			if (activeLineup.lineupId === lineupId) {
-				const activeToSpot = store.activeToSpots.get(activeLineup.toId)!
+				const activeToSpot = store.activeToSpots.get(activeLineup.landId)!
 				store.selectedToSpots.set(activeToSpot?.toSpot.spotId, activeToSpot)
 				store.activeToSpots.delete(activeToSpot?.toSpot.spotId)
 			}
@@ -531,9 +531,9 @@ const renderToSpots2 = computed(() => {
 		selectedLineupsIds: Lineup['lineupId'][]
 	}>()
 	lineups.value.forEach((lineup) => {
-		if (!res.has(lineup.toId)) {
-			const toSpot = spots.value.get(lineup.toId)!
-			res.set(lineup.toId, {
+		if (!res.has(lineup.landId)) {
+			const toSpot = spots.value.get(lineup.landId)!
+			res.set(lineup.landId, {
 				toSpot: toSpot,
 				lineupIds: [lineup.lineupId],
 				filter: {
@@ -556,13 +556,13 @@ const renderToSpots2 = computed(() => {
 				selectedLineupsIds: []
 			})
 		} else {
-			const toSpot = res.get(lineup.toId)!
+			const toSpot = res.get(lineup.landId)!
 			toSpot.lineupIds.push(lineup.lineupId)
 			toSpot.filter.nadeType.add(lineup.nadeType)
 			toSpot.filter.side.add(lineup.side)
 			toSpot.filter.tickrate.add(lineup.tickrate)
 			toSpot.filter.difficulties.add(lineup.difficulty)
-			res.set(lineup.toId, toSpot)
+			res.set(lineup.landId, toSpot)
 		}
 	})
 	return res
@@ -588,69 +588,70 @@ const renderToSpots2 = computed(() => {
 								: ''
 						" :alt="imgMapError" />
 
-					<template v-for="[toId, toItem] in renderToSpots">
-						<Grenade @click="toggleNade($event, toId)" :toItem="toItem"
-							ref="smokeSpritesRef" :pointSize="pointSize"
+					<template v-for="[landId, toItem] in renderToSpots">
+						<Grenade @click="toggleNade($event, landId)"
+							:toItem="toItem" ref="smokeSpritesRef"
+							:pointSize="pointSize"
 							:isToggled="store.activeToSpots.has(toItem.toSpot.spotId)"
 							:isSelected="store.selectedToSpots.has(toItem.toSpot.spotId)"
 							:filter="filterState" />
 
 					</template>
 
-					<!-- <template v-for="[toId, toItem] in renderToSpots">
-																																											<Grenade @click="toggleNade($event, toId)"
-																																												:spot="toItem.toSpot" ref="smokeSpritesRef"
-																																												:pointSize="pointSize"
-																																												:isToggled="store.activeToSpots.has(toItem.toSpot.spotId)"
-																																												:filter="filterState" v-show="(props.nadeType === 'All' || props.nadeType === 'Smoke') &&
-																																													props.side === spot.side &&
-																																													props.tickrate === spot.tickrate &&
-																																													props.difficultiesState[`${spot.difficulty}Visible` as keyof typeof props.difficultiesState] &&
-																																													(
-																																														spot.isOnewaySmoke === true && (
-																																															props.onewayOption === 'Oneways only' ||
-																																															props.onewayOption === 'All'
-																																														) ||
-																																														spot.isOnewaySmoke === false && (
-																																															props.onewayOption === 'Regular only' ||
-																																															props.onewayOption === 'All'
-																																														)
-																																													) &&
-																																													(
-																																														spot.isFakeSmoke === true && (
-																																															props.fakeOption === 'FakeSmokes only' ||
-																																															props.fakeOption === 'All'
-																																														) ||
-																																														spot.isFakeSmoke === false && (
-																																															props.fakeOption === 'Regular only' ||
-																																															props.fakeOption === 'All'
-																																														)
-																																													) &&
-																																													(
-																																														spot.isFakeSmoke === true && (
-																																															props.bugOption === 'BugSmokes only' ||
-																																															props.bugOption === 'All'
-																																														) ||
-																																														spot.isFakeSmoke === false && (
-																																															props.bugOption === 'Regular only' ||
-																																															props.bugOption === 'All'
-																																														)
-																																													)" />
-																																										</template> -->
+					<!-- <template v-for="[landId, toItem] in renderToSpots">
+																																														<Grenade @click="toggleNade($event, landId)"
+																																															:spot="toItem.toSpot" ref="smokeSpritesRef"
+																																															:pointSize="pointSize"
+																																															:isToggled="store.activeToSpots.has(toItem.toSpot.spotId)"
+																																															:filter="filterState" v-show="(props.nadeType === 'All' || props.nadeType === 'Smoke') &&
+																																																props.side === spot.side &&
+																																																props.tickrate === spot.tickrate &&
+																																																props.difficultiesState[`${spot.difficulty}Visible` as keyof typeof props.difficultiesState] &&
+																																																(
+																																																	spot.isOnewaySmoke === true && (
+																																																		props.onewayOption === 'Oneways only' ||
+																																																		props.onewayOption === 'All'
+																																																	) ||
+																																																	spot.isOnewaySmoke === false && (
+																																																		props.onewayOption === 'Regular only' ||
+																																																		props.onewayOption === 'All'
+																																																	)
+																																																) &&
+																																																(
+																																																	spot.isFakeSmoke === true && (
+																																																		props.fakeOption === 'FakeSmokes only' ||
+																																																		props.fakeOption === 'All'
+																																																	) ||
+																																																	spot.isFakeSmoke === false && (
+																																																		props.fakeOption === 'Regular only' ||
+																																																		props.fakeOption === 'All'
+																																																	)
+																																																) &&
+																																																(
+																																																	spot.isFakeSmoke === true && (
+																																																		props.bugOption === 'BugSmokes only' ||
+																																																		props.bugOption === 'All'
+																																																	) ||
+																																																	spot.isFakeSmoke === false && (
+																																																		props.bugOption === 'Regular only' ||
+																																																		props.bugOption === 'All'
+																																																	)
+																																																)" />
+																																													</template> -->
 
 					<!-- <template v-for="[id, smoke] in smokes">
-																																									<SmokeComponent @click="onGrenadeClick($event, smoke)"
-																																										:smoke="smoke" :pointSize="pointSize"
-																																										:nadeType="filterState.nadeType"
-																																										:side="filterState.side"
-																																										:tickrate="filterState.tickrate"
-																																										:difficultiesState="filterState.difficultiesState"
-																																										:onewayOption="filterState.onewaySmokeOption"
-																																										:fakeOption="filterState.fakeSmokeOption"
-																																										:bugOption="filterState.bugSmokeOption"
-																																										ref="smokeSpritesRef"
-																																										:isSelected="store.activeGrenadeItems.has(smoke.id) ? true : false" />
-																																								</template> -->
+																																												<SmokeComponent @click="onGrenadeClick($event, smoke)"
+																																													:smoke="smoke" :pointSize="pointSize"
+																																													:nadeType="filterState.nadeType"
+																																													:side="filterState.side"
+																																													:tickrate="filterState.tickrate"
+																																													:difficultiesState="filterState.difficultiesState"
+																																													:onewayOption="filterState.onewaySmokeOption"
+																																													:fakeOption="filterState.fakeSmokeOption"
+																																													:bugOption="filterState.bugSmokeOption"
+																																													ref="smokeSpritesRef"
+																																													:isSelected="store.activeGrenadeItems.has(smoke.id) ? true : false" />
+																																											</template> -->
 
 					<template v-for="activeLineup in activeLineups">
 						<div class="svgItemWrapper" v-show="(
@@ -662,37 +663,37 @@ const renderToSpots2 = computed(() => {
 						)">
 							<svg>
 								<line
-									:x1="`${activeFromSpots.get(activeLineup.fromId)?.fromSpot.coords.x}%`"
-									:y1="`${activeFromSpots.get(activeLineup.fromId)?.fromSpot.coords.y}%`"
-									:x2="`${store.activeToSpots.get(activeLineup.toId)?.toSpot.coords.x}%`"
-									:y2="`${store.activeToSpots.get(activeLineup.toId)?.toSpot.coords.y}%`"
-									:stroke="`hsl(${store.activeToSpots.get(activeLineup.toId)?.hslColor}, 88%, 56%)`" />
+									:x1="`${activeFromSpots.get(activeLineup.throwId)?.fromSpot.coords.x}%`"
+									:y1="`${activeFromSpots.get(activeLineup.throwId)?.fromSpot.coords.y}%`"
+									:x2="`${store.activeToSpots.get(activeLineup.landId)?.toSpot.coords.x}%`"
+									:y2="`${store.activeToSpots.get(activeLineup.landId)?.toSpot.coords.y}%`"
+									:stroke="`hsl(${store.activeToSpots.get(activeLineup.landId)?.hslColor}, 88%, 56%)`" />
 							</svg>
 							<img ref="smokeexecIcon"
 								src="@/assets/icons/smokeicon.png" alt=""
 								class="smokeexecIcon" :style="{
-									'--spotX': `${activeFromSpots.get(activeLineup.fromId)?.fromSpot.coords.x}%`,
-									'--spotY': `${activeFromSpots.get(activeLineup.fromId)?.fromSpot.coords.y}%`,
-									'--nadeX': `${store.activeToSpots.get(activeLineup.toId)?.toSpot.coords.x}%`,
-									'--nadeY': `${store.activeToSpots.get(activeLineup.toId)?.toSpot.coords.y}%`,
+									'--spotX': `${activeFromSpots.get(activeLineup.throwId)?.fromSpot.coords.x}%`,
+									'--spotY': `${activeFromSpots.get(activeLineup.throwId)?.fromSpot.coords.y}%`,
+									'--nadeX': `${store.activeToSpots.get(activeLineup.landId)?.toSpot.coords.x}%`,
+									'--nadeY': `${store.activeToSpots.get(activeLineup.landId)?.toSpot.coords.y}%`,
 									'--duration':
-										`${store.activeToSpots.get(activeLineup.toId)?.avgDuration}s`,
+										`${store.activeToSpots.get(activeLineup.landId)?.avgDuration}s`,
 									'--rotate-from': `${-Math.random() * 72 * 10 - Math.random() * 270}deg`,
 									'--rotate-to': `${Math.random() * 72 * 10}deg`,
-									filter: `hue-rotate(${Number(store.activeToSpots.get(activeLineup.toId)?.hslColor) + 360 - 40}deg) sepia(33%)`
+									filter: `hue-rotate(${Number(store.activeToSpots.get(activeLineup.landId)?.hslColor) + 360 - 40}deg) sepia(33%)`
 								}">
 						</div>
 					</template>
 
 					<template
-						v-for="[activeFromId, activeFromItem] in activeFromSpots">
+						v-for="[activethrowId, activeFromItem] in activeFromSpots">
 						<FromSpot :fromSpotItem="activeFromItem" v-show="(
 							(activeFromItem.filter.nadeType.has(filterState.nadeType)
 								|| filterState.nadeType === 'all') &&
 							activeFromItem.filter.side.has(filterState.side) &&
 							activeFromItem.filter.tickrate.has(filterState.tickrate)
 							// activeFromItem.filter.difficulties.has( filterState.difficulties)
-						)" @myclick="onFromSpotSelect(activeFromId)" />
+						)" @myclick="onFromSpotSelect(activethrowId)" />
 					</template>
 
 				</main>

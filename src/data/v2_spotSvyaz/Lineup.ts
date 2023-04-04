@@ -10,8 +10,8 @@ import type {
 
 export interface Lineup {
     lineupId: string;
-    toId: Spot["spotId"];
-    fromId: Spot["spotId"];
+    landId: Spot["spotId"];
+    throwId: Spot["spotId"];
     nadeType: NadeType;
     side: Side;
     tickrate: Tickrate;
