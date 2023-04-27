@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 // vue
-import { ref, computed, watch, onMounted, type StyleValue, reactive } from "vue";
-import { onBeforeRouteLeave, useRoute } from 'vue-router'
+import { ref, computed, watch, onMounted, type StyleValue, reactive, watchEffect, onBeforeMount } from "vue";
+import { onBeforeRouteLeave, onBeforeRouteUpdate, useRoute } from 'vue-router'
 import { useSomestore } from "@/stores/somestore";
 // libs
 import panzoom from "panzoom"
@@ -17,6 +17,9 @@ import FromSpot from "@/components/SingleMap/FromSpot.vue"
 import CMS from "@/components/cms/CMS.vue";
 import FilterPanel from "@/components/SingleMap/FilterPanel.vue"
 import Grenade from "@/components/SingleMap/_Grenade.vue"
+import ContentPanel from "@/components/SingleMap/ContentPanel.vue"
+import ContentCard from "@/components/SingleMap/ContentCard.vue"
+import GS_Window from "@/components/UI/GS_Window.vue";
 // data
 import { mirageGrenades } from "@/data/v2_spotSvyaz/mirage/mirageGrenadesV2";
 import { ancientGrenades } from "@/data/v2_spotSvyaz/ancient/ancientGrenadesV2";
@@ -36,6 +39,8 @@ import type { Difficulty, ForWhom, NadeType, Side, Tickrate } from "@/data/types
 import type { ThrowSpot } from "@/data/interfaces/ThrowSpot";
 import type { Lineup } from "@/data/v2_spotSvyaz/Lineup";
 import type { Spot } from "@/data/v2_spotSvyaz/Spot";
+import { ViewItemsFactory, type LineupItem } from "@/data/types/ViewItems";
+import type { ViewToSpot, ViewFromSpot } from "@/data/types/ViewItems";
 
 
 const { isLoading, nSegmentsVisible, startLoading, endLoading, onImageLoadError } = useLoadingGoldsourceLogic()
@@ -147,10 +152,13 @@ const imgResizeObs = new ResizeObserver((obsedElements) => {
 /* Можно спокойно подгружать все карты и пикча текущей карты
 загружена не будет, т.к. браузер увидит, что она есть в кэше => 
 функционал для отслеживания уже загруженных карт не нужен */
-async function preloadRestImages() {
+async function preloadRestData() {
 	maplist.forEach((map) => {
 		let img = new Image()
 		img.src = `/src/assets/maps/webp/${map}.webp`
+		// import(`@/data/v2_spotSvyaz/${map}/${map}GrenadesV2`)
+		// import(`@/data/v2_spotSvyaz/${map}/lineups_${map}`)
+		// import(`@/data/v2_spotSvyaz/${map}/spots_${map}`)
 		// img.onload = (e) => { console.log(`%c ${map} image loaded`, "color:blue") }
 	})
 }
@@ -165,7 +173,7 @@ function getElemSide(elem: HTMLImageElement) {
 }
 onMounted(() => {
 
-	preloadRestImages();
+	preloadRestData();
 
 	panzoom(outerContainerRef.value as HTMLDivElement, {
 		maxZoom: 3,
@@ -179,13 +187,11 @@ onMounted(() => {
 })
 
 
-
 const isFiltersVisible = ref(false)
-const toggleFilters = () => { isFiltersVisible.value = !isFiltersVisible.value }
+const toggleFilters = () => isFiltersVisible.value = !isFiltersVisible.value
 
 const filtersPropData = reactive({
 	nadeTypeList: nadeTypeList,
-
 })
 const filterState = reactive({
 	nadeType: 'smoke' as NadeType | 'all',
@@ -207,9 +213,23 @@ const filterState = reactive({
 	bugMolotovOption: 'All',
 	bugHeOption: 'All',
 })
-watch(filterState, (newval) => {
-	console.log(newval.difficulties);
+watch(filterState, (newVal) => {
+	const stringified = JSON.stringify(newVal, (key, value) => {
+		return key == 'difficulties' ? Array.from(value) : value
+	})
+	localStorage.setItem('filterState', stringified)
 })
+const filterFromCache = () => {
+	const storedFilter = localStorage.getItem('filterState')
+	if (storedFilter) {
+		const parsed = JSON.parse(localStorage.getItem('filterState')!, (k, v) => {
+			return k == 'difficulties' ? new Set(v) : v
+		})
+		Object.assign(filterState, parsed)
+	}
+}
+onMounted(filterFromCache)
+
 const filterHandlers = {
 	changeNadeType: (newVal: any) => {
 		filterState.nadeType = newVal
@@ -258,91 +278,31 @@ const filterHandlers = {
 	},
 }
 
+
 const isDragging = ref(false)
 
-
-
-
-// const selectedNadesStateMachine = createMachine({
-// 	initial: "initial",
-// 	states: {
-// 		initial: {
-// 			on: {
-// 				FIRST_NADE_CLICKED: "selectingFirstSpot"
-// 			}
-// 		},
-// 		selectingFirstSpot: {
-// 			on: {
-// 				FIRST_SPOT_CLICKED: "singleLineupShowing",
-// 				SECOND_NADE_CLICKED: ""
-// 			}
-// 		},
-// 		singleNadeSelected: {
-// 			initial:"idle",
-// 			states:{
-// 				idle:{},
-// 				showingData:{},
-
-// 			}
-// 		},
-
-// 	}
-// })
-
-
-/* onClick TOSPOT */
-function toggleNade(event: Event, toId: Spot['spotId']) {
-	if (isDragging.value == false &&
-		(event.target as HTMLButtonElement).tagName == 'BUTTON') {
-
-		if (!store.activeToSpots.has(toId)) {
-			const toSpotItem = renderToSpots.value.get(toId)!
-
-			console.log(299);
-			const fromSpots: Spot[] = []
-			const durations: number[] = []
-			console.log(302);
-			toSpotItem?.lineupIds.forEach((lineupid, ix) => {
-				try {
-					const lineup = lineups.value.get(lineupid)!
-					fromSpots.push(spots.value.get(lineup.fromId)!)
-				}
-				catch (error) {
-					console.log('Probably problem is Bad/Damaged Lineup Data;');
-					console.log("Most probably Map key Id is not the same as Item's Id");
-					console.log('Error: ');
-					console.error(error)
-				}
-			})
-			fromSpots.forEach((fromSpot) => {
-				const length = Math.sqrt((fromSpot.coords.x - toSpotItem?.toSpot.coords.x) ** 2
-					+ (fromSpot.coords.y - toSpotItem?.toSpot.coords.y) ** 2)
-				const duration = 2.2 + length * 0.01
-				durations.push(duration)
-			})
-			const avgDuration =
-				(durations.reduce((acc, next) => acc + next, 0) / durations.length).toFixed(2)
-
-			store.activeToSpots.set(toId, {
-				toSpot: spots.value.get(toId)!,
-				hslColor: store.activeToSpots.size == 0 ? '52' : (Math.random() * 359).toFixed(0),
-				avgDuration: avgDuration,
-				lineupIds: renderToSpots.value.get(toId)!.lineupIds,
-			})
-		} else {
-			store.activeToSpots.delete(toId)
-		}
+const contentPanelState = reactive({
+	isToggled: false,
+	isMinimized: false,
+	isActive: computed(() => selectedLineups.value.length > 0),
+})
+const contentPanelHandlers = {
+	toggleContentPanel: () => {
+		contentPanelState.isToggled = !contentPanelState.isToggled
+	},
+	toggleContentMode: () => {
+		contentPanelState.isMinimized = !contentPanelState.isMinimized
+		window.localStorage.setItem('contentPanelState.isMinimized', JSON.stringify(contentPanelState.isMinimized))
 	}
 }
+onMounted(() => {
+	if (window.localStorage.getItem('contentPanelState.isMinimized') !== null) {
+		contentPanelState.isMinimized = JSON.parse(window.localStorage.getItem('contentPanelState.isMinimized')!)
+	}
+})
 
-/* RENDER TOSPOTS */
-/* Почему добавлять активные споты лучше в отдельный массив, а не помечать флажками,
-такими как isActive или isSelected внутри каждого?
-Потому что в таком случае придется искать среди всех toСпотов те у которых есть этот флажок.
-Например, если мы хотим отрисовать лайнапы только для активных toСпотов, то нам нужно сделать
-computed на основе всех toСпотов, т.е. при каждой активации спота будет совершен проход
-по всем toСпотам. Засунув активный спот в отдельный массив, для отрисовки нужных лайнапов
-мы итерируемся только по этому массиву. */
+
+
 
 /* TOSPOT ПОКАЗЫВАЕТСЯ, ЕСЛИ ПОДХОДИТ ПО ФИЛЬРАМ **ХОТЯ БЫ ОДИН** СВЯЗАННЫЙ С НИМИ ЛАЙНАП
 (А ЛАЙНАПОВ СВЯЗАННЫХ С НИМ - НЕСКОЛЬКО)
@@ -353,220 +313,826 @@ toSpotы.
 Поэтому сами лайнапы тоже необходимо фильтровать. Попробовать сделать это можно двумя способами:
 1) Отрисовать все лайнапы и включать только подходящие по фильтру с помощью v-if/v-show
 2) Добавлять в toSpot ...  */
-/* 3) Я ПОХОДУ КОНЧ. ВЕДЬ МНЕ ВООБЩЕ НЕ НУЖНА УСЛОВНАЯ ОТРИСОВКА ДЛЯ ЛАЙНАПОВ,
-т.к. лайнапы появляются, когда  */
-const renderToSpots = computed(() => {
-	/* В один спот может прилетать несколько разных лайнапов. Информацию о каждом
-	нужно хранить в этом споте для условной отрисовки на основе фильтров */
 
-	/* На 1 лайнап делать 1 спот - нельзя, т.к. споты будут наслаиваться на миникарте, если
-	у 2 и более лайнапов один и тот же toSpot. */
+/* VIEW-TOSPOTS2 */
+/* В один спот может прилетать несколько разных лайнапов. Информацию о каждом
+нужно хранить в этом споте для условной отрисовки на основе фильтров
 
-	/* По сути renderToSpots содержит в себе все возможные точки, куда летят гранаты.
-	В template нужно только показать нужные на основе фильтров  */
+На 1 лайнап делать 1 спот - нельзя, т.к. споты будут наслаиваться на миникарте, если
+у 2 и более лайнапов один и тот же toSpot.
 
-	/* Из renderToSpots я выбираю спот нажатием кнопки и делаю его активным
-	(помещаю в activeSpots) */
-	const res = new Map<Spot['spotId'], {
-		toSpot: Spot,
-		filter: {
-			nadeType: Set<NadeType>, side: Set<Side>, tickrate: Set<Tickrate>, difficulties: Set<Difficulty>,
-		},
-		lineupIds: Lineup['lineupId'][],
-	}>()
-	lineups.value.forEach((lineup) => {
-		if (!res.has(lineup.toId)) {
-			const toSpot = spots.value.get(lineup.toId)!
-			res.set(lineup.toId, {
-				toSpot: toSpot,
-				lineupIds: [lineup.lineupId],
-				filter: {
-					nadeType: new Set([lineup.nadeType]),
-					side: new Set([lineup.side]),
-					tickrate: new Set([lineup.tickrate]),
-					difficulties: new Set([lineup.difficulty]),
-					// onewaySmokeOption:[],
-					// fakeSmokeOption:[],
-					// bugSmokeOption:[],
-					// forWhom:[],
-					// onewayMolotovOption:[],
-					// fakeMolotovOption:[],
-					// bugMolotovOption:[],
-					// bugHeOption:[],
-				}
-			})
-		} else {
-			const toSpot = res.get(lineup.toId)!
-			toSpot.lineupIds.push(lineup.lineupId)
-			toSpot.filter.nadeType.add(lineup.nadeType)
-			toSpot.filter.side.add(lineup.side)
-			toSpot.filter.tickrate.add(lineup.tickrate)
-			toSpot.filter.difficulties.add(lineup.difficulty)
-			res.set(lineup.toId, toSpot)
-		}
-	})
-	return res
+По сути viewToSpots содержит в себе все возможные точки, куда летят гранаты.
+В template нужно только показать нужные на основе фильтров  */
+const viewToSpots = ref<Map<Spot['spotId'], ViewToSpot>>(new Map())
+/* VIEW-LINEUPS */
+const viewLineups = ref<Map<Lineup['lineupId'], LineupItem>>(new Map())
+/* VIEW-FROMSPOTS */
+/* Лайнапов к одному fromСпоту 
+		может быть несколько, когда включено несколько toСпотов
+	Или когда редкий эдж кейс, когда уже выбрана граната, такая как на мираже смок в окно
+		и к ней выбирается еще молотов с той же позиции также в окно. Кому это может пригодиться?
+		Мб кто-то будет расставлять экзеки на карте и кому-то понадобится такой функционал. */
+const viewFromSpots = ref<Map<Spot['spotId'], ViewFromSpot>>(new Map())
+/* activeToSpotsCounter используется только для вычисления hslColor, 
+а именно, чтобы первый toSpot всегда был желтый */
+const activeToSpotsCounter = ref(0)
+
+const viewItemsFactory = computed(() => {
+	return new ViewItemsFactory(currentRouteMapItems.value)
 })
-
-/* ACTIVE LINEUPS */
-const activeLineups = computed(() => {
-	const res: Set<Lineup> = new Set()
-	store.activeToSpots.forEach((activeToSpotItem, activeToSpotId) => {
-		activeToSpotItem.lineupIds.forEach((lineupId) => {
-			console.log(lineupId);
-			const activeLineup = lineups.value.get(lineupId)!
-			if (!selectedLineups.value.has(activeLineup)) {
-				/*  */
-				res.add(activeLineup)
-			}
-		})
-	})
-	return res
-})
-/* SELECTED LINEUPS */
 const selectedLineups = computed(() => {
-	const res: Set<Lineup> = new Set()
-	store.selectedToSpots.forEach((selectedToSpotItem, selectedToSpotId) => {
-		selectedToSpotItem.lineupIds.forEach((lineupId) => {
-			console.log(lineupId);
-			const selectedLineup = lineups.value.get(lineupId)!
-			/*  */
-			res.add(selectedLineup)
-		})
-	})
-	return res
+	return [...viewLineups.value]
+		.filter(lineup => lineup[1].isSelected)
+		.map(lineup => lineup[1].lineup)
 })
 
-/* ACTIVE FROM SPOTS */
-const activeFromSpots = computed(() => {
-	/* Сохраняет id лайнапов в Set */
-	const res = new Map<Spot['spotId'], {
-		fromSpot: Spot,
-		lineupIds: Set<Lineup['lineupId']>, /* Лайнапов к одному fromСпоту 
-		может быть несколько, когда включено несколько toСпотов */
-		filter: {
-			nadeType: Set<NadeType>, side: Set<Side>, tickrate: Set<Tickrate>, difficulties: Set<Difficulty>,
-		},
-	}>()
-	activeLineups.value.forEach((activeLineup) => {
-		if (!res.has(activeLineup.fromId)) {
-			const newFromSpot = spots.value.get(activeLineup.fromId)!
-			res.set(activeLineup.fromId, {
-				fromSpot: newFromSpot,
-				lineupIds: new Set([activeLineup.lineupId]),
-				filter: {
-					nadeType: new Set([activeLineup.nadeType]),
-					side: new Set([activeLineup.side]),
-					tickrate: new Set([activeLineup.tickrate]),
-					difficulties: new Set([activeLineup.difficulty]),
-				}
-			})
-		} else {
-			const existingFromSpot = res.get(activeLineup.fromId)!
-			existingFromSpot.lineupIds.add(activeLineup.lineupId)
-			existingFromSpot.filter.nadeType.add(activeLineup.nadeType)
-			existingFromSpot.filter.side.add(activeLineup.side)
-			existingFromSpot.filter.tickrate.add(activeLineup.tickrate)
-			existingFromSpot.filter.difficulties.add(activeLineup.difficulty)
-			res.set(activeLineup.fromId, existingFromSpot)
-		}
-	})
-	return res
-})
-
-function onFromSpotSelect(activeFromSpotId: string) {
-	const activeFromSpot = activeFromSpots.value.get(activeFromSpotId)!
-	/* Если из этого спота летит несколько лайнапов, то нужно
-	выбрать один конкретный */
-	if (activeFromSpot?.lineupIds.size == 1) {
-		const lineupId = activeFromSpot.lineupIds.values().next().value
-		activeLineups.value.forEach((activeLineup) => {
-			if (activeLineup.lineupId === lineupId) {
-				const activeToSpot = store.activeToSpots.get(activeLineup.toId)!
-				store.selectedToSpots.set(activeToSpot?.toSpot.spotId, activeToSpot)
-				store.activeToSpots.delete(activeToSpot?.toSpot.spotId)
-			}
-		})
+watch(selectedLineups, (newVal, oldVal) => {
+	if (newVal.length > oldVal.length) {
+		contentPanelState.isToggled = true
 	}
+	if (newVal.length === 0) {
+		contentPanelState.isToggled = false
+	}
+})
 
-	if (activeFromSpot?.lineupIds.size > 1) {
-		console.log("> 1");
+
+/* Эта функция очищает viewToSpots, viewLineups и viewFromSpots
+И на основе lineups и spots заполняет значениями viewToSpots.
+P.S. viewLineups и viewFromSpots создаются в обработчике клика. */
+function populateRefsWithData() {
+	viewToSpots.value.clear()
+	viewLineups.value.clear()
+	viewFromSpots.value.clear()
+	/* Сборка viewToSpots */
+	viewToSpots.value = viewItemsFactory.value.generateViewToSpots()
+	console.log('refs Populated');
+}
+populateRefsWithData()
+// /* При смене маршрута, меняются computed lineups и spots. */
+watch(currentRouteMapItems, (nv) => {
+	populateRefsWithData()
+})
+
+watch(viewLineups, () => {
+	console.log('viewLineups watcher:');
+	console.log(viewLineups.value);
+})
+
+
+/* onClick TOSPOT */
+function clickToSpot(event: Event, clickedToSpot: ViewToSpot) {
+	if (isDragging.value == false &&
+		(event.target as HTMLButtonElement).tagName == 'BUTTON') {
+		if (!clickedToSpot.isActive && !clickedToSpot.isSelected) {
+			methods_toSpot.activeOnClick(clickedToSpot)
+
+			return
+		}
+		if (clickedToSpot.isActive && !clickedToSpot.isSelected) {
+			methods_toSpot.deactivateOnClick(clickedToSpot)
+			return
+		}
+		if (!clickedToSpot.isActive && clickedToSpot.isSelected) {
+			//mb form
+			return
+		}
+		if (clickedToSpot.isActive && clickedToSpot.isSelected) {
+			//mb form
+			return
+		}
 	}
 }
+
+function clickFromSpot(event: Event, fromSpot: ViewFromSpot) {
+	const intersection = fromSpot.activeLineupIds.size + fromSpot.selectedLineupIds.size
+	if (intersection === 1) {
+		if (fromSpot.isActive) {
+			const activeLineupId = [...fromSpot.activeLineupIds][0]
+			const lineup = viewLineups.value.get(activeLineupId)!
+			methods_fromSpot.select(fromSpot, lineup)
+			return
+		}
+		if (fromSpot.isSelected) {
+			const selectedLineupId = [...fromSpot.selectedLineupIds][0]
+			const lineup = viewLineups.value.get(selectedLineupId)!
+			methods_fromSpot.deselect(fromSpot, lineup)
+			return
+		}
+	}
+	if (intersection > 1) {
+		selectFromSpotFormContext.value.open(fromSpot)
+	}
+
+}
+
+const methods_toSpot = {
+	activeOnClick(toSpot: ViewToSpot) {
+		activeToSpotsCounter.value++
+		{ // Логика для вычисления средней длительности(анимации)
+			const toSpots: Spot[] = []
+			const durations: number[] = []
+			toSpot.lineupIds.forEach(lineupId => {
+				try {
+					const lineup = viewItemsFactory.value.lineups.get(lineupId)!
+					toSpots.push(spots.value.get(lineup.fromId)!)
+				}
+				catch (error) {
+					console.log("Probably problem is Bad/Damaged Lineup Data. Most probably Map key Id is not the same as Item's Id");
+					console.log('Error: ');
+					console.error(error)
+				}
+			})
+			toSpots.forEach((fromSpot) => {
+				const length = Math.sqrt((fromSpot.coords.x - toSpot.toSpot.coords.x) ** 2
+					+ (fromSpot.coords.y - toSpot.toSpot.coords.y) ** 2)
+				const duration = 2.2 + length * 0.01
+				durations.push(duration)
+			})
+			const avgDuration =
+				(durations.reduce((acc, next) => acc + next, 0) / durations.length).toFixed(2)
+			// присваивание результата
+			toSpot.avgDuration = avgDuration
+		}
+		toSpot.hslColor = activeToSpotsCounter.value > 1 ? (Math.random() * 359).toFixed(0) : '52'
+		toSpot.isActive = true
+		methods_toSpot.toActiveDeps(toSpot)
+	},
+	toActiveDeps(toSpot: ViewToSpot) {
+		// toActive только те, которые не selected и также не active.
+		const lineupIds = toSpot.getNonSelectedLineupIds().filter(lineupId => !toSpot.activeLineupIds.has(lineupId))
+
+		lineupIds.forEach(lineupId => {
+			const viewLineup = viewItemsFactory.value.createViewLineup(lineupId)
+			viewLineups.value.set(lineupId, viewLineup)
+			toSpot.activeLineupIds.add(lineupId)
+			toSpot.activeFromSpotIds.push(viewLineup.lineup.fromId)
+			methods_fromSpot.activate(viewLineup)
+		})
+	},
+	select(lineup: LineupItem) {
+		const toSpot = viewToSpots.value.get(lineup.lineup.toId)!
+		toSpot.isSelected = true
+		toSpot.isActive = false
+		const ix1 = toSpot.activeFromSpotIds.findIndex(entry => entry == lineup.lineup.fromId)
+		toSpot.activeFromSpotIds.splice(ix1, 1)
+		toSpot.activeLineupIds.delete(lineup.lineup.lineupId)
+		toSpot.selectedFromSpotIds.push(lineup.lineup.fromId)
+		toSpot.selectedLineupIds.add(lineup.lineup.lineupId)
+
+		toSpot.activeLineupIds.forEach(lineupId => {
+			const lineup = viewLineups.value.get(lineupId)!
+			const fromSpot = viewFromSpots.value.get(lineup.lineup.fromId)!
+			const intersection = fromSpot.activeLineupIds.size + fromSpot.selectedLineupIds.size
+			if (intersection > 1) { //активирован/выбран не только удаляемым лайнапом
+				const ix1 = fromSpot.activatedByToSpotIds.findIndex(entry => entry == lineup.lineup.toId)
+				fromSpot.activatedByToSpotIds.splice(ix1, 1)
+				fromSpot.activeLineupIds.delete(lineupId)
+				fromSpot.filter.nadeType[lineup.lineup.nadeType]--
+				fromSpot.filter.side[lineup.lineup.side]--
+				fromSpot.filter.tickrate[lineup.lineup.tickrate]--
+				fromSpot.filter.difficulties[lineup.lineup.difficulty]--
+				fromSpot.lineupIds = fromSpot.lineupIds.filter(lineupIdFltr => lineupId != lineupIdFltr)
+				console.log(493);
+				if (fromSpot.activeLineupIds.size < 1) {
+					fromSpot.isActive = false
+					console.log(496);
+				}
+			} else { //связан только с удаляемым лайнапом => удаляем
+				viewFromSpots.value.delete(lineup.lineup.fromId)
+			}
+			viewLineups.value.delete(lineupId)
+			const ix1 = toSpot.activeFromSpotIds.findIndex(entry => entry == lineup.lineup.fromId)
+			toSpot.activeFromSpotIds.splice(ix1, 1)
+			toSpot.activeLineupIds.delete(lineupId)
+		})
+	},
+
+	deactivateOnClick(toSpot: ViewToSpot) {
+		activeToSpotsCounter.value--
+		toSpot.isActive = false
+		methods_toSpot.toInactiveDeps(toSpot)
+	},
+	toInactiveDeps(toSpot: ViewToSpot) {
+		toSpot.activeLineupIds.forEach(lineupId => {
+			const viewLineup = viewLineups.value.get(lineupId)!
+			const ix1 = toSpot.activeFromSpotIds.findIndex(entry => entry == viewLineup.lineup.fromId)
+			toSpot.activeFromSpotIds.splice(ix1, 1)
+			toSpot.activeLineupIds.delete(lineupId)
+			methods_fromSpot.deactivate(viewLineup)
+			viewLineups.value.delete(lineupId)
+		})
+	},
+}
+const methods_lineup = {
+
+}
+const methods_fromSpot = {
+	select(fromSpot: ViewFromSpot, lineup: LineupItem) {
+		fromSpot.isSelected = true
+		fromSpot.activeLineupIds.delete(lineup.lineup.lineupId)
+		fromSpot.selectedLineupIds.add(lineup.lineup.lineupId)
+		const ix1 = fromSpot.activatedByToSpotIds.findIndex(entry => entry == lineup.lineup.toId)
+		fromSpot.activatedByToSpotIds.splice(ix1, 1)
+		fromSpot.selectedByToSpotIds.push(lineup.lineup.toId)
+		if (fromSpot.activeLineupIds.size < 1) {
+			fromSpot.isActive = false
+		}
+		methods_fromSpot.toSelectedDeps(lineup)
+	},
+	toSelectedDeps(lineup: LineupItem) {
+		lineup.isSelected = true
+		lineup.isActive = false
+		methods_toSpot.select(lineup)
+	},
+	deselect(fromSpot: ViewFromSpot, lineup: LineupItem) {
+		const intersection = fromSpot.activeLineupIds.size + fromSpot.selectedLineupIds.size
+		if (intersection < 2) {
+			viewFromSpots.value.delete(fromSpot.fromSpot.spotId)
+			viewLineups.value.delete(lineup.lineup.lineupId)
+			const toSpot = viewToSpots.value.get(lineup.lineup.toId)!
+			const ix1 = toSpot.selectedFromSpotIds.findIndex(entry => entry == fromSpot.fromSpot.spotId)
+			toSpot.selectedFromSpotIds.splice(ix1, 1)
+			toSpot.selectedLineupIds.delete(lineup.lineup.lineupId)
+			if (toSpot.selectedLineupIds.size < 1) {
+				toSpot.isSelected = false
+			}
+			toSpot.isActive = true
+			methods_toSpot.toActiveDeps(toSpot)
+		} else {
+			// if (fromSpot.selectedLineupIds.size < 2) {
+			// fromSpot.isSelected = false
+			const ix1 = fromSpot.selectedByToSpotIds.findIndex(entry => entry == lineup.lineup.toId)
+			fromSpot.selectedByToSpotIds.splice(ix1, 1)
+			fromSpot.selectedLineupIds.delete(lineup.lineup.lineupId)
+			fromSpot.lineupIds = fromSpot.lineupIds.filter(lId => lId != lineup.lineup.lineupId)
+			fromSpot.filter.nadeType[lineup.lineup.nadeType]--
+			fromSpot.filter.side[lineup.lineup.side]--
+			fromSpot.filter.tickrate[lineup.lineup.tickrate]--
+			fromSpot.filter.difficulties[lineup.lineup.difficulty]--
+			const toSpot = viewToSpots.value.get(lineup.lineup.toId)!
+			const ix1_toSpot = toSpot.selectedFromSpotIds.findIndex(entry => entry == fromSpot.fromSpot.spotId)
+			toSpot.selectedFromSpotIds.splice(ix1_toSpot, 1)
+			toSpot.selectedLineupIds.delete(lineup.lineup.lineupId)
+			if (toSpot.selectedLineupIds.size < 1) {
+				toSpot.isSelected = false
+			}
+			toSpot.isActive = true
+			methods_toSpot.toActiveDeps(toSpot)
+			// } else {}
+		}
+	},
+
+	activate(lineup: LineupItem) {
+		const toId = lineup.lineup.toId
+		const toSpot = viewToSpots.value.get(toId)!
+		const fromId = lineup.lineup.fromId
+		const fromSpotExists = viewFromSpots.value.has(fromId)
+		if (!fromSpotExists) { // если не существует - создать
+			const fromSpot = viewItemsFactory.value.createActiveViewFromSpot(lineup.lineup.lineupId)
+			viewFromSpots.value.set(fromId, fromSpot)
+		} else {
+			//fromSpot может быть создан другим toSpotом или этим же, но через другой лайнап
+			const existingFromSpot = viewFromSpots.value.get(fromId)!
+			existingFromSpot.activatedByToSpotIds.push(lineup.lineup.toId)
+			existingFromSpot.activeLineupIds.add(lineup.lineup.lineupId)
+			existingFromSpot.lineupIds.push(lineup.lineup.lineupId)
+			existingFromSpot.filter.nadeType[lineup.lineup.nadeType]++
+			existingFromSpot.filter.side[lineup.lineup.side]++
+			existingFromSpot.filter.tickrate[lineup.lineup.tickrate]++
+			existingFromSpot.filter.difficulties[lineup.lineup.difficulty]++
+			existingFromSpot.isActive = true
+			viewFromSpots.value.set(fromId, existingFromSpot)
+		}
+	},
+	deactivate(lineup: LineupItem) {//delete if not selected/activated by any other toSpot
+		/* не уверен на 100% в этой функции, т.к. скопировал ее код из прототипа другой.
+		Т.е. она не "opinionated"  */
+		const lineupId = lineup.lineup.lineupId
+		const fromSpot = viewFromSpots.value.get(lineup.lineup.fromId)!
+		const intersection = fromSpot.activeLineupIds.size + fromSpot.selectedLineupIds.size
+		if (intersection > 1) { //активирован/выбран не только удаляемым лайнапом
+			const ix1 = fromSpot.activatedByToSpotIds.findIndex(entry => entry == lineup.lineup.toId)
+			fromSpot.activatedByToSpotIds.splice(ix1, 1)
+			fromSpot.activeLineupIds.delete(lineupId)
+			fromSpot.filter.nadeType[lineup.lineup.nadeType]--
+			fromSpot.filter.side[lineup.lineup.side]--
+			fromSpot.filter.tickrate[lineup.lineup.tickrate]--
+			fromSpot.filter.difficulties[lineup.lineup.difficulty]--
+			fromSpot.lineupIds = fromSpot.lineupIds.filter(lineupIdFltr => lineupId != lineupIdFltr)
+			if (fromSpot.activeLineupIds.size < 1) {
+				fromSpot.isActive = false
+			}
+		} else { //связан только с удаляемым лайнапом => удаляем
+			viewFromSpots.value.delete(lineup.lineup.fromId)
+		}
+	},
+}
+
+/* onClick FROMSPOT */
+function clickFromSpot2(event: Event, fromId: string) {
+	/* КОД В ЭТОМ ОБРАБОТЧИКЕ ПОВТОРЯЕТСЯ В РАЗНЫХ УСЛОВИЯХ(If'ах). ЭТО СДЕЛАНО ДЛЯ 
+	ЯВНОСТИ, Т.К. ПО СУТИ В КАЖДОМ УСЛОВИИ ПРОИСХОДИТ ПЕРЕХОД МЕЖДУ СОСТОЯНИЯМИ.
+	ПОВТОРЫ ПОМОГАЮТ ЯВНО ПРОСЛЕДИТЬ ЧТО ЭТО ЗА СОСТОЯНИЯ И ЧТО ЗА ПЕРЕХОДЫ */
+	const clickedFromSpot = viewFromSpots.value.get(fromId)!
+	const lineupIds = Array.from(clickedFromSpot.lineupIds)
+	const lineups = []
+	/* Цикл для заполнения lineups */
+	for (const lineupId of lineupIds) {
+		const lineup = viewLineups.value.get(lineupId)!
+		lineups.push(lineup)
+	}
+	{/* Обработчик самой ебанутой EDGE ситуации, когда есть разные лайнапы, которые
+	кидаются из одного и того же fromSpot'а в один и тот же toSpot. Например,
+	На топ миде из-за ящиков в окно из одной позиции одинаково кидаются
+	и молик и смок и хае.
+	По хорошому, по семантике лайнапа, такая информация должна содержаться в
+	самом лайнапе и не должна создавать разные лайнапы для разных параметров, но
+	...................... короче причины есть... (типа почти в каждом лайнапе
+	будет храниться массив с одним элементом, т.к таких случаев с бросками с разными
+	параметрами из одной и той же в одну и ту же точку крайне мало)
+	---------
+	ХОТЯ) В ином случае будет храниться лайнап с абсолютно одинаковыми всеми другими
+	параметрами и только одним-парой отличающимися. Короче выбор - либо 
+	занимать гораздо больше оперативы пользователя(если заменить параметр
+	на массив с параметром), либо использовать чуть больше IO(если сделать
+	лайнапы с повторяющимися данными).
+	---------
+	Я сейчас еще раз подумал, что ...про comboids крч мысль, лень писать... */}
+	/* 1. Один связанный с fromSpot лайнап */
+	if (lineups.length === 1) {
+		const lineup = lineups[0]
+		const toSpot = viewToSpots.value.get(lineup.lineup.toId)!
+		/* 1.1 FromSpot активен  */
+		if (clickedFromSpot.isActive && !clickedFromSpot.isSelected) {
+			/* 1.1.1 Если у *toSpot* больше нет связанных лайнапов */
+			if (toSpot.lineupIds.length === 1) {
+				clickedFromSpot.isSelected = true
+				clickedFromSpot.isActive = false
+				lineup.isSelected = true
+				lineup.isActive = false
+				toSpot.isSelected = true
+				toSpot.isActive = false
+				viewFromSpots.value.set(clickedFromSpot.fromSpot.spotId, clickedFromSpot)
+				viewLineups.value.set(lineup.lineup.lineupId, lineup)
+				viewToSpots.value.set(toSpot.toSpot.spotId, toSpot)
+				return
+			}
+			/* 1.1.2 Если у toSpot есть еще связанные лайнапы. */
+			if (toSpot.lineupIds.length > 1) {
+				/* Получаем список id остальных связанных лайнапов */
+				const restLineupIds = toSpot.lineupIds.filter((lineupId) => {
+					return lineupId != lineup.lineup.lineupId
+				}).filter(lineupId => {
+					return viewLineups.value.has(lineupId)
+				})
+				console.log(529);
+				for (const restLineupId in restLineupIds) {
+					/* На каждой итерации получаем остальные лайнапы */
+					const restLineup = viewLineups.value.get(restLineupId)!
+					console.log(533, restLineup);
+					if (restLineup.isSelected) {
+						break
+					}
+					if (restLineup.isActive) {
+						viewLineups.value.delete(restLineup.lineup.lineupId)
+					}
+					/* Получаем fromSpot'ы, связанные с этими лайнапами */
+					const restFromSpot = viewFromSpots.value.get(restLineup.lineup.fromId)!
+					/* И теперь мы либо
+					1)Удаляем этот fromSpot и лайнап, если они активированы только нашим toSpot'ом
+					2)Удаляем только лайнап, НО не трогаем fromSpot, если это fromSpot активировал другой toSpot */
+					// Получаем id всех лайнапов, связанных с тем fromSpot'ом.
+					const restFromSpot_allLineupIds = restFromSpot.lineupIds.filter(fromSpotLineupId => {
+						return fromSpotLineupId != restLineup.lineup.lineupId
+					})
+					/* Узнаем, активен/выбран ли хоть один из этих лайнап ов.
+					Иными словами, содержится ли хоть один из них в viewLineups. */
+					const anotherLineupMakesThisFromSpotActive = restFromSpot_allLineupIds.some(restFromSpotLineupId => {
+						const restFromSpotLineup = viewLineups.value.get(restFromSpotLineupId)
+						return restFromSpotLineup?.isActive ? true : false
+					})
+					if (anotherLineupMakesThisFromSpotActive) {
+						viewLineups.value.delete(restLineupId)
+					} else {
+
+					}
+				}
+				clickedFromSpot.isSelected = true
+				clickedFromSpot.isActive = false
+				lineup.isSelected = true
+				lineup.isActive = false
+				toSpot.isSelected = true
+				toSpot.isActive = false
+				viewFromSpots.value.set(clickedFromSpot.fromSpot.spotId, clickedFromSpot)
+				viewLineups.value.set(lineup.lineup.lineupId, lineup)
+				viewToSpots.value.set(toSpot.toSpot.spotId, toSpot)
+				return
+			}
+		}
+		/* 1.2 FromSpot выбран */
+		if (!clickedFromSpot.isActive && clickedFromSpot.isSelected) {
+			/* 1.2.1 Если у *toSpot* больше нет связанных лайнапов  */
+			if (toSpot.lineupIds.length === 1) {
+				clickedFromSpot.isActive = true
+				clickedFromSpot.isSelected = false
+				lineup.isActive = true
+				lineup.isSelected = false
+				toSpot.isActive = true
+				toSpot.isSelected = false
+				viewFromSpots.value.set(clickedFromSpot.fromSpot.spotId, clickedFromSpot)
+				viewLineups.value.set(lineup.lineup.lineupId, lineup)
+				viewToSpots.value.set(toSpot.toSpot.spotId, toSpot)
+				return
+			}
+			/* 1.2.2 Если у toSpot есть еще связанные лайнапы*/
+			if (toSpot.lineupIds.length > 1) {
+				/* Далее логика для проверки, есть ли среди этих лайнапов selected 
+				и если есть, то блок с !anotherFromSpotIsSelected просто не выполнится, 
+				т.е. toSpot не сделается active, а так и останется selected */
+				const toSpotLineups: {
+					lineup: Lineup;
+					isActive: boolean;
+					isSelected: boolean;
+				}[] = []
+				toSpot.lineupIds.forEach((lineupId) => {
+					const lineup = viewLineups.value.get(lineupId)!
+					toSpotLineups.push(lineup)
+				})
+				const toSpotLineups_withoutCurrent = toSpotLineups.filter((val, ix) => {
+					/* НЕЯВНАЯ ЛОГИКА. почему я хочу сравнить не lineupid, а fromid.
+					Для обработки самого рарного эдж кейса, когда из одного и того же fromSpot в один и 
+					тот же toSpot летят несколько разных лайнапов. Опять же пример с броском
+					молотова/смока в окно на мираже из-за ящиков.
+					Просто если я сравню */
+					return val.lineup.fromId != fromId
+				})
+				const anotherFromSpotIsSelected = toSpotLineups_withoutCurrent.some((value) => {
+					return value.isSelected === true
+				})
+				clickedFromSpot.isActive = true
+				clickedFromSpot.isSelected = false
+				lineup.isActive = true
+				lineup.isSelected = false
+				viewFromSpots.value.set(clickedFromSpot.fromSpot.spotId, clickedFromSpot)
+				viewLineups.value.set(lineup.lineup.lineupId, lineup)
+				/* Если у toSpot'а больше нет selected лайнапов, кроме кликнутого */
+				if (!anotherFromSpotIsSelected) {
+					toSpot.isActive = true
+					toSpot.isSelected = false
+					viewToSpots.value.set(toSpot.toSpot.spotId, toSpot)
+				}
+				return
+			}
+		}
+	}
+	/* 2. Несколько связанных с fromSpot лайнапов */
+	/* Нужно предложить выбрать через форму в какую именно точку нужен лайнап */
+	if (lineups.length > 1) {
+
+	}
+}
+
+function activateToSpot(viewToSpot: ViewToSpot) {
+	if (!viewToSpot.isSelected) {
+		activeToSpotsCounter.value++
+	}
+	{ // Логика для вычисления средней длительности(анимации)
+		const toSpots: Spot[] = []
+		const durations: number[] = []
+		viewToSpot.lineupIds.forEach(lineupId => {
+			try {
+				const lineup = viewItemsFactory.value.lineups.get(lineupId)!
+				toSpots.push(spots.value.get(lineup.fromId)!)
+			}
+			catch (error) {
+				console.log("Probably problem is Bad/Damaged Lineup Data. Most probably Map key Id is not the same as Item's Id");
+				console.log('Error: ');
+				console.error(error)
+			}
+		})
+		toSpots.forEach((fromSpot) => {
+			const length = Math.sqrt((fromSpot.coords.x - viewToSpot.toSpot.coords.x) ** 2
+				+ (fromSpot.coords.y - viewToSpot.toSpot.coords.y) ** 2)
+			const duration = 2.2 + length * 0.01
+			durations.push(duration)
+		})
+		const avgDuration =
+			(durations.reduce((acc, next) => acc + next, 0) / durations.length).toFixed(2)
+		// присваивание результата
+		viewToSpot.avgDuration = avgDuration
+	}
+	viewToSpot.hslColor = activeToSpotsCounter.value > 1 ? (Math.random() * 359).toFixed(0) : '52'
+	viewToSpot.isActive = true
+	viewToSpots.value.set(viewToSpot.toSpot.spotId, viewToSpot)
+	activateToSpotLineups(viewToSpot.toSpot.spotId)
+	activateToSpotFromSpots(viewToSpot.toSpot.spotId)
+}
+function activateToSpotLineups(toId: string) {
+	const toSpot = viewToSpots.value.get(toId)!
+	toSpot.lineupIds.forEach(lineupId => {
+		const lineup = viewItemsFactory.value.createViewLineup(lineupId)
+		if (!lineup.isSelected) {
+			lineup.isActive = true
+			viewLineups.value.set(lineupId, lineup)
+			toSpot.activeLineupIds.add(lineupId)
+			viewToSpots.value.set(lineup.lineup.toId, toSpot)
+		}
+	})
+}
+function activateToSpotFromSpots(toId: string) {
+	const toSpot = viewToSpots.value.get(toId)!
+	toSpot.lineupIds.forEach(lineupId => {
+		const lineup = viewItemsFactory.value.lineups.get(lineupId)!
+		/* Если такого fromSpotа нет, то создать его */
+		if (!viewFromSpots.value.has(lineup.fromId)) {
+			const fromSpot = viewItemsFactory.value.createActiveViewFromSpot(lineupId)
+			viewFromSpots.value.set(lineup.fromId, fromSpot)
+			toSpot.activeFromSpotIds.add(lineup.fromId)
+			/* Если есть, то добавить в него информацию из соответствующего лайнапа.
+			P.S. Если fromSpot selected он все-равно может быть active.
+			P.P.S. Он не может стать active, если его активирует toSpot через тот же lineup, через который и сделал его selected */
+		} else {
+			const existingFromSpot = viewFromSpots.value.get(lineup.fromId)!
+			if (!existingFromSpot.selectedLineupIds.has(lineup.toId)) {
+
+				existingFromSpot.activatedByToSpotIds.add(toId)
+				existingFromSpot.activeLineupIds.add(lineupId)
+
+				existingFromSpot.lineupIds.push(lineupId)
+				existingFromSpot.filter.nadeType[lineup.nadeType]++
+				existingFromSpot.filter.side[lineup.side]++
+				existingFromSpot.filter.tickrate[lineup.tickrate]++
+				existingFromSpot.filter.difficulties[lineup.difficulty]++
+				existingFromSpot.isActive = true
+				viewFromSpots.value.set(lineup.fromId, existingFromSpot)
+				toSpot.activeFromSpotIds.add(lineup.fromId)
+			}
+		}
+		viewToSpots.value.set(lineup.toId, toSpot)
+	})
+}
+
+function deactivateToSpot(viewToSpot: ViewToSpot) {
+	if (!viewToSpot.isSelected) {
+		activeToSpotsCounter.value--
+	}
+	deactivateToSpotFromSpots(viewToSpot.toSpot.spotId) /* 1 */
+	deactivateToSpotLineups(viewToSpot.toSpot.spotId) /* 2 */
+	viewToSpot.isActive = false
+	viewToSpots.value.set(viewToSpot.toSpot.spotId, viewToSpot)
+}
+function deactivateToSpotLineups(toId: string) {
+	const toSpot = viewToSpots.value.get(toId)!
+	toSpot.activeLineupIds.forEach(lineupId => {
+		viewLineups.value.delete(lineupId)
+		toSpot.activeLineupIds.delete(lineupId)
+	})
+	viewToSpots.value.set(toId, toSpot)
+}
+function deactivateToSpotFromSpots(toId: string) {
+	const toSpot = viewToSpots.value.get(toId)!
+
+	toSpot.activeLineupIds.forEach(activeLineupId => {
+
+		const activeLineup = viewLineups.value.get(activeLineupId)!
+		const activeFromSpot = viewFromSpots.value.get(activeLineup.lineup.fromId)!
+		console.log('430, activeFromSpot: ', activeFromSpot.fromSpot.name, activeFromSpot);
+		/* fromSpot может быть просто active, но также может быть и selected */
+		if (activeFromSpot.isSelected) { /* Если селектед(он Active в любом случае) */
+			console.log(433);
+			activeFromSpot.activatedByToSpotIds.delete(toId)
+			activeFromSpot.activeLineupIds.delete(activeLineupId)
+			activeFromSpot.lineupIds = activeFromSpot.lineupIds.filter(lineupId => lineupId != activeLineupId)
+			activeFromSpot.filter.nadeType[activeLineup.lineup.nadeType]--
+			activeFromSpot.filter.side[activeLineup.lineup.side]--
+			activeFromSpot.filter.tickrate[activeLineup.lineup.tickrate]--
+			activeFromSpot.filter.difficulties[activeLineup.lineup.difficulty]--
+			/* Если активных toSpots больше двух, то не деактивируем */
+			if (activeFromSpot.activeLineupIds.size < 2) {
+				console.log(443);
+				activeFromSpot.isActive = false
+			}
+			viewFromSpots.value.set(activeLineup.lineup.fromId, activeFromSpot)
+
+			toSpot.activeFromSpotIds.delete(activeLineup.lineup.fromId)
+			viewToSpots.value.set(toId, toSpot)
+			return
+		}
+		/* Если fromSpot только active */
+		if (!activeFromSpot.isSelected) {
+			console.log(454);
+			/* Если активирующий toSpot только один(=> это текущий), то тупа удаляем fromSpot */
+			if (activeFromSpot.activeLineupIds.size < 2) {
+				console.log(457);
+				viewFromSpots.value.delete(activeLineup.lineup.fromId)
+				toSpot.activeFromSpotIds.delete(activeLineup.lineup.fromId)
+				viewToSpots.value.set(toId, toSpot)
+				return
+				/* Если активирующих toSpotов несколько, то только удаляем информацию о соответствующем */
+			} else {
+				console.log(464);
+				activeFromSpot.activatedByToSpotIds.delete(toId)
+				activeFromSpot.activeLineupIds.delete(activeLineupId)
+				activeFromSpot.lineupIds = activeFromSpot.lineupIds.filter(lineupId => lineupId != activeLineupId)
+				activeFromSpot.filter.nadeType[activeLineup.lineup.nadeType]--
+				activeFromSpot.filter.side[activeLineup.lineup.side]--
+				activeFromSpot.filter.tickrate[activeLineup.lineup.tickrate]--
+				activeFromSpot.filter.difficulties[activeLineup.lineup.difficulty]--
+				viewFromSpots.value.set(activeLineup.lineup.fromId, activeFromSpot)
+				toSpot.activeFromSpotIds.delete(activeLineup.lineup.fromId)
+				viewToSpots.value.set(toId, toSpot)
+				return
+			}
+
+		}
+	})
+}
+
+function selectFromSpotLineup(lineupId: string) {
+	const lineup = viewLineups.value.get(lineupId)!
+	lineup.isSelected = true
+	lineup.isActive = false
+
+	const fromSpot = viewFromSpots.value.get(lineup.lineup.fromId)!
+	fromSpot.activeLineupIds.delete(lineupId)
+	fromSpot.selectedLineupIds.add(lineupId)
+
+	const toSpot = viewToSpots.value.get(lineup.lineup.toId)!
+	toSpot.activeLineupIds.delete(lineupId)
+	toSpot.selectedLineupIds.add(lineupId)
+
+
+	viewLineups.value.set(lineupId, lineup)
+	viewFromSpots.value.set(fromSpot.fromSpot.spotId, fromSpot)
+	viewToSpots.value.set(toSpot.toSpot.spotId, toSpot)
+
+	// toSpot.activeLineupIds.forEach(alineupId => viewLineups.value.delete(alineupId))
+	// toSpot.activeFromSpotIds.forEach(afromId => {
+	// 	viewFrom
+	// })
+}
+function selectFromSpotToSpot(lineupId: string) {
+	const lineup = viewLineups.value.get(lineupId)!
+	const toSpot = viewToSpots.value.get(lineup.lineup.toId)!
+	const fromSpot = viewFromSpots.value.get(lineup.lineup.fromId)!
+	toSpot.isActive = false
+	toSpot.isSelected = true
+	toSpot.activeFromSpotIds.delete(lineup.lineup.fromId)
+	toSpot.selectedFromSpotIds.add(lineup.lineup.fromId)
+	fromSpot.activatedByToSpotIds.delete(lineup.lineup.toId)
+	fromSpot.selectedByToSpotIds.add(lineup.lineup.toId)
+	deactivateToSpotFromSpots(toSpot.toSpot.spotId)
+	deactivateToSpotLineups(toSpot.toSpot.spotId)
+}
+function selectFromSpot(fromSpot: ViewFromSpot) { // fromSpot - isActive:true
+	// if (selectFromSpotFormContext.value.clickedFromSpot) {
+	// 	selectFromSpotFormContext.value.clickedFromSpot
+	// 		return
+	// }
+	const intersection = fromSpot.selectedLineupIds.size + fromSpot.activeLineupIds.size
+	if (intersection === 1) { //only 1 active
+		const lineupId = [...fromSpot.activeLineupIds][0]
+		fromSpot.isSelected = true
+		fromSpot.isActive = false
+		viewFromSpots.value.set(fromSpot.fromSpot.spotId, fromSpot)
+		selectFromSpotLineup(lineupId)
+		selectFromSpotToSpot(lineupId)
+		return
+	}
+	if (intersection > 1) {
+		selectFromSpotFormContext.value.open(fromSpot)
+
+		return
+	}
+
+	/* if (!fromSpot.isSelected) {
+		if (fromSpot.activeLineupIds.size === 1) {
+			
+		}
+		if (fromSpot.activeLineupIds.size > 1) {
+			selectFromSpotFormContext.value!.clickedFromSpot = fromSpot
+			//////////////////////////////////
+			return
+		}
+	}
+
+	if (fromSpot.isSelected) {
+		selectFromSpotFormContext.value!.clickedFromSpot = fromSpot
+		///////////////////////////////////
+		if (fromSpot.activeLineupIds.size)
+		if (fromSpot.activeLineupIds.size > 1) {
+			selectFromSpotFormContext.value!.clickedFromSpot = fromSpot
+			//////////////////////////////////
+			return
+		}
+
+		return
+	} */
+}
+
+function formSelectFromSpot(lineupId: string) {
+	const lineup = viewLineups.value.get(lineupId)!
+	const fromSpot = viewFromSpots.value.get(lineup.lineup.fromId)!
+	// fromSpot.isActive = false
+	fromSpot.isSelected = true
+	viewFromSpots.value.set(fromSpot.fromSpot.spotId, fromSpot)
+	methods_fromSpot.select(fromSpot, lineup)
+	// selectFromSpotLineup(lineupId)
+	// selectFromSpotToSpot(lineupId)
+	selectFromSpotFormContext.value.close()
+}
+function formDeselectFromSpot(lineupId: string) {
+	const lineup = viewLineups.value.get(lineupId)!
+	const fromSpot = viewFromSpots.value.get(lineup.lineup.fromId)!
+	methods_fromSpot.deselect(fromSpot, lineup)
+
+	selectFromSpotFormContext.value.close()
+}
+
+function deselectFromSpot(fromSpot: ViewFromSpot) {
+	// вызывается только когда fromSpot isActive:false
+	if (fromSpot.selectedLineupIds.size === 1) {
+		const lineupId = [...fromSpot.selectedLineupIds][0]
+		viewFromSpots.value.delete(fromSpot.fromSpot.spotId)
+		deselectFromSpotToSpot(lineupId)
+		deselectFromSpotLineup(lineupId)
+		return
+	}
+	if (fromSpot.selectedLineupIds.size > 1) {
+		//////////////
+		return
+	}
+}
+function deselectFromSpotLineup(lineupId: string) {
+	const lineup = viewLineups.value.get(lineupId)!
+	const toSpot = viewToSpots.value.get(lineup.lineup.toId)!
+	toSpot.selectedLineupIds.delete(lineupId)
+	viewLineups.value.delete(lineupId)
+}
+function deselectFromSpotToSpot(lineupId: string) {
+	const lineup = viewLineups.value.get(lineupId)!
+	const toSpot = viewToSpots.value.get(lineup.lineup.toId)!
+	if (toSpot.selectedLineupIds.size === 1) {
+		toSpot.isSelected = false
+		toSpot.selectedFromSpotIds.clear()
+		activeToSpotsCounter.value--
+		return
+	}
+	if (toSpot.selectedLineupIds.size > 1) {
+		toSpot.selectedFromSpotIds.delete(lineup.lineup.fromId)
+		return
+	}
+}
+
+
+
+
+
+const selectFromSpotFormContext = ref<{
+	isFormVisible: boolean
+	clickedFromSpot: ViewFromSpot | undefined;
+	lineupIdToSelect: string | undefined
+	lineupIdToDeselect: string | undefined
+	relatedLineups: LineupItem[] | undefined;
+	open: Function;
+	close: Function;
+}>({
+	isFormVisible: false,
+	clickedFromSpot: undefined,
+	lineupIdToSelect: undefined,
+	lineupIdToDeselect: undefined,
+	relatedLineups: undefined,
+	open: (fromSpot: ViewFromSpot) => {
+		selectFromSpotFormContext.value.isFormVisible = true
+		selectFromSpotFormContext.value.clickedFromSpot = fromSpot
+	},
+	close: () => {
+		selectFromSpotFormContext.value.isFormVisible = false;
+		selectFromSpotFormContext.value.clickedFromSpot = undefined
+	}
+})
+/* onewaySmokeOption:[],
+fakeSmokeOption:[],
+bugSmokeOption:[],
+forWhom:[],
+onewayMolotovOption:[],
+fakeMolotovOption:[],
+bugMolotovOption:[],
+bugHeOption:[], */
 
 // 'hsl(' + (Math.random() * 359).toFixed(0) + ', 88%, 56%)'
 // 'hsl(52, 88%, 56%)'
 // const l2r = spotX < nadeX ? true : false
-type SvgItem = {
-	nadeX: number,
-	nadeY: number,
-	spotX: number,
-	spotY: number,
-	duration: number | undefined,
-	l2r: boolean,
-	colorStr: string
-}
 
-const renderToSpots2 = computed(() => {
-	/* В один спот может прилетать несколько разных лайнапов. Информацию о каждом
-	нужно хранить в этом споте для условной отрисовки на основе фильтров */
-
-	/* На 1 лайнап делать 1 спот - нельзя, т.к. споты будут наслаиваться на миникарте, если
-	у 2 и более лайнапов один и тот же toSpot. */
-
-	/* По сути renderToSpots содержит в себе все возможные точки, куда летят гранаты.
-	В template нужно только показать нужные на основе фильтров  */
-
-	/* Из renderToSpots я выбираю спот нажатием кнопки и делаю его активным
-	(помещаю в activeSpots) */
-	const res = new Map<Spot['spotId'], {
-		toSpot: Spot,
-		filter: {
-			nadeType: Set<NadeType>, side: Set<Side>, tickrate: Set<Tickrate>, difficulties: Set<Difficulty>,
-		},
-		lineupIds: Lineup['lineupId'][],
-		isActive: boolean,
-		isSelected: boolean,
-		activeLineupsIds: Lineup['lineupId'][],
-		selectedLineupsIds: Lineup['lineupId'][]
-	}>()
-	lineups.value.forEach((lineup) => {
-		if (!res.has(lineup.toId)) {
-			const toSpot = spots.value.get(lineup.toId)!
-			res.set(lineup.toId, {
-				toSpot: toSpot,
-				lineupIds: [lineup.lineupId],
-				filter: {
-					nadeType: new Set([lineup.nadeType]),
-					side: new Set([lineup.side]),
-					tickrate: new Set([lineup.tickrate]),
-					difficulties: new Set([lineup.difficulty]),
-					// onewaySmokeOption:[],
-					// fakeSmokeOption:[],
-					// bugSmokeOption:[],
-					// forWhom:[],
-					// onewayMolotovOption:[],
-					// fakeMolotovOption:[],
-					// bugMolotovOption:[],
-					// bugHeOption:[],
-				},
-				isActive: false,
-				isSelected: false,
-				activeLineupsIds: [],
-				selectedLineupsIds: []
-			})
-		} else {
-			const toSpot = res.get(lineup.toId)!
-			toSpot.lineupIds.push(lineup.lineupId)
-			toSpot.filter.nadeType.add(lineup.nadeType)
-			toSpot.filter.side.add(lineup.side)
-			toSpot.filter.tickrate.add(lineup.tickrate)
-			toSpot.filter.difficulties.add(lineup.difficulty)
-			res.set(lineup.toId, toSpot)
-		}
-	})
-	return res
-})
+// type SvgItem = {
+// 	nadeX: number,
+// 	nadeY: number,
+// 	spotX: number,
+// 	spotY: number,
+// 	duration: number | undefined,
+// 	l2r: boolean,
+// 	colorStr: string
+// }
 </script>
 
 <template>
@@ -582,127 +1148,134 @@ const renderToSpots2 = computed(() => {
 					@mousedown="isDragging = false" @mousemove="isDragging = true">
 					<CMS />
 					<img ref="imgRef" @load="onImageLoaded"
-						@error="onImageLoadError" class="mapImg" :src="
-							currentRoute.length > 1
+						@error="onImageLoadError" class="mapImg" :src="currentRoute.length > 1
 								? `/src/assets/maps/webp/${currentRoute}.webp`
 								: ''
-						" :alt="imgMapError" />
+							" :alt="imgMapError" />
 
-					<template v-for="[toId, toItem] in renderToSpots">
-						<Grenade @click="toggleNade($event, toId)" :toItem="toItem"
-							ref="smokeSpritesRef" :pointSize="pointSize"
-							:isToggled="store.activeToSpots.has(toItem.toSpot.spotId)"
-							:isSelected="store.selectedToSpots.has(toItem.toSpot.spotId)"
-							:filter="filterState" />
-
-					</template>
-
-					<!-- <template v-for="[toId, toItem] in renderToSpots">
-																																											<Grenade @click="toggleNade($event, toId)"
-																																												:spot="toItem.toSpot" ref="smokeSpritesRef"
-																																												:pointSize="pointSize"
-																																												:isToggled="store.activeToSpots.has(toItem.toSpot.spotId)"
-																																												:filter="filterState" v-show="(props.nadeType === 'All' || props.nadeType === 'Smoke') &&
-																																													props.side === spot.side &&
-																																													props.tickrate === spot.tickrate &&
-																																													props.difficultiesState[`${spot.difficulty}Visible` as keyof typeof props.difficultiesState] &&
-																																													(
-																																														spot.isOnewaySmoke === true && (
-																																															props.onewayOption === 'Oneways only' ||
-																																															props.onewayOption === 'All'
-																																														) ||
-																																														spot.isOnewaySmoke === false && (
-																																															props.onewayOption === 'Regular only' ||
-																																															props.onewayOption === 'All'
-																																														)
-																																													) &&
-																																													(
-																																														spot.isFakeSmoke === true && (
-																																															props.fakeOption === 'FakeSmokes only' ||
-																																															props.fakeOption === 'All'
-																																														) ||
-																																														spot.isFakeSmoke === false && (
-																																															props.fakeOption === 'Regular only' ||
-																																															props.fakeOption === 'All'
-																																														)
-																																													) &&
-																																													(
-																																														spot.isFakeSmoke === true && (
-																																															props.bugOption === 'BugSmokes only' ||
-																																															props.bugOption === 'All'
-																																														) ||
-																																														spot.isFakeSmoke === false && (
-																																															props.bugOption === 'Regular only' ||
-																																															props.bugOption === 'All'
-																																														)
-																																													)" />
-																																										</template> -->
+					<!-- <template v-for="[toId, toItem] in viewToSpots">
+						<Grenade @click="toggleNade($event, toId)"
+							:spot="toItem.toSpot" ref="smokeSpritesRef"
+							:pointSize="pointSize"
+							:isToggled="store.toggledToSpots.has(toItem.toSpot.spotId)"
+							:filter="filterState" v-show="(props.nadeType === 'All' || props.nadeType === 'Smoke') &&
+								props.side === spot.side &&
+								props.tickrate === spot.tickrate &&
+								props.difficultiesState[`${spot.difficulty}Visible` as keyof typeof props.difficultiesState] &&
+								(
+									spot.isOnewaySmoke === true && (
+										props.onewayOption === 'Oneways only' ||
+										props.onewayOption === 'All'
+									) ||
+									spot.isOnewaySmoke === false && (
+										props.onewayOption === 'Regular only' ||
+										props.onewayOption === 'All'
+									)
+								) &&
+								(
+									spot.isFakeSmoke === true && (
+										props.fakeOption === 'FakeSmokes only' ||
+										props.fakeOption === 'All'
+									) ||
+									spot.isFakeSmoke === false && (
+										props.fakeOption === 'Regular only' ||
+										props.fakeOption === 'All'
+									)
+								) &&
+								(
+									spot.isFakeSmoke === true && (
+										props.bugOption === 'BugSmokes only' ||
+										props.bugOption === 'All'
+									) ||
+									spot.isFakeSmoke === false && (
+										props.bugOption === 'Regular only' ||
+										props.bugOption === 'All'
+									)
+								)" />
+					</template> -->
 
 					<!-- <template v-for="[id, smoke] in smokes">
-																																									<SmokeComponent @click="onGrenadeClick($event, smoke)"
-																																										:smoke="smoke" :pointSize="pointSize"
-																																										:nadeType="filterState.nadeType"
-																																										:side="filterState.side"
-																																										:tickrate="filterState.tickrate"
-																																										:difficultiesState="filterState.difficultiesState"
-																																										:onewayOption="filterState.onewaySmokeOption"
-																																										:fakeOption="filterState.fakeSmokeOption"
-																																										:bugOption="filterState.bugSmokeOption"
-																																										ref="smokeSpritesRef"
-																																										:isSelected="store.activeGrenadeItems.has(smoke.id) ? true : false" />
-																																								</template> -->
+						<SmokeComponent @click="onGrenadeClick($event, smoke)"
+							:smoke="smoke" :pointSize="pointSize"
+							:nadeType="filterState.nadeType"
+							:side="filterState.side"
+							:tickrate="filterState.tickrate"
+							:difficultiesState="filterState.difficultiesState"
+							:onewayOption="filterState.onewaySmokeOption"
+							:fakeOption="filterState.fakeSmokeOption"
+							:bugOption="filterState.bugSmokeOption"
+							ref="smokeSpritesRef"
+							:isSelected="store.activeGrenadeItems.has(smoke.id) ? true : false" />
+					</template> -->
 
-					<template v-for="activeLineup in activeLineups">
+					<template v-for="[viewLineupId, viewLineup] in viewLineups">
 						<div class="svgItemWrapper" v-show="(
-							(activeLineup.nadeType === filterState.nadeType
-								|| filterState.nadeType === 'all') &&
-							filterState.side === activeLineup.side &&
-							filterState.tickrate === activeLineup.tickrate &&
-							filterState.difficulties.has(activeLineup.difficulty)
-						)">
+								(viewLineup.lineup.nadeType === filterState.nadeType
+									|| filterState.nadeType === 'all') &&
+								filterState.side === viewLineup.lineup.side &&
+								filterState.tickrate === viewLineup.lineup.tickrate &&
+								filterState.difficulties.has(viewLineup.lineup.difficulty)
+							)">
 							<svg>
 								<line
-									:x1="`${activeFromSpots.get(activeLineup.fromId)?.fromSpot.coords.x}%`"
-									:y1="`${activeFromSpots.get(activeLineup.fromId)?.fromSpot.coords.y}%`"
-									:x2="`${store.activeToSpots.get(activeLineup.toId)?.toSpot.coords.x}%`"
-									:y2="`${store.activeToSpots.get(activeLineup.toId)?.toSpot.coords.y}%`"
-									:stroke="`hsl(${store.activeToSpots.get(activeLineup.toId)?.hslColor}, 88%, 56%)`" />
+									:x1="`${viewFromSpots.get(viewLineup.lineup.fromId)?.fromSpot.coords.x}%`"
+									:y1="`${viewFromSpots.get(viewLineup.lineup.fromId)?.fromSpot.coords.y}%`"
+									:x2="`${viewToSpots.get(viewLineup.lineup.toId)?.toSpot.coords.x}%`"
+									:y2="`${viewToSpots.get(viewLineup.lineup.toId)?.toSpot.coords.y}%`"
+									:stroke="viewLineup.isSelected
+											? `hsl(${viewToSpots.get(viewLineup.lineup.toId)?.hslColor}, 100%, 56%)`
+											: `hsl(${viewToSpots.get(viewLineup.lineup.toId)?.hslColor}, 80%, 55%)`
+										" :class="{ lineSelected: viewLineup.isSelected }" />
 							</svg>
 							<img ref="smokeexecIcon"
 								src="@/assets/icons/smokeicon.png" alt=""
 								class="smokeexecIcon" :style="{
-									'--spotX': `${activeFromSpots.get(activeLineup.fromId)?.fromSpot.coords.x}%`,
-									'--spotY': `${activeFromSpots.get(activeLineup.fromId)?.fromSpot.coords.y}%`,
-									'--nadeX': `${store.activeToSpots.get(activeLineup.toId)?.toSpot.coords.x}%`,
-									'--nadeY': `${store.activeToSpots.get(activeLineup.toId)?.toSpot.coords.y}%`,
-									'--duration':
-										`${store.activeToSpots.get(activeLineup.toId)?.avgDuration}s`,
-									'--rotate-from': `${-Math.random() * 72 * 10 - Math.random() * 270}deg`,
-									'--rotate-to': `${Math.random() * 72 * 10}deg`,
-									filter: `hue-rotate(${Number(store.activeToSpots.get(activeLineup.toId)?.hslColor) + 360 - 40}deg) sepia(33%)`
-								}">
+										'--spotX': `${viewFromSpots.get(viewLineup.lineup.fromId)?.fromSpot.coords.x}%`,
+										'--spotY': `${viewFromSpots.get(viewLineup.lineup.fromId)?.fromSpot.coords.y}%`,
+										'--nadeX': `${viewToSpots.get(viewLineup.lineup.toId)?.toSpot.coords.x}%`,
+										'--nadeY': `${viewToSpots.get(viewLineup.lineup.toId)?.toSpot.coords.y}%`,
+										'--duration':
+											`${viewToSpots.get(viewLineup.lineup.toId)?.avgDuration}s`,
+										'--rotate-from': `${-Math.random() * 72 * 10 - Math.random() * 270}deg`,
+										'--rotate-to': `${Math.random() * 72 * 10}deg`,
+										filter: `hue-rotate(${Number(viewToSpots.get(viewLineup.lineup.toId)?.hslColor) + 360 - 40}deg) sepia(33%)`
+									}">
 						</div>
 					</template>
 
-					<template
-						v-for="[activeFromId, activeFromItem] in activeFromSpots">
-						<FromSpot :fromSpotItem="activeFromItem" v-show="(
-							(activeFromItem.filter.nadeType.has(filterState.nadeType)
-								|| filterState.nadeType === 'all') &&
-							activeFromItem.filter.side.has(filterState.side) &&
-							activeFromItem.filter.tickrate.has(filterState.tickrate)
-							// activeFromItem.filter.difficulties.has( filterState.difficulties)
-						)" @myclick="onFromSpotSelect(activeFromId)" />
+					<template v-for="[toId, toItem] in viewToSpots">
+						<Grenade @click="clickToSpot($event, toItem)"
+							:toItem="toItem" ref="smokeSpritesRef"
+							:pointSize="pointSize" :isActive="toItem.isActive"
+							:isSelected="toItem.isSelected" :filter="filterState" />
 					</template>
+
+					<template v-for="[fromId, fromItem] in viewFromSpots">
+						<FromSpot :fromItem="fromItem"
+							@myclick="clickFromSpot($event, fromItem)"
+							:filter="filterState" />
+					</template>
+
+
 
 				</main>
 			</div>
 		</div>
+
+		<ContentPanel :state="contentPanelState"
+			@toggle="contentPanelHandlers.toggleContentPanel"
+			@toggleMode="contentPanelHandlers.toggleContentMode">
+			<ContentCard v-for="lineup in selectedLineups"
+				:toSpot="viewToSpots.get(lineup.toId)!" :lineup="lineup"
+				:fromSpot="viewFromSpots.get(lineup.fromId)!"
+				:isMinimized="contentPanelState.isMinimized" />
+		</ContentPanel>
+
 		<FilterPanel v-bind="{
-			isFiltersVisible,
-			filtersPropData,
-			filterState
-		}" @toggle="toggleFilters" @changeNadeType="filterHandlers.changeNadeType"
+				isFiltersVisible,
+				filtersPropData,
+				filterState
+			}" @toggle="toggleFilters" @changeNadeType="filterHandlers.changeNadeType"
 			@changeSide="filterHandlers.changeSide"
 			@changeTickrate="filterHandlers.changeTickrate"
 			@changeDifficulty="filterHandlers.changeDifficulty"
@@ -715,6 +1288,33 @@ const renderToSpots2 = computed(() => {
 			@changeBugMolotov="filterHandlers.changeBugMolotov"
 			@changeBugHe="filterHandlers.changeBugHe" />
 	</div>
+
+	<Teleport to="body">
+		<GS_Window v-if="selectFromSpotFormContext.isFormVisible"
+			@exit="selectFromSpotFormContext.close">
+			<template #title>
+				Choose what to do with clicked throw spot
+			</template>
+			<template #default>
+				<div
+					v-for="lineupId in selectFromSpotFormContext.clickedFromSpot!.activeLineupIds">
+					<div @click="formSelectFromSpot(lineupId)"
+						style="cursor: pointer; display: inline-block;"
+						:style="{ color: `hsl(${viewToSpots.get(viewLineups.get(lineupId)?.lineup.toId!)?.hslColor}, 100%, 60%)` }">
+						+SELECT {{ viewLineups.get(lineupId)?.lineup.lineupId }}
+					</div>
+				</div>
+				<div
+					v-for="lineupId in selectFromSpotFormContext.clickedFromSpot!.selectedLineupIds">
+					<div @click="formDeselectFromSpot(lineupId)"
+						style="cursor: pointer; display: inline-block;"
+						:style="{ color: `hsl(${viewToSpots.get(viewLineups.get(lineupId)?.lineup.toId!)?.hslColor}, 100%, 60%)` }">
+						-DESELECT {{ viewLineups.get(lineupId)?.lineup.lineupId }}
+					</div>
+				</div>
+			</template>
+		</GS_Window>
+	</Teleport>
 
 
 	<Teleport to="body">
@@ -774,7 +1374,7 @@ const renderToSpots2 = computed(() => {
 
 .mapContainer-inner {
 	position: relative;
-	z-index: 1;
+	// z-index: 1;
 	// border: 15px solid var(--bg_dark);
 	// border: 5px solid rgb(29, 183, 55);
 	aspect-ratio: 1/1;
@@ -799,9 +1399,11 @@ const renderToSpots2 = computed(() => {
 	}
 }
 
+.svgItemWrapper {}
+
 svg {
 	position: absolute;
-	z-index: 2;
+	// z-index: 1;
 	top: 0;
 	left: 0;
 	width: 100%;
@@ -817,6 +1419,12 @@ line {
 	stroke-linecap: round;
 	stroke-dasharray: 1 1.5;
 	animation: stroke 60s linear infinite;
+	filter: drop-shadow(0px 0px 1px rgba(209, 191, 120, 0.3));
+}
+
+.lineSelected {
+	stroke-dasharray: none;
+
 }
 
 .smokeexecIcon {
@@ -825,7 +1433,7 @@ line {
 	translate: -50% -50%;
 	animation: execution var(--duration) linear infinite;
 	height: 16px;
-	z-index: 3;
+	z-index: 2;
 	pointer-events: none;
 
 	@keyframes execution {

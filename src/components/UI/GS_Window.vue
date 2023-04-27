@@ -28,9 +28,10 @@ const emit = defineEmits(['exit'])
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background-color: var(--bg_light);
     padding: 0 5px 9px 5px;
+    background: $bg_light;
     @include gs-bd;
+    border: 2px solid $border_light;
 
     &__heading {
         display: flex;
@@ -63,6 +64,6 @@ const emit = defineEmits(['exit'])
     position: fixed;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(0, 0, 0, 0.13);
 }
 </style>

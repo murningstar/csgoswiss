@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { onMounted } from "vue";
+import { onMounted, reactive, ref, type ComputedRef, type Ref, computed } from "vue";
 import { useLoadingGoldsourceLogic } from "@/components/Loading_goldsource/loading_goldsource"
 import GS_Window from "@/components/UI/GS_Window.vue"
 const { isLoading, nSegmentsVisible, startLoading, endLoading } = useLoadingGoldsourceLogic()
@@ -7,7 +7,6 @@ startLoading();
 onMounted(() => {
 	endLoading()
 });
-
 </script>
 
 <template>
@@ -31,6 +30,8 @@ onMounted(() => {
 		</div>
 	</div>
 	<div>someCOntent</div>
+	<!-- <div>{{ computedDoubler }}</div> -->
+	<!-- <div style="background-color: black;" @click="increment">asd</div> -->
 </template>
 
 <style lang="scss">

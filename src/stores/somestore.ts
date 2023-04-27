@@ -18,13 +18,15 @@ export const useSomestore = defineStore("somestore", {
         //     }
         // >,
 
-        activeToSpots: new Map() as Map<
+        toggledToSpots: new Map() as Map<
             Spot["spotId"],
             {
                 toSpot: Spot;
                 lineupIds: Lineup["lineupId"][];
                 avgDuration: string;
                 hslColor: string;
+                isActive: boolean;
+                isSelected: boolean;
             }
         >,
         /* selectedToSpots необходим для того чтобы при нажатии на fromSpot соответствующий

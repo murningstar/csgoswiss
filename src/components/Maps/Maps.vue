@@ -12,7 +12,10 @@
 
 <template>
     <div class="mapsWrapper">
-        <SingleMap />
+        <router-view>
+
+        </router-view>
+        <!-- <SingleMap /> -->
     </div>
 </template>
 

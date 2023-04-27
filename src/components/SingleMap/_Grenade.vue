@@ -1,22 +1,22 @@
 
 <script setup lang="ts">
 import type { Grenade } from '@/data/interfaces/Grenade';
-import type { Difficulty, ForWhom, NadeType, Side, Tickrate } from '@/data/types/GrenadeProperties';
+import type { Difficulty, ForWhom, NadeType, Side, Tickrate, ViewCountDifficulty, ViewCountNadeType, ViewCountSide, ViewCountTickrate } from '@/data/types/GrenadeProperties';
 import type { Spot } from '@/data/v2_spotSvyaz/Spot';
 import { reactive, computed, ref, onMounted } from 'vue';
 const props = defineProps<{
     toItem: {
         toSpot: Spot;
         filter: {
-            nadeType: Set<NadeType>;
-            side: Set<Side>;
-            tickrate: Set<Tickrate>;
-            difficulties: Set<Difficulty>;
+            nadeType: ViewCountNadeType;
+            side: ViewCountSide;
+            tickrate: ViewCountTickrate;
+            difficulties: ViewCountDifficulty;
         };
         lineupIds: string[];
     },
     pointSize: number,
-    isToggled: boolean,
+    isActive: boolean,
     isSelected: boolean,
     filter: {
         nadeType: "all" | "smoke" | "molotov" | "flash" | "he",
@@ -34,52 +34,55 @@ const props = defineProps<{
     },
 }>()
 
-const spot = reactive(props.toItem)
+/* toSpot !!! */
+const toSpot = reactive(props.toItem)
 
 const difficultyIntersection = computed(() => {
     const filterDifficulties: Difficulty[] = []
     props.filter.difficulties.forEach((dif) => {
         filterDifficulties.push(dif)
     })
-    const res = filterDifficulties.some((value) => {
-        return spot.filter.difficulties.has(value)
+    const res = filterDifficulties.some((difficulty) => {
+        return toSpot.filter.difficulties[difficulty] > 0
     })
     return res
 })
+
 const showIf = computed(() => {
     console.log('difficultyIntersection ', difficultyIntersection.value);
-    return ((spot.filter.nadeType.has(props.filter.nadeType) ||
-        props.filter.nadeType == 'all') &&
-        spot.filter.side.has(props.filter.side) &&
-        spot.filter.tickrate.has(props.filter.tickrate) &&
-        difficultyIntersection.value)
+    return (
+        (toSpot.filter.nadeType[props.filter.nadeType] > 0 //может произойти сравнение undefined > 0 (так и надо, undefined > 0 все равно вернет false. и следующее выражение вернет true, если значение фильтра - "all")
+            || props.filter.nadeType == 'all')
+        && toSpot.filter.side[props.filter.side]>0
+        && toSpot.filter.tickrate[props.filter.tickrate]>0
+        && difficultyIntersection.value)
     // &&
     // (
-    //     spot.isOnewaySmoke === true && (
+    //     toSpot.isOnewaySmoke === true && (
     //         props.onewayOption === 'Oneways only' ||
     //         props.onewayOption === 'All'
     //     ) ||
-    //     spot.isOnewaySmoke === false && (
+    //     toSpot.isOnewaySmoke === false && (
     //         props.onewayOption === 'Regular only' ||
     //         props.onewayOption === 'All'
     //     )
     // ) &&
     // (
-    //     spot.isFakeSmoke === true && (
+    //     toSpot.isFakeSmoke === true && (
     //         props.fakeOption === 'FakeSmokes only' ||
     //         props.fakeOption === 'All'
     //     ) ||
-    //     spot.isFakeSmoke === false && (
+    //     toSpot.isFakeSmoke === false && (
     //         props.fakeOption === 'Regular only' ||
     //         props.fakeOption === 'All'
     //     )
     // ) &&
     // (
-    //     spot.isFakeSmoke === true && (
+    //     toSpot.isFakeSmoke === true && (
     //         props.bugOption === 'BugSmokes only' ||
     //         props.bugOption === 'All'
     //     ) ||
-    //     spot.isFakeSmoke === false && (
+    //     toSpot.isFakeSmoke === false && (
     //         props.bugOption === 'Regular only' ||
     //         props.bugOption === 'All'
     //     )
@@ -96,19 +99,19 @@ onMounted(() => {
 console.log(props.toItem);
 
 
-// v-show="showIf || isToggled"
+// v-show="showIf || isActive"
 </script>
 
 
 <template>
     <div class="grenadeContainer" :style="{
-        top: `${spot.toSpot.coords.y}%`,
-        left: `${spot.toSpot.coords.x}%`,
+        top: `${toSpot.toSpot.coords.y}%`,
+        left: `${toSpot.toSpot.coords.x}%`,
         // width: `${pointSize}px`,
         // height: `${pointSize}px`,
-    }" v-show="showIf || isToggled || isSelected">
+    }" v-show="showIf || isActive || isSelected">
         <button class="button" :class="{
-            clicked: isToggled,
+            clicked: isActive,
             selected: isSelected
         }"></button>
         <img class="sprite" src="@/assets/ui/Smoke circle.png"
@@ -119,7 +122,7 @@ console.log(props.toItem);
 <style scoped lang="scss">
 .grenadeContainer {
     position: absolute;
-    z-index: 3;
+    // z-index: 3;
     width: 10px;
     height: 10px;
     width: 1.54%;
@@ -129,11 +132,12 @@ console.log(props.toItem);
     /* border: 15px solid rgb(255, 0, 0); */
     box-sizing: content-box;
     translate: -50% -50%;
+    transform-style: preserve-3d;
 }
 
 .button {
     position: absolute;
-    z-index: 10;
+    z-index: 9;
     top: 50%;
     left: 50%;
     width: 100%;
@@ -146,22 +150,24 @@ console.log(props.toItem);
     cursor: pointer;
     transform-style: preserve-3d;
     translate: -50% -50%;
+    transform: translateZ(10px);
 }
 
 .button::before {
     content: '';
     display: inline-block;
     position: absolute;
-    z-index: -1;
+    // z-index: -1;
     /* border-radius: 50%; */
     top: 50%;
     left: 50%;
     width: 450%;
     height: 450%;
-    /* background: radial-gradient(circle, rgba(237, 237, 237, 1) 0%, rgba(237, 237, 237, 1) 14%, rgba(255, 237, 237, 0.5) 56%, rgba(237, 237, 237, 0) 70.71%); */
+    // background: radial-gradient(circle, rgba(237, 237, 237, 1) 0%, rgba(237, 237, 237, 1) 14%, rgba(255, 237, 237, 0.5) 56%, rgba(237, 237, 237, 0) 70.71%);
     background: radial-gradient(circle, rgba(237, 237, 237, 1) 0%, rgb(174, 174, 174) 0%, rgba(237, 237, 237, 1) 33%, rgba(237, 237, 237, 0.5) 57%, rgba(237, 237, 237, 0) 71%);
     translate: -50% -50%;
-    transform: translateZ(-1px);
+    transform: translateZ(-2px);
+    opacity: 100%;
 }
 
 .button:hover {
@@ -200,12 +206,14 @@ console.log(props.toItem);
     left: 50%;
     translate: -50% -50%;
     /* border: 1px green solid; */
-    z-index: -1;
+    // z-index: -1;
     opacity: 16%;
     /* opacity: 100%; */
 
     width: 400%;
     height: 400%;
+    filter: invert(90deg);
+    transform: translateZ(-3px);
 }
 
 @media (max-width: 550px) {
@@ -239,6 +247,7 @@ console.log(props.toItem);
 .clicked:active {
     background-color: #ffe14c;
 }
+
 .selected {
     background-color: #ead75e;
     border: 1px solid #3f3f3f;

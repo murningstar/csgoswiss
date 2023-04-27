@@ -8,10 +8,10 @@ const route = useRoute();
 const store = useSomestore()
 const currentMap = computed(() => route.path.slice(1));
 function purgeActiveNades(mapName:string) {
-	if (currentMap.value!==mapName){
-		store.activeGrenadeItems.clear()
+	// if (currentMap.value!==mapName){
+	// 	store.activeGrenadeItems.clear()
 		router.push('/'+mapName)
-	}
+	// }
 }
 </script>
 
