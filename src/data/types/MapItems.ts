@@ -1,13 +1,7 @@
-import type { Smoke } from "@/data/interfaces/Smoke";
-import type { Molotov } from "@/data/interfaces/Motolov";
-import type { Flash } from "@/data/interfaces/Flash";
-import type { He } from "@/data/interfaces/He";
-import type { ThrowSpot } from "@/data/interfaces/ThrowSpot";
+import type { Lineup } from "@/data/interfaces/Lineup";
+import type { Spot } from "@/data/interfaces/Spot";
 
 export type MapItems = {
-    smokes: Map<Smoke["id"], Smoke>;
-    molotovs: Map<Molotov["id"], Molotov>;
-    flashes: Map<Flash["id"], Flash>;
-    hes: Map<He["id"], He>;
-    throwSpots: Map<ThrowSpot["id"], ThrowSpot>;
+    spots: Map<Spot["spotId"], Spot>;
+    lineups: Map<Lineup["lineupId"], Lineup>;
 };

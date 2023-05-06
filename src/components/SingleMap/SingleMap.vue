@@ -21,24 +21,24 @@ import ContentPanel from "@/components/SingleMap/ContentPanel.vue"
 import ContentCard from "@/components/SingleMap/ContentCard.vue"
 import GS_Window from "@/components/UI/GS_Window.vue";
 // data
-import { mirageGrenades } from "@/data/v2_spotSvyaz/mirage/mirageGrenadesV2";
-import { ancientGrenades } from "@/data/v2_spotSvyaz/ancient/ancientGrenadesV2";
-import { dust2Grenades } from "@/data/v2_spotSvyaz/dust2/dust2GrenadesV2";
-import { infernoGrenades } from "@/data/v2_spotSvyaz/inferno/infernoGrenadesV2";
-import { nukeGrenades } from "@/data/v2_spotSvyaz/nuke/nukeGrenadesV2";
-import { overpassGrenades } from "@/data/v2_spotSvyaz/overpass/overpassGrenadesV2";
-import { vertigoGrenades } from "@/data/v2_spotSvyaz/vertigo/vertigoGrenadesV2";
+import { mirageGrenades } from "@/data/content/mirage/mirageGrenades";
+import { ancientGrenades } from "@/data/content/ancient/ancientGrenades";
+import { dust2Grenades } from "@/data/content/dust2/dust2Grenades";
+import { infernoGrenades } from "@/data/content/inferno/infernoGrenades";
+import { nukeGrenades } from "@/data/content/nuke/nukeGrenades";
+import { overpassGrenades } from "@/data/content/overpass/overpassGrenades";
+import { vertigoGrenades } from "@/data/content/vertigo/vertigoGrenades";
 // other
 import { useLoadingGoldsourceLogic } from "@/components/Loading_goldsource/loading_goldsource"
 import { maplist } from "@/data/maplist"
-import type { MapItems } from "@/data/v2_spotSvyaz/MapItemsV2"
+import type { MapItems } from "@/data/types/MapItems"
 import { nadeTypeList } from "@/data/nadeTypeList";
-import type { Smoke as SmokeType } from "@/data/interfaces/Smoke";
+import type { Smoke as SmokeType } from "@/data/_old/Smoke";
 // import type { Grenade } from "@/data/interfaces/Grenade";
 import type { Difficulty, ForWhom, NadeType, Side, Tickrate } from "@/data/types/GrenadeProperties";
-import type { ThrowSpot } from "@/data/interfaces/ThrowSpot";
-import type { Lineup } from "@/data/v2_spotSvyaz/Lineup";
-import type { Spot } from "@/data/v2_spotSvyaz/Spot";
+import type { ThrowSpot } from "@/data/_old/ThrowSpot";
+import type { Lineup } from "@/data/interfaces/Lineup";
+import type { Spot } from "@/data/interfaces/Spot";
 import { ViewItemsFactory, type LineupItem } from "@/data/types/ViewItems";
 import type { ViewToSpot, ViewFromSpot } from "@/data/types/ViewItems";
 
@@ -404,7 +404,7 @@ function clickToSpot(event: Event, clickedToSpot: ViewToSpot) {
 }
 
 function clickFromSpot(event: Event, fromSpot: ViewFromSpot) {
-	
+
 	const intersection = fromSpot.activeLineupIds.size + fromSpot.selectedLineupIds.size
 	if (intersection === 1) {
 		if (fromSpot.isActive) {
@@ -445,12 +445,12 @@ const methods_toSpot = {
 			})
 			toSpots.forEach((fromSpot) => {
 				const length = Math.sqrt((fromSpot.coords.x - toSpot.toSpot.coords.x) ** 2
-				+ (fromSpot.coords.y - toSpot.toSpot.coords.y) ** 2)
+					+ (fromSpot.coords.y - toSpot.toSpot.coords.y) ** 2)
 				const duration = 2.2 + length * 0.01
 				durations.push(duration)
 			})
 			const avgDuration =
-			(durations.reduce((acc, next) => acc + next, 0) / durations.length).toFixed(2)
+				(durations.reduce((acc, next) => acc + next, 0) / durations.length).toFixed(2)
 			// присваивание результата
 			toSpot.avgDuration = avgDuration
 		}
@@ -608,7 +608,7 @@ const methods_fromSpot = {
 			console.log(existingFromSpot);
 			viewFromSpots.value.set(fromId, existingFromSpot)
 		}
-		
+
 	},
 	deactivate(lineup: LineupItem) {//delete if not selected/activated by any other toSpot
 		/* не уверен на 100% в этой функции, т.к. скопировал ее код из прототипа другой.
@@ -715,8 +715,8 @@ bugHeOption:[], */
 					<CMS />
 					<img ref="imgRef" @load="onImageLoaded"
 						@error="onImageLoadError" class="mapImg" :src="currentRoute.length > 1
-								? `/src/assets/maps/webp/${currentRoute}.webp`
-								: ''
+							? `/src/assets/maps/webp/${currentRoute}.webp`
+							: ''
 							" :alt="imgMapError" />
 
 					<!-- <template v-for="[toId, toItem] in viewToSpots">
@@ -776,12 +776,12 @@ bugHeOption:[], */
 
 					<template v-for="[viewLineupId, viewLineup] in viewLineups">
 						<div class="svgItemWrapper" v-show="(
-								(viewLineup.lineup.nadeType === filterState.nadeType
-									|| filterState.nadeType === 'all') &&
-								filterState.side === viewLineup.lineup.side &&
-								filterState.tickrate === viewLineup.lineup.tickrate &&
-								filterState.difficulties.has(viewLineup.lineup.difficulty)
-							) && !store.isCmsModeOn">
+							(viewLineup.lineup.nadeType === filterState.nadeType
+								|| filterState.nadeType === 'all') &&
+							filterState.side === viewLineup.lineup.side &&
+							filterState.tickrate === viewLineup.lineup.tickrate &&
+							filterState.difficulties.has(viewLineup.lineup.difficulty)
+						) && !store.isCmsModeOn">
 							<svg>
 								<line
 									:x1="`${viewFromSpots.get(viewLineup.lineup.fromId)?.fromSpot.coords.x}%`"
@@ -789,23 +789,23 @@ bugHeOption:[], */
 									:x2="`${viewToSpots.get(viewLineup.lineup.toId)?.toSpot.coords.x}%`"
 									:y2="`${viewToSpots.get(viewLineup.lineup.toId)?.toSpot.coords.y}%`"
 									:stroke="viewLineup.isSelected
-											? `hsl(${viewToSpots.get(viewLineup.lineup.toId)?.hslColor}, 100%, 56%)`
-											: `hsl(${viewToSpots.get(viewLineup.lineup.toId)?.hslColor}, 80%, 55%)`
+										? `hsl(${viewToSpots.get(viewLineup.lineup.toId)?.hslColor}, 100%, 56%)`
+										: `hsl(${viewToSpots.get(viewLineup.lineup.toId)?.hslColor}, 80%, 55%)`
 										" :class="{ lineSelected: viewLineup.isSelected }" />
 							</svg>
 							<img ref="smokeexecIcon"
 								src="@/assets/icons/smokeicon.png" alt=""
 								class="smokeexecIcon" :style="{
-										'--spotX': `${viewFromSpots.get(viewLineup.lineup.fromId)?.fromSpot.coords.x}%`,
-										'--spotY': `${viewFromSpots.get(viewLineup.lineup.fromId)?.fromSpot.coords.y}%`,
-										'--nadeX': `${viewToSpots.get(viewLineup.lineup.toId)?.toSpot.coords.x}%`,
-										'--nadeY': `${viewToSpots.get(viewLineup.lineup.toId)?.toSpot.coords.y}%`,
-										'--duration':
-											`${viewToSpots.get(viewLineup.lineup.toId)?.avgDuration}s`,
-										'--rotate-from': `${-Math.random() * 72 * 10 - Math.random() * 270}deg`,
-										'--rotate-to': `${Math.random() * 72 * 10}deg`,
-										filter: `hue-rotate(${Number(viewToSpots.get(viewLineup.lineup.toId)?.hslColor) + 360 - 40}deg) sepia(33%)`
-									}">
+									'--spotX': `${viewFromSpots.get(viewLineup.lineup.fromId)?.fromSpot.coords.x}%`,
+									'--spotY': `${viewFromSpots.get(viewLineup.lineup.fromId)?.fromSpot.coords.y}%`,
+									'--nadeX': `${viewToSpots.get(viewLineup.lineup.toId)?.toSpot.coords.x}%`,
+									'--nadeY': `${viewToSpots.get(viewLineup.lineup.toId)?.toSpot.coords.y}%`,
+									'--duration':
+										`${viewToSpots.get(viewLineup.lineup.toId)?.avgDuration}s`,
+									'--rotate-from': `${-Math.random() * 72 * 10 - Math.random() * 270}deg`,
+									'--rotate-to': `${Math.random() * 72 * 10}deg`,
+									filter: `hue-rotate(${Number(viewToSpots.get(viewLineup.lineup.toId)?.hslColor) + 360 - 40}deg) sepia(33%)`
+								}">
 						</div>
 					</template>
 
@@ -839,10 +839,10 @@ bugHeOption:[], */
 		</ContentPanel>
 
 		<FilterPanel v-bind="{
-				isFiltersVisible,
-				filtersPropData,
-				filterState
-			}" @toggle="toggleFilters" @changeNadeType="filterHandlers.changeNadeType"
+			isFiltersVisible,
+			filtersPropData,
+			filterState
+		}" @toggle="toggleFilters" @changeNadeType="filterHandlers.changeNadeType"
 			@changeSide="filterHandlers.changeSide"
 			@changeTickrate="filterHandlers.changeTickrate"
 			@changeDifficulty="filterHandlers.changeDifficulty"

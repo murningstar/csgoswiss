@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Molotov } from '@/data/interfaces/Motolov';
+import type { Molotov } from '@/data/_old/Motolov';
 import { reactive, computed } from 'vue';
 const props = defineProps<{
 	molotov: Molotov,

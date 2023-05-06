@@ -1,8 +1,8 @@
 
 <script setup lang="ts">
-import type { Grenade } from '@/data/interfaces/Grenade';
+import type { Grenade } from '@/data/_old/Grenade';
 import type { Difficulty, ForWhom, NadeType, Side, Tickrate, ViewCountDifficulty, ViewCountNadeType, ViewCountSide, ViewCountTickrate } from '@/data/types/GrenadeProperties';
-import type { Spot } from '@/data/v2_spotSvyaz/Spot';
+import type { Spot } from '@/data/interfaces/Spot';
 import { reactive, computed, ref, onMounted } from 'vue';
 const props = defineProps<{
     toItem: {
@@ -53,8 +53,8 @@ const showIf = computed(() => {
     return (
         (toSpot.filter.nadeType[props.filter.nadeType] > 0 //может произойти сравнение undefined > 0 (так и надо, undefined > 0 все равно вернет false. и следующее выражение вернет true, если значение фильтра - "all")
             || props.filter.nadeType == 'all')
-        && toSpot.filter.side[props.filter.side]>0
-        && toSpot.filter.tickrate[props.filter.tickrate]>0
+        && toSpot.filter.side[props.filter.side] > 0
+        && toSpot.filter.tickrate[props.filter.tickrate] > 0
         && difficultyIntersection.value)
     // &&
     // (

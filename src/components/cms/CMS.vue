@@ -12,19 +12,19 @@ import { useMachine } from "@xstate/vue"
 import { createMachine } from "xstate"
 import { nanoid } from "nanoid"
 import type { CoordsObj, Difficulty, ForWhom, NadeType, Side, ThrowClick, ThrowMovement, Tickrate } from '@/data/types/GrenadeProperties';
-import type { Placeholder } from '@/data/interfaces/Placeholder'
+import type { Placeholder } from '@/data/_old/Placeholder'
 import { nadeTypeList } from '@/data/nadeTypeList';
 import { useSomestore } from '@/stores/somestore';
-import { mirageGrenades } from '@/data/v2_spotSvyaz/mirage/mirageGrenadesV2';
-import { ancientGrenades } from '@/data/v2_spotSvyaz/ancient/ancientGrenadesV2';
-import { dust2Grenades } from '@/data/v2_spotSvyaz/dust2/dust2GrenadesV2';
-import { infernoGrenades } from '@/data/v2_spotSvyaz/inferno/infernoGrenadesV2';
-import { nukeGrenades } from '@/data/v2_spotSvyaz/nuke/nukeGrenadesV2';
-import { overpassGrenades } from '@/data/v2_spotSvyaz/overpass/overpassGrenadesV2';
-import { vertigoGrenades } from '@/data/v2_spotSvyaz/vertigo/vertigoGrenadesV2';
-import type { MapItems } from '@/data/v2_spotSvyaz/MapItemsV2';
+import { mirageGrenades } from '@/data/content/mirage/mirageGrenades';
+import { ancientGrenades } from '@/data/content/ancient/ancientGrenades';
+import { dust2Grenades } from '@/data/content/dust2/dust2Grenades';
+import { infernoGrenades } from '@/data/content/inferno/infernoGrenades';
+import { nukeGrenades } from '@/data/content/nuke/nukeGrenades';
+import { overpassGrenades } from '@/data/content/overpass/overpassGrenades';
+import { vertigoGrenades } from '@/data/content/vertigo/vertigoGrenades';
+import type { MapItems } from '@/data/types/MapItems';
 import { maplist } from '@/data/maplist';
-import type { Spot } from '@/data/v2_spotSvyaz/Spot';
+import type { Spot } from '@/data/interfaces/Spot';
 import { z } from 'zod'
 import axios from 'axios';
 

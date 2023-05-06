@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { Difficulty, ForWhom, NadeType, Side, Tickrate } from '@/data/types/GrenadeProperties';
-import type { Lineup } from '@/data/v2_spotSvyaz/Lineup';
-import type { Spot } from '@/data/v2_spotSvyaz/Spot';
+import type { Lineup } from '@/data/interfaces/Lineup';
+import type { Spot } from '@/data/interfaces/Spot';
 import type { ViewFromSpot } from '@/data/types/ViewItems';
 const props = defineProps<{
     fromItem: ViewFromSpot,
@@ -29,17 +29,17 @@ const difficultyIntersection = computed(() => {
         filterDifficulties.push(dif)
     })
     const res = filterDifficulties.some((dif) => {
-        return props.fromItem.filter.difficulties[dif]>0
+        return props.fromItem.filter.difficulties[dif] > 0
     })
     return res
 })
 
 const showIf = computed(() => {
     return (
-        (props.fromItem.filter.nadeType[props.filter.nadeType]>0
+        (props.fromItem.filter.nadeType[props.filter.nadeType] > 0
             || props.filter.nadeType === 'all') &&
-        props.fromItem.filter.side[props.filter.side]>0 &&
-        props.fromItem.filter.tickrate[props.filter.tickrate]>0 &&
+        props.fromItem.filter.side[props.filter.side] > 0 &&
+        props.fromItem.filter.tickrate[props.filter.tickrate] > 0 &&
         difficultyIntersection.value
     )
 })
@@ -49,15 +49,13 @@ const showIf = computed(() => {
     <div class="spotContainer" :style="{
         top: `${fromItem.fromSpot.coords.y}%`,
         left: `${fromItem.fromSpot.coords.x}%`
-    }" @click.stop="emit('myclick',)" 
-    v-show="showIf">
+    }" @click.stop="emit('myclick',)" v-show="showIf">
         <button class="throwSpot">
         </button>
         <svg>
-            <circle class="outerCircle" cx='50%' cy='50%' r="48%" 
-            :style="{
+            <circle class="outerCircle" cx='50%' cy='50%' r="48%" :style="{
                 strokeDasharray: props.fromItem.isSelected ? 'none' : '1 2'
-            }"/>
+            }" />
         </svg>
     </div>
 </template>

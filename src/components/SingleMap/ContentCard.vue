@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { LineupItem, ViewFromSpot, ViewToSpot } from '@/data/types/ViewItems';
-import type { Lineup } from '@/data/v2_spotSvyaz/Lineup';
+import type { Lineup } from '@/data/interfaces/Lineup';
 import { computed } from 'vue';
 
 const props = defineProps<{

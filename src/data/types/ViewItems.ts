@@ -1,6 +1,6 @@
 import type { ComputedRef, Ref } from "vue";
-import type { Lineup } from "../v2_spotSvyaz/Lineup";
-import type { Spot } from "../v2_spotSvyaz/Spot";
+import type { Lineup } from "../interfaces/Lineup";
+import type { Spot } from "../interfaces/Spot";
 import type {
     NadeType,
     Side,
@@ -11,7 +11,7 @@ import type {
     ViewCountTickrate,
     ViewCountDifficulty,
 } from "./GrenadeProperties";
-import type { MapItems } from "@/data/v2_spotSvyaz/MapItemsV2";
+import type { MapItems } from "@/data/types/MapItems";
 import { boolean } from "zod";
 
 export type LineupItem = {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Grenade } from '@/data/interfaces/Grenade';
+import type { Grenade } from '@/data/_old/Grenade';
 import type { Difficulty } from '@/data/types/GrenadeProperties';
 import { computed, reactive, ref, watch, watchEffect } from 'vue';
 import { gsap } from "gsap"

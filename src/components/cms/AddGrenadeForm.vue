@@ -256,7 +256,7 @@
 
 <script lang="ts">
 import type { PropType } from 'vue';
-import type { Placeholder } from '@/data/interfaces/Placeholder'
+import type { Placeholder } from '@/data/_old/Placeholder'
 import GS_ContainerLight from "@/components/UI/GS_ContainerLight.vue"
 import GS_Window from "@/components/UI/GS_Window.vue"
 import GS_Input from "@/components/UI/GS_Input.vue"

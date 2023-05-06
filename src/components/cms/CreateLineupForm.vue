@@ -12,10 +12,10 @@ import GS_Select from '@/components/UI/GS_Select.vue'
 import GS_Radio from '@/components/UI/GS_Radio.vue'
 import GS_Check from '@/components/UI/GS_Check.vue'
 /* types */
-import type { Spot } from '@/data/v2_spotSvyaz/Spot';
+import type { Spot } from '@/data/interfaces/Spot';
 import type { NadeType, Side, Tickrate, ThrowClick, ThrowMovement, Difficulty, ForWhom } from '@/data/types/GrenadeProperties';
 import { nanoid } from 'nanoid';
-import type { Lineup } from '@/data/v2_spotSvyaz/Lineup';
+import type { Lineup } from '@/data/interfaces/Lineup';
 /* zod schema */
 import { lineupSchema } from "@/data/zodSchemas/lineupSchema"
 import axios from 'axios';

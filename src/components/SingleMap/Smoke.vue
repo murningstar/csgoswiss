@@ -1,6 +1,6 @@
 
 <script setup lang="ts">
-import type { Smoke } from '@/data/interfaces/Smoke';
+import type { Smoke } from '@/data/_old/Smoke';
 import { reactive, computed, ref, onMounted } from 'vue';
 const props = defineProps<{
 	smoke: Smoke,

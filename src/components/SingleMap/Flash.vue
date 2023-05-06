@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Flash } from '@/data/interfaces/Flash';
+import type { Flash } from '@/data/_old/Flash';
 import type { ForWhom, Side, Tickrate } from '@/data/types/GrenadeProperties';
 import { reactive, computed } from 'vue';
 const props = defineProps<{

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { He } from '@/data/interfaces/He';
+import type { He } from '@/data/_old/He';
 import { reactive } from 'vue';
 const props = defineProps<{
 	he: He,
