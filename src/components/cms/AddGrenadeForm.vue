@@ -117,7 +117,7 @@
                             <div class="formItem">
                                 <div class="formItem__content">
                                     <GS_Select
-                                        :options='["easy", "normal", "medium", "hard", "pixelPerfect"]'
+                                        :options='["easy", "medium", "hard", "pixelPerfect"]'
                                         :selected="clickedPlaceholder?.difficulty || ''"
                                         @update:modelValue="updateDifficulty" />
                                 </div>

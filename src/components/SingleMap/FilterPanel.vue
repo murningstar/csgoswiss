@@ -140,7 +140,6 @@ function log(message: string, value: any) {
                     <div class="menu__element">
                         <GS_MultiCheck :options="[
                             'easy',
-                            'normal',
                             'medium',
                             'hard',
                             'pixelPerfect'

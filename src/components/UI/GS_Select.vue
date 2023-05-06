@@ -29,6 +29,7 @@ select {
     option {
         background-color: $bg_light;
         margin: 0;
+        text-transform: capitalize;
 
         &:hover {
             color: var(--text_active);

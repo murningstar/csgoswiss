@@ -7,7 +7,7 @@ const props = defineProps<{
     toSpot: ViewToSpot,
     lineup: Lineup,
     fromSpot: ViewFromSpot,
-    isMinimized:boolean
+    isMinimized: boolean
 }>()
 const iconSrc = computed(() => {
     return `/src/assets/icons/icon_${props.lineup.nadeType}.webp`
@@ -28,7 +28,38 @@ const iconSrc = computed(() => {
             <figure class="figure">
                 <div class="figure__imgCont">
                     <img class="figure__img"
-                        src="@/assets/content/mirage/tSpawnTrashcan.jpg" alt="">
+                        :src="fromSpot.fromSpot.fromImgSrc!"
+                        alt="">
+                </div>
+                <figcaption class="figure__caption">
+                    Stand there
+                </figcaption>
+            </figure>
+            <figure class="figure">
+                <div class="figure__imgCont">
+                    <img class="figure__img"
+                        :src="lineup.imgSrcAim!" alt="">
+                </div>
+                <figcaption class="figure__caption">
+                    Aim there
+                </figcaption>
+            </figure>
+            <figure class="figure">
+                <div class="figure__imgCont">
+                    <img class="figure__img"
+                        :src="toSpot.toSpot.toImgSrc!" alt="">
+                </div>
+                <figcaption class="figure__caption">
+                    Lands<span class="hsl"> there</span>
+                </figcaption>
+            </figure>
+        </section>
+
+        <!-- <section class="contentItem__content" v-if="!isMinimized">
+            <figure class="figure">
+                <div class="figure__imgCont">
+                    <img class="figure__img"
+                        src="@/assets/content/spots/mirage/tSpawnTrashcan/tSpawnTrashcan.jpg" alt="">
                 </div>
                 <figcaption class="figure__caption">
                     Stand there
@@ -52,10 +83,8 @@ const iconSrc = computed(() => {
                     Lands<span class="hsl"> there</span>
                 </figcaption>
             </figure>
-        </section>
-        <!-- <footer class="contentItem__tags">
-
-                                                                        </footer> -->
+        </section> -->
+        <!-- <footer class="contentItem__tags"></footer> -->
     </article>
 </template>
 
@@ -84,6 +113,7 @@ const iconSrc = computed(() => {
         width: 100%;
         height: 100%;
         object-fit: cover;
+
         &:hover {
             scale: 1.3;
         }

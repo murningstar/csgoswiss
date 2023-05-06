@@ -190,7 +190,6 @@ export class ViewItemsFactory {
                         } as ViewCountTickrate,
                         difficulties: {
                             easy: 0,
-                            normal: 0,
                             medium: 0,
                             hard: 0,
                             pixelPerfect: 0,
@@ -247,7 +246,6 @@ export class ViewItemsFactory {
                 } as ViewCountTickrate,
                 difficulties: {
                     easy: 0,
-                    normal: 0,
                     medium: 0,
                     hard: 0,
                     pixelPerfect: 0,

@@ -1,22 +1,29 @@
-import type { Spot } from "@/data/v2_spotSvyaz/Spot";
 import type {
     Difficulty,
+    ForWhom,
     NadeType,
     Side,
     ThrowClick,
     ThrowMovement,
     Tickrate,
-} from "@/data/types/GrenadeProperties";
+} from "../types/GrenadeProperties";
 
 export interface Lineup {
     lineupId: string;
-    toId: Spot["spotId"];
-    fromId: Spot["spotId"];
+    toId: string;
+    fromId: string;
     nadeType: NadeType;
+    /* Потом буду еще категоризировать эти imgFile, 
+    т.к. буду добавлять либо гифки либо вставки видео из ютуба
+    и => изменю сам type Lineup */
+    imgSrcAim: string | null;
+    imgSrcAimZoom: string | null;
+    imgSrcOverview: string | null;
     side: Side;
     tickrate: Tickrate;
     comboLineupIds?: Lineup["lineupId"][];
     throwClick: ThrowClick;
     throwMovement: ThrowMovement;
     difficulty: Difficulty;
+    forWhom?: ForWhom;
 }

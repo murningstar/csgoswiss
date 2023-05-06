@@ -199,7 +199,6 @@ const filterState = reactive({
 	tickrate: 128 as Tickrate,
 	difficulties: new Set([
 		'easy',
-		'normal',
 		'medium',
 		'hard',
 		'pixelPerfect',
@@ -381,6 +380,7 @@ watch(viewLineups, () => {
 
 /* onClick TOSPOT */
 function clickToSpot(event: Event, clickedToSpot: ViewToSpot) {
+	console.log('clicked singlemap.vue');
 	if (isDragging.value == false &&
 		(event.target as HTMLButtonElement).tagName == 'BUTTON') {
 		if (!clickedToSpot.isActive && !clickedToSpot.isSelected) {
@@ -404,6 +404,7 @@ function clickToSpot(event: Event, clickedToSpot: ViewToSpot) {
 }
 
 function clickFromSpot(event: Event, fromSpot: ViewFromSpot) {
+	
 	const intersection = fromSpot.activeLineupIds.size + fromSpot.selectedLineupIds.size
 	if (intersection === 1) {
 		if (fromSpot.isActive) {
@@ -444,18 +445,18 @@ const methods_toSpot = {
 			})
 			toSpots.forEach((fromSpot) => {
 				const length = Math.sqrt((fromSpot.coords.x - toSpot.toSpot.coords.x) ** 2
-					+ (fromSpot.coords.y - toSpot.toSpot.coords.y) ** 2)
+				+ (fromSpot.coords.y - toSpot.toSpot.coords.y) ** 2)
 				const duration = 2.2 + length * 0.01
 				durations.push(duration)
 			})
 			const avgDuration =
-				(durations.reduce((acc, next) => acc + next, 0) / durations.length).toFixed(2)
+			(durations.reduce((acc, next) => acc + next, 0) / durations.length).toFixed(2)
 			// присваивание результата
 			toSpot.avgDuration = avgDuration
 		}
+		methods_toSpot.toActiveDeps(toSpot)
 		toSpot.hslColor = activeToSpotsCounter.value > 1 ? (Math.random() * 359).toFixed(0) : '52'
 		toSpot.isActive = true
-		methods_toSpot.toActiveDeps(toSpot)
 	},
 	toActiveDeps(toSpot: ViewToSpot) {
 		// toActive только те, которые не selected и также не active.
@@ -524,7 +525,6 @@ const methods_toSpot = {
 	},
 }
 const methods_lineup = {
-
 }
 const methods_fromSpot = {
 	select(fromSpot: ViewFromSpot, lineup: LineupItem) {
@@ -583,12 +583,16 @@ const methods_fromSpot = {
 	},
 
 	activate(lineup: LineupItem) {
+		console.log(587);
 		const toId = lineup.lineup.toId
 		const toSpot = viewToSpots.value.get(toId)!
+		console.log('toSpot: ', toSpot);
 		const fromId = lineup.lineup.fromId
 		const fromSpotExists = viewFromSpots.value.has(fromId)
+		console.log(592, 'exists? :', fromSpotExists, performance.now());
 		if (!fromSpotExists) { // если не существует - создать
 			const fromSpot = viewItemsFactory.value.createActiveViewFromSpot(lineup.lineup.lineupId)
+			console.log(fromSpot);
 			viewFromSpots.value.set(fromId, fromSpot)
 		} else {
 			//fromSpot может быть создан другим toSpotом или этим же, но через другой лайнап
@@ -601,8 +605,10 @@ const methods_fromSpot = {
 			existingFromSpot.filter.tickrate[lineup.lineup.tickrate]++
 			existingFromSpot.filter.difficulties[lineup.lineup.difficulty]++
 			existingFromSpot.isActive = true
+			console.log(existingFromSpot);
 			viewFromSpots.value.set(fromId, existingFromSpot)
 		}
+		
 	},
 	deactivate(lineup: LineupItem) {//delete if not selected/activated by any other toSpot
 		/* не уверен на 100% в этой функции, т.к. скопировал ее код из прототипа другой.
@@ -775,7 +781,7 @@ bugHeOption:[], */
 								filterState.side === viewLineup.lineup.side &&
 								filterState.tickrate === viewLineup.lineup.tickrate &&
 								filterState.difficulties.has(viewLineup.lineup.difficulty)
-							)">
+							) && !store.isCmsModeOn">
 							<svg>
 								<line
 									:x1="`${viewFromSpots.get(viewLineup.lineup.fromId)?.fromSpot.coords.x}%`"
@@ -804,14 +810,15 @@ bugHeOption:[], */
 					</template>
 
 					<template v-for="[toId, toItem] in viewToSpots">
-						<Grenade @click="clickToSpot($event, toItem)"
-							:toItem="toItem" ref="smokeSpritesRef"
-							:pointSize="pointSize" :isActive="toItem.isActive"
+						<Grenade v-show="!store.isCmsModeOn"
+							@click="clickToSpot($event, toItem)" :toItem="toItem"
+							ref="smokeSpritesRef" :pointSize="pointSize"
+							:isActive="toItem.isActive"
 							:isSelected="toItem.isSelected" :filter="filterState" />
 					</template>
 
 					<template v-for="[fromId, fromItem] in viewFromSpots">
-						<FromSpot :fromItem="fromItem"
+						<FromSpot v-show="!store.isCmsModeOn" :fromItem="fromItem"
 							@myclick="clickFromSpot($event, fromItem)"
 							:filter="filterState" />
 					</template>
