@@ -100,27 +100,27 @@ const handlers = {
                 return alert('Заполненные данные невалидны. Подробности: ' + result.error)
             } else {
                 const formData = new FormData()
-                formData.append('lineupId', lineup['lineupId'])
-                formData.append('toId', lineup['toId'])
-                formData.append('fromId', lineup['fromId'])
+                formData.append('lineupId', lineup.lineupId)
+                formData.append('toId', lineup.toId)
+                formData.append('fromId', lineup.fromId)
                 if (lineup.imgFileAim) {
-                    formData.append('imgFileAim', lineup['imgFileAim'])
+                    formData.append('imgFileAim', lineup.imgFileAim)
                 }
                 if (lineup.imgFileAimZoom) {
-                    formData.append('imgFileAimZoom', lineup['imgFileAimZoom'])
+                    formData.append('imgFileAimZoom', lineup.imgFileAimZoom)
                 }
                 if (lineup.imgFileOverview) {
-                    formData.append('imgFileOverview', lineup['imgFileOverview'])
+                    formData.append('imgFileOverview', lineup.imgFileOverview)
                 }
-                formData.append('nadeType', lineup['nadeType'])
-                formData.append('side', lineup['side'])
-                formData.append('tickrate', JSON.stringify(lineup['tickrate']))
-                formData.append('comboLineupIds', JSON.stringify(lineup['comboLineupIds']))
-                formData.append('throwClick', lineup['throwClick'])
-                formData.append('throwMovement', lineup['throwMovement'])
-                formData.append('difficulty', lineup['difficulty'])
+                formData.append('nadeType', lineup.nadeType)
+                formData.append('side', lineup.side)
+                formData.append('tickrate', JSON.stringify(lineup.tickrate))
+                formData.append('comboLineupIds', JSON.stringify(lineup.comboLineupIds))
+                formData.append('throwClick', lineup.throwClick)
+                formData.append('throwMovement', lineup.throwMovement)
+                formData.append('difficulty', lineup.difficulty)
                 if (lineup.forWhom) {
-                    formData.append('forWhom', lineup['forWhom'])
+                    formData.append('forWhom', lineup.forWhom)
                 }
                 formData.append('name', computeds.name.value) //
                 formData.append('lineupFileName', computeds.fileName.value) //

@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 // vue
 import { ref, computed, watch, onMounted, type StyleValue, reactive, watchEffect, onBeforeMount } from "vue";
-import { onBeforeRouteLeave, onBeforeRouteUpdate, useRoute } from 'vue-router'
+import { onBeforeRouteLeave, onBeforeRouteUpdate, useRoute, useRouter } from 'vue-router'
 import { useSomestore } from "@/stores/somestore";
 // libs
 import panzoom from "panzoom"
@@ -42,13 +42,12 @@ import type { Spot } from "@/data/interfaces/Spot";
 import { ViewItemsFactory, type LineupItem } from "@/data/types/ViewItems";
 import type { ViewToSpot, ViewFromSpot } from "@/data/types/ViewItems";
 
-
 const { isLoading, nSegmentsVisible, startLoading, endLoading, onImageLoadError } = useLoadingGoldsourceLogic()
-const store = useSomestore()
 
+const store = useSomestore()
+const router = useRouter()
 const route = useRoute()
 const currentRoute = computed(() => route.path.slice(1))
-
 
 /* Возможно нужно вынести склеивание этого объекта в отдельный файл и импортировать его,
 если склеивание происходит каждый раз при загрузке приложения.*/
@@ -294,11 +293,13 @@ const contentPanelHandlers = {
 		window.localStorage.setItem('contentPanelState.isMinimized', JSON.stringify(contentPanelState.isMinimized))
 	}
 }
+/* localStorage preview state */
 onMounted(() => {
 	if (window.localStorage.getItem('contentPanelState.isMinimized') !== null) {
 		contentPanelState.isMinimized = JSON.parse(window.localStorage.getItem('contentPanelState.isMinimized')!)
 	}
 })
+
 
 
 
@@ -340,9 +341,42 @@ const viewItemsFactory = computed(() => {
 	return new ViewItemsFactory(currentRouteMapItems.value)
 })
 const selectedLineups = computed(() => {
-	return [...viewLineups.value]
+	const res = [...viewLineups.value]
 		.filter(lineup => lineup[1].isSelected)
 		.map(lineup => lineup[1].lineup)
+	if (!store.isFirstLoad) {
+		// const names = res.map(lineup => lineup.name)
+		const ids = res.map(lineup => lineup.lineupId)
+		if (res.length > 0) {
+			/* Names into url */
+			router.push({ query: { id: ids } })
+			/* IDs into localstorage */
+			// localStorage.setItem('where', JSON.stringify(ids))
+		}
+		else {
+			router.push({ query: {} })
+			// localStorage.removeItem('where')
+		}
+	}
+	/* return selected lineups */
+	return res
+})
+onMounted(() => {
+	if (route.query.id) {
+		router.push({ query: { where: route.query.id } })
+		// const lineupIds = JSON.parse(localStorage.getItem('where')!) as string[]
+		const lineupIds = route.query.id as string[]
+		lineupIds.forEach((lineupId, ix) => {
+			const lineup = viewItemsFactory.value.createViewLineup(lineupId)
+			const toSpot = viewToSpots.value.get(lineup.lineup.toId)!
+			clickToSpot(new Event('restoreLineups'), toSpot)
+			const fromSpot = viewFromSpots.value.get(lineup.lineup.fromId)!
+			clickFromSpot(new Event('restoreLineups'), fromSpot, lineup)
+		})
+	}
+	else {
+		return
+	}
 })
 
 watch(selectedLineups, (newVal, oldVal) => {
@@ -381,8 +415,8 @@ watch(viewLineups, () => {
 /* onClick TOSPOT */
 function clickToSpot(event: Event, clickedToSpot: ViewToSpot) {
 	console.log('clicked singlemap.vue');
-	if (isDragging.value == false &&
-		(event.target as HTMLButtonElement).tagName == 'BUTTON') {
+	if (event.type == 'restoreLineups' || (isDragging.value == false &&
+		(event.target as HTMLButtonElement).tagName == 'BUTTON')) {
 		if (!clickedToSpot.isActive && !clickedToSpot.isSelected) {
 			methods_toSpot.activeOnClick(clickedToSpot)
 
@@ -403,7 +437,7 @@ function clickToSpot(event: Event, clickedToSpot: ViewToSpot) {
 	}
 }
 
-function clickFromSpot(event: Event, fromSpot: ViewFromSpot) {
+function clickFromSpot(event: Event, fromSpot: ViewFromSpot, lineup: LineupItem | undefined) {
 
 	const intersection = fromSpot.activeLineupIds.size + fromSpot.selectedLineupIds.size
 	if (intersection === 1) {
@@ -419,6 +453,12 @@ function clickFromSpot(event: Event, fromSpot: ViewFromSpot) {
 			methods_fromSpot.deselect(fromSpot, lineup)
 			return
 		}
+	}
+	if (intersection > 1 && event?.type == 'restoreLineups') {
+		fromSpot.isSelected = true
+		viewFromSpots.value.set(fromSpot.fromSpot.spotId, fromSpot)
+		methods_fromSpot.select(fromSpot, lineup!)
+		return
 	}
 	if (intersection > 1) {
 		selectFromSpotFormContext.value.open(fromSpot)
@@ -540,8 +580,10 @@ const methods_fromSpot = {
 		methods_fromSpot.toSelectedDeps(lineup)
 	},
 	toSelectedDeps(lineup: LineupItem) {
+		console.log('lineup ', lineup.lineup.lineupId, ' made selected');
 		lineup.isSelected = true
 		lineup.isActive = false
+		viewLineups.value.set(lineup.lineup.lineupId, lineup)
 		methods_toSpot.select(lineup)
 	},
 	deselect(fromSpot: ViewFromSpot, lineup: LineupItem) {
@@ -819,7 +861,7 @@ bugHeOption:[], */
 
 					<template v-for="[fromId, fromItem] in viewFromSpots">
 						<FromSpot v-show="!store.isCmsModeOn" :fromItem="fromItem"
-							@myclick="clickFromSpot($event, fromItem)"
+							@myclick="clickFromSpot($event, fromItem, undefined)"
 							:filter="filterState" />
 					</template>
 
