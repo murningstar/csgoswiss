@@ -345,11 +345,11 @@ const selectedLineups = computed(() => {
 		.filter(lineup => lineup[1].isSelected)
 		.map(lineup => lineup[1].lineup)
 	if (!store.isFirstLoad) {
-		// const names = res.map(lineup => lineup.name)
 		const ids = res.map(lineup => lineup.lineupId)
+		const into = res.map(lineup => lineup.name.replace('into-', ''))
 		if (res.length > 0) {
 			/* Names into url */
-			router.push({ query: { id: ids } })
+			router.push({ query: { into: into } })
 			/* IDs into localstorage */
 			// localStorage.setItem('where', JSON.stringify(ids))
 		}
@@ -362,17 +362,28 @@ const selectedLineups = computed(() => {
 	return res
 })
 onMounted(() => {
-	if (route.query.id) {
-		router.push({ query: { where: route.query.id } })
-		// const lineupIds = JSON.parse(localStorage.getItem('where')!) as string[]
-		const lineupIds = route.query.id as string[]
-		lineupIds.forEach((lineupId, ix) => {
+	if (route.query.into) {
+		router.push({ query: { where: route.query.into } })
+		if (Array.isArray(route.query.into)) {
+			const intos = (route.query.into as string[]).map(lineupName => "into-" + lineupName)
+			const lineupIds: string[] = []
+			intos.forEach(lineupName => lineupIds.push(viewItemsFactory.value.lineupIdNameMap.get(lineupName)!))
+			lineupIds.forEach((lineupId, ix) => {
+				const lineup = viewItemsFactory.value.createViewLineup(lineupId)
+				const toSpot = viewToSpots.value.get(lineup.lineup.toId)!
+				clickToSpot(new Event('restoreLineups'), toSpot)
+				const fromSpot = viewFromSpots.value.get(lineup.lineup.fromId)!
+				clickFromSpot(new Event('restoreLineups'), fromSpot, lineup)
+			})
+		} else {
+			const into = "into-" + (route.query.into as string)
+			const lineupId = viewItemsFactory.value.lineupIdNameMap.get(into)
 			const lineup = viewItemsFactory.value.createViewLineup(lineupId)
 			const toSpot = viewToSpots.value.get(lineup.lineup.toId)!
 			clickToSpot(new Event('restoreLineups'), toSpot)
 			const fromSpot = viewFromSpots.value.get(lineup.lineup.fromId)!
 			clickFromSpot(new Event('restoreLineups'), fromSpot, lineup)
-		})
+		}
 	}
 	else {
 		return

@@ -80,6 +80,7 @@ const handlers = {
                 imgFileAimZoom: File | null,
                 imgFileOverview: File | null
             }), 'imgSrcAim' | 'imgSrcAimZoom' | 'imgSrcOverview'> = {
+                name: computeds.fileName.value,
                 lineupId: data.lineupId,
                 toId: props.newLineupData.toSpot!.spotId,
                 fromId: props.newLineupData.fromSpot!.spotId,

@@ -13,6 +13,7 @@ export interface Lineup {
     toId: string;
     fromId: string;
     nadeType: NadeType;
+    name: string;
     /* Потом буду еще категоризировать эти imgFile, 
     т.к. буду добавлять либо гифки либо вставки видео из ютуба
     и => изменю сам type Lineup */

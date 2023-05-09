@@ -2,11 +2,12 @@ import type { Lineup } from "../../interfaces/Lineup";
 
 export const lineups_mirage = new Map<Lineup["lineupId"], Lineup>([
     [
-        "fJVy8KdHSz2mE", // somewhere near b ->  b first arch
+        "fJVy8KdHSz2mE",
         {
             lineupId: "fJVy8KdHSz2mE",
             fromId: "gNx6wmZRJX_dv",
             toId: "EOOfF3gTmzrL2",
+            name: "into-bFirstArch-from-somewhereNearB",
             imgSrcAim: null,
             imgSrcAimZoom: null,
             imgSrcOverview: null,
@@ -20,11 +21,12 @@ export const lineups_mirage = new Map<Lineup["lineupId"], Lineup>([
         },
     ],
     [
-        "hdydF8AsNgPRm", // somewhere near b -> b second arch
+        "hdydF8AsNgPRm",
         {
             lineupId: "hdydF8AsNgPRm",
             fromId: "gNx6wmZRJX_dv",
             toId: "T81rq8FeVnKFg",
+            name: "into-bSecondArch-from-somewhereNearB",
             imgSrcAim: null,
             imgSrcAimZoom: null,
             imgSrcOverview: null,
@@ -38,11 +40,12 @@ export const lineups_mirage = new Map<Lineup["lineupId"], Lineup>([
         },
     ],
     [
-        "Jc_iTnlLSgQ9f", // somewhere near b -> b kitchen window
+        "Jc_iTnlLSgQ9f",
         {
             lineupId: "Jc_iTnlLSgQ9f",
             fromId: "gNx6wmZRJX_dv",
             toId: "DnpCe37cuAIGY",
+            name: "into-kitchenWindow-from-somewhereNearB",
             imgSrcAim: null,
             imgSrcAimZoom: null,
             imgSrcOverview: null,
@@ -56,11 +59,12 @@ export const lineups_mirage = new Map<Lineup["lineupId"], Lineup>([
         },
     ],
     [
-        "KBlpeRYpcsI4c", // somewhere near b -> window
+        "KBlpeRYpcsI4c",
         {
             lineupId: "KBlpeRYpcsI4c",
             fromId: "gNx6wmZRJX_dv",
             toId: "bozR5AccXBfmM",
+            name: "into-window-from-somewhereNearB",
             imgSrcAim: null,
             imgSrcAimZoom: null,
             imgSrcOverview: null,
@@ -74,11 +78,12 @@ export const lineups_mirage = new Map<Lineup["lineupId"], Lineup>([
         },
     ],
     [
-        "nA8LtLGcWfHVo", // somewhere near b -> jungle
+        "nA8LtLGcWfHVo",
         {
             lineupId: "nA8LtLGcWfHVo",
             fromId: "gNx6wmZRJX_dv",
             toId: "Bcn__DOHHfUT4",
+            name: "into-jungle-from-somewhereNearB",
             imgSrcAim: null,
             imgSrcAimZoom: null,
             imgSrcOverview: null,
@@ -92,11 +97,12 @@ export const lineups_mirage = new Map<Lineup["lineupId"], Lineup>([
         },
     ],
     [
-        "T5bwRsMq8si2k", // center -> jungle
+        "T5bwRsMq8si2k",
         {
             lineupId: "T5bwRsMq8si2k",
             fromId: "c2ZW10Z85iese",
             toId: "Bcn__DOHHfUT4",
+            name: "into-jungle-from-center",
             imgSrcAim: null,
             imgSrcAimZoom: null,
             imgSrcOverview: null,
@@ -110,11 +116,12 @@ export const lineups_mirage = new Map<Lineup["lineupId"], Lineup>([
         },
     ],
     [
-        "m7F1GhjUpjf94", // palace texture -> jungle
+        "m7F1GhjUpjf94",
         {
             lineupId: "m7F1GhjUpjf94",
             fromId: "BfHgp4IsQezko",
             toId: "Bcn__DOHHfUT4",
+            name: "into-jungle-from-palaceTexture",
             imgSrcAim: null,
             imgSrcAimZoom: null,
             imgSrcOverview: null,
@@ -128,11 +135,12 @@ export const lineups_mirage = new Map<Lineup["lineupId"], Lineup>([
         },
     ],
     [
-        "vosMfcX1tt9e3", // somewhere near b -> stairs
+        "vosMfcX1tt9e3",
         {
             lineupId: "vosMfcX1tt9e3",
             fromId: "c2ZW10Z85iese",
             toId: "lRdZnqs18HiLW",
+            name: "into-stairs-from-somewhereNearB",
             imgSrcAim: null,
             imgSrcAimZoom: null,
             imgSrcOverview: null,
@@ -146,11 +154,12 @@ export const lineups_mirage = new Map<Lineup["lineupId"], Lineup>([
         },
     ],
     [
-        "OOf0lfLtQzG65", // palace texture -> ct
+        "OOf0lfLtQzG65",
         {
             lineupId: "OOf0lfLtQzG65",
             fromId: "BfHgp4IsQezko",
             toId: "Ug5qL_LbcBY1k",
+            name: "into-ct-from-palaceTexture",
             imgSrcAim: null,
             imgSrcAimZoom: null,
             imgSrcOverview: null,
@@ -165,11 +174,12 @@ export const lineups_mirage = new Map<Lineup["lineupId"], Lineup>([
     ],
 
     [
-        "Y8pQ1sCXrdNWbs", // near top mid somewhere -> window
+        "Y8pQ1sCXrdNWbs",
         {
             lineupId: "Y8pQ1sCXrdNWbs",
             fromId: "P6xMszIS5iqTD",
             toId: "bozR5AccXBfmM",
+            name: "into-window-from-nearTopMidSomewhere",
             imgSrcAim: null,
             imgSrcAimZoom: null,
             imgSrcOverview: null,
@@ -183,11 +193,12 @@ export const lineups_mirage = new Map<Lineup["lineupId"], Lineup>([
         },
     ],
     [
-        "Y8pQ1sCXrdNWbd", // near top mid somewhere -> window
+        "Y8pQ1sCXrdNWbd",
         {
             lineupId: "Y8pQ1sCXrdNWbd",
             fromId: "P6xMszIS5iqTD",
             toId: "bozR5AccXBfmM",
+            name: "into-window-from-nearTopMidSomewhere",
             imgSrcAim: null,
             imgSrcAimZoom: null,
             imgSrcOverview: null,
@@ -201,11 +212,12 @@ export const lineups_mirage = new Map<Lineup["lineupId"], Lineup>([
         },
     ],
     [
-        "Y8pQ1sCXrdNWbc", // near top mid somewhere -> window
+        "Y8pQ1sCXrdNWbc",
         {
             lineupId: "Y8pQ1sCXrdNWbc",
             fromId: "P6xMszIS5iqTD",
             toId: "bozR5AccXBfmM",
+            name: "into-window-from-nearTopMidSomewhere",
             imgSrcAim: null,
             imgSrcAimZoom: null,
             imgSrcOverview: null,
@@ -219,10 +231,11 @@ export const lineups_mirage = new Map<Lineup["lineupId"], Lineup>([
         },
     ],
     [
-        "MkVeOh4atXXxA", // palace texture -> near top mid somewhere
+        "MkVeOh4atXXxA",
         {
             lineupId: "MkVeOh4atXXxA",
             toId: "P6xMszIS5iqTD",
+            name: "into-nearTopMidSomewhere-from-palaceTexture",
             fromId: "BfHgp4IsQezko",
             imgSrcAim:
                 "/src/assets/content/lineups/mirage/into-nearTopMidSomewhere-from-palaceTexture/aim.jpg",

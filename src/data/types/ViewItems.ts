@@ -160,9 +160,14 @@ export class ViewFromSpot {
 export class ViewItemsFactory {
     readonly lineups: Map<Lineup["lineupId"], Lineup>;
     readonly spots: Map<Spot["spotId"], Spot>;
+    readonly lineupIdNameMap: Map<string, string>;
     constructor(mapItems: MapItems) {
         this.lineups = mapItems.lineups;
         this.spots = mapItems.spots;
+        this.lineupIdNameMap = new Map<string, string>();
+        this.lineups.forEach((lineup, lineupId) => {
+            this.lineupIdNameMap.set(lineup.name, lineupId);
+        });
     }
     generateViewToSpots() {
         const viewToSpotsCollection: Map<Spot["spotId"], ViewToSpot> =
@@ -263,5 +268,9 @@ export class ViewItemsFactory {
         viewFromSpot.filter.side[lineup.side]++;
         viewFromSpot.filter.tickrate[lineup.tickrate]++;
         return viewFromSpot;
+    }
+    getLineupByName(name: string): Lineup {
+        const id = this.lineupIdNameMap.get(name)!;
+        return this.lineups.get(id)!
     }
 }
