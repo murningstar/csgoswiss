@@ -17,8 +17,8 @@ import FromSpot from "@/components/SingleMap/FromSpot.vue"
 import CMS from "@/components/cms/CMS.vue";
 import FilterPanel from "@/components/SingleMap/FilterPanel.vue"
 import Grenade from "@/components/SingleMap/_Grenade.vue"
-import ContentPanel from "@/components/SingleMap/ContentPanel.vue"
-import ContentCard from "@/components/SingleMap/ContentCard.vue"
+import PreviewPanel from "@/components/SingleMap/PreviewPanel.vue"
+import PreviewCard from "@/components/SingleMap/PreviewCard.vue"
 import GS_Window from "@/components/UI/GS_Window.vue";
 // data
 import { mirageGrenades } from "@/data/content/mirage/mirageGrenades";
@@ -279,24 +279,24 @@ const filterHandlers = {
 
 const isDragging = ref(false)
 
-const contentPanelState = reactive({
+const previewPanelState = reactive({
 	isToggled: false,
 	isMinimized: false,
 	isActive: computed(() => selectedLineups.value.length > 0),
 })
-const contentPanelHandlers = {
-	toggleContentPanel: () => {
-		contentPanelState.isToggled = !contentPanelState.isToggled
+const previewPanelHandlers = {
+	togglePreviewPanel: () => {
+		previewPanelState.isToggled = !previewPanelState.isToggled
 	},
 	toggleContentMode: () => {
-		contentPanelState.isMinimized = !contentPanelState.isMinimized
-		window.localStorage.setItem('contentPanelState.isMinimized', JSON.stringify(contentPanelState.isMinimized))
+		previewPanelState.isMinimized = !previewPanelState.isMinimized
+		window.localStorage.setItem('previewPanelState.isMinimized', JSON.stringify(previewPanelState.isMinimized))
 	}
 }
 /* localStorage preview state */
 onMounted(() => {
-	if (window.localStorage.getItem('contentPanelState.isMinimized') !== null) {
-		contentPanelState.isMinimized = JSON.parse(window.localStorage.getItem('contentPanelState.isMinimized')!)
+	if (window.localStorage.getItem('previewPanelState.isMinimized') !== null) {
+		previewPanelState.isMinimized = JSON.parse(window.localStorage.getItem('previewPanelState.isMinimized')!)
 	}
 })
 
@@ -392,10 +392,10 @@ onMounted(() => {
 
 watch(selectedLineups, (newVal, oldVal) => {
 	if (newVal.length > oldVal.length) {
-		contentPanelState.isToggled = true
+		previewPanelState.isToggled = true
 	}
 	if (newVal.length === 0) {
-		contentPanelState.isToggled = false
+		previewPanelState.isToggled = false
 	}
 })
 
@@ -760,10 +760,10 @@ bugHeOption:[], */
 	<!-- для цели panzoom(в этом случае братские для mapContainer-outer) элементы  -->
 	<!-- проходят все события(click,drag,scroll и тд) от самой цели. То есть -->
 	<!-- драг миникарты работает сквозь этот sibling(братский)-элемент  -->
-	<div class="wrapperOuter">
+	<main class="wrapperOuter">
 		<div class="wrapperInner">
 			<div class="mapContainer-outer" ref="outerContainerRef" @wheel="">
-				<main class="mapContainer-inner" ref="innerContainerRef"
+				<div class="mapContainer-inner" ref="innerContainerRef"
 					@mousedown="isDragging = false" @mousemove="isDragging = true">
 					<CMS />
 					<img ref="imgRef" @load="onImageLoaded"
@@ -878,18 +878,20 @@ bugHeOption:[], */
 
 
 
-				</main>
+				</div>
 			</div>
 		</div>
 
-		<ContentPanel :state="contentPanelState"
-			@toggle="contentPanelHandlers.toggleContentPanel"
-			@toggleMode="contentPanelHandlers.toggleContentMode">
-			<ContentCard v-for="lineup in selectedLineups"
+		<ContentPanel />
+
+		<PreviewPanel :state="previewPanelState"
+			@toggle="previewPanelHandlers.togglePreviewPanel"
+			@toggleMode="previewPanelHandlers.toggleContentMode">
+			<PreviewCard v-for="lineup in selectedLineups"
 				:toSpot="viewToSpots.get(lineup.toId)!" :lineup="lineup"
 				:fromSpot="viewFromSpots.get(lineup.fromId)!"
-				:isMinimized="contentPanelState.isMinimized" />
-		</ContentPanel>
+				:isMinimized="previewPanelState.isMinimized" />
+		</PreviewPanel>
 
 		<FilterPanel v-bind="{
 			isFiltersVisible,
@@ -907,7 +909,7 @@ bugHeOption:[], */
 			@changeFakeMolotov="filterHandlers.changeFakeMolotov"
 			@changeBugMolotov="filterHandlers.changeBugMolotov"
 			@changeBugHe="filterHandlers.changeBugHe" />
-	</div>
+	</main>
 
 	<Teleport to="body">
 		<GS_Window v-if="selectFromSpotFormContext.isFormVisible"

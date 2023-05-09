@@ -574,27 +574,6 @@ function exitLineupCreation() {
         <CreateLineupForm :isVisible="state.matches('shadowmapOn.creatingLineup')"
             :newLineupData="newLineupProps" @exit="exitLineupCreation" />
 
-        <Teleport to="body">
-            <GS_Window v-if="state.matches('shadowmapOn.creatingLineup') && false"
-                @exit="send('EXIT')">
-                <template #title>Create new Lineup</template>
-                <GS_ContainerLight>
-                    <p style="color:grey"> Id:{{ newLineupProps.lineupId }} </p>
-
-                    <p>To image (landing image)</p>
-                    <input type="file" name="toImgFile" id=""
-                        accept="image/*,.png,.jpg,.jpeg,.webp"
-                        @change="$event => onChangeFileInput($event, 'to')"
-                        style="display: block;">
-
-                    <div style="display: flex; margin-top: 2rem;">
-                        <GS_Button @click="submitNewSpot"> Submit </GS_Button>
-                        <GS_Button @click="onClickExit">Exit(and delete)</GS_Button>
-                    </div>
-                </GS_ContainerLight>
-            </GS_Window>
-        </Teleport>
-
         <!-- Формы для вписывания данных новой гранаты -->
         <AddGrenadeForm @exit="send('COLLAPSE')" v-bind="formState"
             v-if="smokeFormOn || molotovFormOn || flashFormOn || heFormOn"
