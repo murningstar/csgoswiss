@@ -100,6 +100,9 @@ const iconSrc = computed(() => {
     &__content {
         display: flex;
     }
+    &:hover{
+        background-color: hsla(var(--hsl), 77%, 25%, 0.7);
+    }
 }
 
 .figure {
