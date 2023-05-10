@@ -70,12 +70,13 @@ const handlers = {
     display: inline-block;
     display: flex;
     padding: 0.1rem 0.5rem;
-    &:hover{
+
+    &:hover {
         background-color: $bg_dark;
     }
 }
 
 .sd {
-    min-width: 6rem;
+    min-width: 5.4rem;
 }
 </style>
