@@ -8,4 +8,6 @@ export interface Spot {
     toSrc2?: string;
     fromSrc_fp?: string;
     fromSrc_tp?: string;
+    /* priority: Если выбран fp, то fp будет отображаться изначально, а tp - onhover */
+    priority: "fp" | "tp";
 }
