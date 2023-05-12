@@ -17,9 +17,9 @@ export interface Lineup {
     /* Потом буду еще категоризировать эти imgFile, 
     т.к. буду добавлять либо гифки либо вставки видео из ютуба
     и => изменю сам type Lineup */
-    imgSrcAim: string | null;
-    imgSrcAimZoom: string | null;
-    imgSrcOverview: string | null;
+    imgSrcAim?: string;
+    imgSrcOverview?: string;
+    imgSrcOverview2?: string;
     side: Side;
     tickrate: Tickrate;
     comboLineupIds?: Lineup["lineupId"][];
