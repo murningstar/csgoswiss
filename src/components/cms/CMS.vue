@@ -6,6 +6,7 @@ import CreateLineupForm from '@/components/cms/CreateLineupForm.vue';
 import GS_Button from "@/components/UI/GS_Button.vue"
 import GS_Check from "@/components/UI/GS_Check.vue"
 import GS_Input from "@/components/UI/GS_Input.vue"
+import GS_Radio from "@/components/UI/GS_Radio.vue"
 import GS_Window from '@/components/UI/GS_Window.vue';
 import GS_ContainerLight from '@/components/UI/GS_ContainerLight.vue';
 import { useMachine } from "@xstate/vue"
@@ -373,8 +374,11 @@ const cursorCircleVisible = ref(false)
 const cursorCircleRef = ref(null)
 
 async function submitNewSpot() {
-
-    if (!newToSpotData.value!.toImg && !newToSpotData.value!.fromImg) {
+    if (!newToSpotData.value!.toImg
+        && !newToSpotData.value!.toImg2
+        && !newToSpotData.value!.fromFp
+        && !newToSpotData.value!.fromTp
+    ) {
         return alert('Нужно залить минимум одну из картинок')
     }
     const formData = new FormData()
@@ -382,13 +386,23 @@ async function submitNewSpot() {
     formData.append('name', newToSpotData.value!.name)
     formData.append('coords', JSON.stringify(newToSpotData.value!.coords))
     const toImg = newToSpotData.value!.toImg as Blob
-    const fromImg = newToSpotData.value!.fromImg as Blob
-    const name = newToSpotData.value!.name
+    const toImg2 = newToSpotData.value!.toImg2 as Blob
+    const fromImgFp = newToSpotData.value!.fromFp as Blob
+    const fromImgTp = newToSpotData.value!.fromTp as Blob
     if (toImg) {
         formData.append('toImgFile', toImg)
     }
-    if (fromImg) {
-        formData.append('fromImgFile', fromImg)
+    if (toImg2) {
+        formData.append('toImg2File', toImg2)
+    }
+    if (fromImgFp) {
+        formData.append('fromImgFpFile', fromImgFp)
+    }
+    if (fromImgTp) {
+        formData.append('fromImgTpFile', fromImgTp)
+    }
+    if (fromImgFp || fromImgTp) {
+        formData.append('priority', newToSpotData.value!.priority)
     }
     const res = await axios.postForm(`http://localhost:7351/spots/${currentRoute.value}`, formData)
     // console.log(res);
@@ -403,21 +417,28 @@ const newToSpotData = ref<{
         x: number,
         y: number
     },
-    toImg: File | null,
-    fromImg: File | null,
+    toImg?: File,
+    toImg2?: File,
+    fromFp?: File,
+    fromTp?: File,
+    priority: "fp" | "tp",
 }>()
 
-function onChangeFileInput(e: Event, direction: 'to' | 'from') {
+function onChangeFileInput(e: Event, direction: 'to' | 'to2' | 'fromFp' | 'fromTp') {
     const target = e.target as HTMLInputElement
     const files = target.files
-    if (!files) { // если пользователь отменил добавление картинки
-        if (direction == 'to') { newToSpotData.value!.toImg = null }
-        if (direction == 'from') { newToSpotData.value!.fromImg = null }
+    if (!files) { // если пользователь отменил добавление картинки ((?)как-то xd)
+        if (direction == 'to') newToSpotData.value!.toImg = undefined
+        if (direction == 'to2') newToSpotData.value!.toImg2 = undefined
+        if (direction == 'fromFp') newToSpotData.value!.fromFp = undefined
+        if (direction == 'fromTp') newToSpotData.value!.fromTp = undefined
         return
     }
     if (files) { // если добавлена картинка
-        if (direction == 'to') { newToSpotData.value!.toImg = target.files![0] }
-        if (direction == 'from') { newToSpotData.value!.fromImg = target.files![0] }
+        if (direction == 'to') newToSpotData.value!.toImg = target.files![0]
+        if (direction == 'to2') newToSpotData.value!.toImg2 = target.files![0]
+        if (direction == 'fromFp') newToSpotData.value!.fromFp = target.files![0]
+        if (direction == 'fromTp') newToSpotData.value!.fromTp = target.files![0]
         return
     }
 }
@@ -499,7 +520,7 @@ function exitLineupCreation() {
         </div>
 
         <!-- Модалка для выбора типа гранаты -->
-        <Teleport to="body">
+        <!-- <Teleport to="body">
             <GS_Window
                 v-if="state.matches('shadowmapOn.typingPlaceholder.choosingType')"
                 @exit="send('BACK')">
@@ -531,12 +552,12 @@ function exitLineupCreation() {
             </GS_Window>
 
 
-            <!-- Кнопка step back -->
+            <-- Кнопка step back ->
             <div class="backBtn" @click="send('BACK')"
                 v-if="state.matches('shadowmapOn.typingPlaceholder')">
                 ←
             </div>
-        </Teleport>
+        </Teleport> -->
 
         <!-- createSpotForm -->
         <Teleport to="body">
@@ -555,12 +576,28 @@ function exitLineupCreation() {
                         accept="image/*,.png,.jpg,.jpeg,.webp"
                         @change="$event => onChangeFileInput($event, 'to')"
                         style="display: block;">
+                    <p>To image 2 (additional landing image)</p>
+                    <input type="file" name="toImgFile" id=""
+                        accept="image/*,.png,.jpg,.jpeg,.webp"
+                        @change="$event => onChangeFileInput($event, 'to2')"
+                        style="display: block;">
 
-                    <p>From image (throwing image)</p>
+                    <p>From image (1st person)</p>
                     <input type="file" name="fromImgFile" id=""
                         accept="image/*,.png,.jpg,.jpeg,.webp"
-                        @change="$event => onChangeFileInput($event, 'from')"
+                        @change="$event => onChangeFileInput($event, 'fromFp')"
                         style="display: block;">
+                    <p>From image (3rd person)</p>
+                    <input type="file" name="fromImgFile" id=""
+                        accept="image/*,.png,.jpg,.jpeg,.webp"
+                        @change="$event => onChangeFileInput($event, 'fromTp')"
+                        style="display: block;">
+                        
+                    <p>Priority "from" image</p>
+                    <GS_Radio :options='["fp", "tp"]'
+                        :modelValue="newToSpotData!.priority"
+                        :radioName="'spotFromPriority'"
+                        @update:modelValue="nv => newToSpotData!.priority = nv" />
 
                     <div style="display: flex; margin-top: 2rem;">
                         <GS_Button @click="submitNewSpot"> Submit </GS_Button>

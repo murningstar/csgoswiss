@@ -32,9 +32,10 @@ const route = useRoute()
 const currentRoute = computed(() => route.path.slice(1))
 const data = reactive({
     lineupId: nanoid(13) as Lineup['lineupId'],
-    imgFileAim: null as File | null,
-    imgFileAimZoom: null as File | null,
-    imgFileOverview: null as File | null,
+    imgFileAim: undefined as File | undefined,
+    imgFileOverview: undefined as File | undefined,
+    imgFileOverview2: undefined as File | undefined,
+    priority: undefined as 1 | 2 | undefined,
     /* Потом буду еще категоризировать эти imgFile, 
     т.к. буду добавлять либо гифки либо вставки видео из ютуба
     и => изменю сам type Lineup */
@@ -72,21 +73,22 @@ const handlers = {
     click: {
         exit: () => emit('exit'),
         submit: async () => {
-            if (!data.imgFileAim && !data.imgFileAimZoom && !data.imgFileOverview) {
+            if (!data.imgFileAim && !data.imgFileOverview && !data.imgFileOverview2) {
                 return alert('Нужно залить минимум одну из картинок')
             }
             const lineup: Omit<(Lineup & {
-                imgFileAim: File | null,
-                imgFileAimZoom: File | null,
-                imgFileOverview: File | null
-            }), 'imgSrcAim' | 'imgSrcAimZoom' | 'imgSrcOverview'> = {
+                imgFileAim?: File,
+                imgFileOverview?: File
+                imgFileOverview2?: File,
+            }), 'srcAim' | 'srcOverview' | 'srcOverview2'> = {
                 name: computeds.fileName.value,
                 lineupId: data.lineupId,
                 toId: props.newLineupData.toSpot!.spotId,
                 fromId: props.newLineupData.fromSpot!.spotId,
                 imgFileAim: data.imgFileAim,
-                imgFileAimZoom: data.imgFileAimZoom,
                 imgFileOverview: data.imgFileOverview,
+                imgFileOverview2: data.imgFileOverview2,
+                priority: data.priority,
                 nadeType: data.nadeType,
                 side: data.side,
                 tickrate: data.tickrate,
@@ -107,11 +109,17 @@ const handlers = {
                 if (lineup.imgFileAim) {
                     formData.append('imgFileAim', lineup.imgFileAim)
                 }
-                if (lineup.imgFileAimZoom) {
-                    formData.append('imgFileAimZoom', lineup.imgFileAimZoom)
-                }
                 if (lineup.imgFileOverview) {
                     formData.append('imgFileOverview', lineup.imgFileOverview)
+                }
+                if (lineup.imgFileOverview2) {
+                    formData.append('imgFileOverview2', lineup.imgFileOverview2)
+                }
+                if (lineup.imgFileOverview || lineup.imgFileOverview2) {
+                    if (!lineup.priority) {
+                        return alert('choose priority (which overview file gonna be displayed on the foreground)')
+                    }
+                    formData.append('priority', JSON.stringify(lineup.priority))
                 }
                 formData.append('nadeType', lineup.nadeType)
                 formData.append('side', lineup.side)
@@ -136,6 +144,7 @@ const handlers = {
         }
     },
     updateModel: {
+        priority: (nv: 1 | 2) => data.priority = nv,
         nadeType: (nv: NadeType) => data.nadeType = nv,
         side: (nv: Side) => data.side = nv,
         tickrate: (nv: Tickrate) => data.tickrate = nv,
@@ -145,19 +154,19 @@ const handlers = {
         forWhom: (nv: ForWhom) => data.forWhom = nv,
     },
     fileChanges: {
-        onchange: (e: Event, type: 'aim' | 'aimZoom' | 'overview') => {
+        onchange: (e: Event, type: 'aim' | 'overview' | 'overview2') => {
             const target = e.target as HTMLInputElement
             const files = target.files
             if (!files) { // если пользователь отменил добавление картинки
-                if (type == 'aim') { data.imgFileAim = null }
-                if (type == 'aimZoom') { data.imgFileAimZoom = null }
-                if (type == 'overview') { data.imgFileOverview = null }
+                if (type == 'aim') { data.imgFileAim = undefined }
+                if (type == 'overview') { data.imgFileOverview = undefined }
+                if (type == 'overview2') { data.imgFileOverview2 = undefined }
                 return
             }
             if (files) { // если добавлена картинка
                 if (type == 'aim') { data.imgFileAim = target.files![0] }
-                if (type == 'aimZoom') { data.imgFileAimZoom = target.files![0] }
                 if (type == 'overview') { data.imgFileOverview = target.files![0] }
+                if (type == 'overview2') { data.imgFileOverview2 = target.files![0] }
                 return
             }
         }
@@ -217,14 +226,6 @@ const handlers = {
                             @change="$event => handlers.fileChanges.onchange($event, 'aim')"
                             style="display: block;">
                     </div>
-                    <!-- imgFileAimZoom -->
-                    <div class="inputItem">
-                        <div class="inputItem__label">imgFileAimZoom</div>
-                        <input type="file" name="fromImgFile" id=""
-                            accept="image/*,.png,.jpg,.jpeg,.webp"
-                            @change="$event => handlers.fileChanges.onchange($event, 'aimZoom')"
-                            style="display: block;">
-                    </div>
                     <!-- imgFileOverview -->
                     <div class="inputItem">
                         <div class="inputItem__label">imgFileOverview</div>
@@ -232,6 +233,22 @@ const handlers = {
                             accept="image/*,.png,.jpg,.jpeg,.webp"
                             @change="$event => handlers.fileChanges.onchange($event, 'overview')"
                             style="display: block;">
+                    </div>
+                    <!-- imgFileOverview2 -->
+                    <div class="inputItem">
+                        <div class="inputItem__label">imgFileOverview2</div>
+                        <input type="file" name="fromImgFile" id=""
+                            accept="image/*,.png,.jpg,.jpeg,.webp"
+                            @change="$event => handlers.fileChanges.onchange($event, 'overview2')"
+                            style="display: block;">
+                    </div>
+                    <!-- priority -->
+                    <div class="inputItem"
+                        v-if="data.imgFileOverview || data.imgFileOverview2">
+                        <GS_Radio :options="[1, 2]" :modelValue="data.priority"
+                            :radioName="'priorityRadio'"
+                            @update:modelValue="handlers.updateModel.priority" />
+                        <div class="inputItem__label">Priority overview file</div>
                     </div>
 
                     <!-- side -->

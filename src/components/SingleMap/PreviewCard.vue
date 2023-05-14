@@ -1,22 +1,44 @@
 <script setup lang="ts">
+import { computed, reactive, ref } from 'vue';
+import { useRoute } from 'vue-router';
+import camelcase from "camelcase"
 import type { LineupItem, ViewFromSpot, ViewToSpot } from '@/data/types/ViewItems';
 import type { Lineup } from '@/data/interfaces/Lineup';
-import { computed } from 'vue';
-
+const emit = defineEmits(['viewLineup'])
 const props = defineProps<{
     toSpot: ViewToSpot,
     lineup: Lineup,
     fromSpot: ViewFromSpot,
     isMinimized: boolean
 }>()
-const iconSrc = computed(() => {
-    return `/src/assets/icons/icon_${props.lineup.nadeType}.webp`
+const route = useRoute()
+const currentRoute = computed(() => route.path.slice(1))
+const fromSrc = computed(() => {
+    const priority = props.fromSpot.fromSpot.priority!
+    const path = `/src/assets/content/spots/${currentRoute.value}`
+    const spotFolderName = camelcase(props.fromSpot.fromSpot.name)
+    if (priority == 'fp') return path + "/" + spotFolderName + props.fromSpot.fromSpot.fromSrc_fp
+    if (priority == 'tp') return path + "/" + spotFolderName + props.fromSpot.fromSpot.fromSrc_tp
 })
+const lineupSrc = computed(() => `/src/assets/content/lineups/${currentRoute.value}/${props.lineup.name}` + props.lineup.srcAim)
+const toSrc = computed(() => {
+    const path = `/src/assets/content/spots/${currentRoute.value}`
+    const spotFolderName = camelcase(props.toSpot.toSpot.name)
+    return path + "/" + spotFolderName + props.toSpot.toSpot.toSrc!
+})
+const iconSrc = computed(() => `/src/assets/icons/icon_${props.lineup.nadeType}.webp`)
+
+const data = ref({
+    fromImgHovered: false
+})
+
+
 
 </script>
 
 <template>
-    <article class="contentItem" :style="{ '--hsl': toSpot.hslColor }">
+    <article class="contentItem" :style="{ '--hsl': toSpot.hslColor }"
+        @click="emit('viewLineup', lineup.lineupId)">
         <header class="contentItem__header">
             <span class="capitalizer hsl">{{ toSpot.toSpot.name }}</span>
             {{ lineup.nadeType }}
@@ -27,9 +49,7 @@ const iconSrc = computed(() => {
         <section class="contentItem__content" v-if="!isMinimized">
             <figure class="figure">
                 <div class="figure__imgCont">
-                    <img class="figure__img"
-                        :src="fromSpot.fromSpot.fromImgSrc!"
-                        alt="">
+                    <img class="figure__img" :src="fromSrc" alt="">
                 </div>
                 <figcaption class="figure__caption">
                     Stand there
@@ -37,8 +57,7 @@ const iconSrc = computed(() => {
             </figure>
             <figure class="figure">
                 <div class="figure__imgCont">
-                    <img class="figure__img"
-                        :src="lineup.imgSrcAim!" alt="">
+                    <img class="figure__img" :src="lineupSrc" alt="">
                 </div>
                 <figcaption class="figure__caption">
                     Aim there
@@ -46,8 +65,7 @@ const iconSrc = computed(() => {
             </figure>
             <figure class="figure">
                 <div class="figure__imgCont">
-                    <img class="figure__img"
-                        :src="toSpot.toSpot.toImgSrc!" alt="">
+                    <img class="figure__img" :src="toSrc!" alt="">
                 </div>
                 <figcaption class="figure__caption">
                     Lands<span class="hsl"> there</span>
@@ -100,7 +118,8 @@ const iconSrc = computed(() => {
     &__content {
         display: flex;
     }
-    &:hover{
+
+    &:hover {
         background-color: hsla(var(--hsl), 77%, 25%, 0.7);
     }
 }

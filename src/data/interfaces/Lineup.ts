@@ -17,9 +17,9 @@ export interface Lineup {
     /* Потом буду еще категоризировать эти imgFile, 
     т.к. буду добавлять либо гифки либо вставки видео из ютуба
     и => изменю сам type Lineup */
-    imgSrcAim?: string;
-    imgSrcOverview?: string;
-    imgSrcOverview2?: string;
+    srcAim?: string;
+    srcOverview?: string;
+    srcOverview2?: string;
     /* priority: Если выбран 1, то overview будет 
     отображаться изначально, а overview2 - onhover */
     priority?: 1 | 2;
