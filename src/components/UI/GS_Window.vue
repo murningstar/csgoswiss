@@ -32,6 +32,8 @@ const emit = defineEmits(['exit'])
     background: $bg_light;
     @include gs-bd;
     border: 2px solid $border_light;
+    max-width: 100%;
+
 
     &__heading {
         display: flex;

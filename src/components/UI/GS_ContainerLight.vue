@@ -18,7 +18,7 @@
     padding: 30px 40px 30px 40px;
     width: fit-content;
     min-width: 27rem;
-    max-width: 80%;
+    max-width: 100%;
     max-height: 79vh;
     overflow-y: scroll;
 }
