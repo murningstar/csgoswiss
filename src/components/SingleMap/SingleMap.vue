@@ -19,6 +19,8 @@ import FilterPanel from "@/components/SingleMap/FilterPanel.vue"
 import Grenade from "@/components/SingleMap/_Grenade.vue"
 import PreviewPanel from "@/components/SingleMap/PreviewPanel.vue"
 import PreviewCard from "@/components/SingleMap/PreviewCard.vue"
+import ContentPanel from "@/components/SingleMap/ContentPanel.vue"
+import SelectForm from "@/components/SingleMap/SelectForm.vue"
 import GS_Window from "@/components/UI/GS_Window.vue";
 // data
 import { mirageGrenades } from "@/data/content/mirage/mirageGrenades";
@@ -730,6 +732,56 @@ const selectFromSpotFormContext = ref<{
 		selectFromSpotFormContext.value.clickedFromSpot = undefined
 	}
 })
+const selectFormProps = {
+	activeLineups: computed(() => {
+		if (selectFromSpotFormContext.value.clickedFromSpot) {
+			const lineupPropObjArray =
+				[...selectFromSpotFormContext.value.clickedFromSpot!.activeLineupIds]
+					.map(activeLineupId => {
+						const lineup = viewLineups.value.get(activeLineupId)!
+						const lineupPropObj =
+						{
+							lineupItem: lineup,
+							viewToSpot: viewToSpots.value.get(lineup.lineup.toId)!,
+							viewFromSpot: viewFromSpots.value.get(lineup.lineup.fromId)!
+						}
+						return lineupPropObj
+					})
+			return lineupPropObjArray
+		}
+	}),
+	selectedLineups: computed(() => {
+		if (selectFromSpotFormContext.value.clickedFromSpot) {
+			const lineupPropObjArray =
+				[...selectFromSpotFormContext.value.clickedFromSpot!.selectedLineupIds]
+					.map(selectedLineupId => {
+						const lineup = viewLineups.value.get(selectedLineupId)!
+						const lineupPropObj =
+						{
+							lineupItem: lineup,
+							viewToSpot: viewToSpots.value.get(lineup.lineup.toId)!,
+							viewFromSpot: viewFromSpots.value.get(lineup.lineup.fromId)!
+						}
+						return lineupPropObj
+					})
+			return lineupPropObjArray
+		}
+	})
+}
+
+const contentPanelData = ref({
+	isVisible: false,
+	clickedLineup: undefined as LineupItem | undefined,
+	linkedToSpot: undefined as ViewToSpot | undefined,
+	linkedFromSpot: undefined as ViewFromSpot | undefined,
+})
+function viewLineupData(lineupId: string) {
+	contentPanelData.value.isVisible = true
+	const lineup = viewLineups.value.get(lineupId)!
+	contentPanelData.value.clickedLineup = lineup
+	contentPanelData.value.linkedToSpot = viewToSpots.value.get(lineup.lineup.toId)!
+	contentPanelData.value.linkedFromSpot = viewFromSpots.value.get(lineup.lineup.fromId)!
+}
 /* onewaySmokeOption:[],
 fakeSmokeOption:[],
 bugSmokeOption:[],
@@ -876,13 +928,13 @@ bugHeOption:[], */
 							:filter="filterState" />
 					</template>
 
-
-
 				</div>
 			</div>
 		</div>
-
-		<ContentPanel />
+		<ContentPanel :isVisible="contentPanelData.isVisible"
+			:lineup="contentPanelData.clickedLineup"
+			:toSpot="contentPanelData.linkedToSpot"
+			:fromSpot="contentPanelData.linkedFromSpot" />
 
 		<PreviewPanel :state="previewPanelState"
 			@toggle="previewPanelHandlers.togglePreviewPanel"
@@ -890,7 +942,8 @@ bugHeOption:[], */
 			<PreviewCard v-for="lineup in selectedLineups"
 				:toSpot="viewToSpots.get(lineup.toId)!" :lineup="lineup"
 				:fromSpot="viewFromSpots.get(lineup.fromId)!"
-				:isMinimized="previewPanelState.isMinimized" />
+				:isMinimized="previewPanelState.isMinimized"
+				@viewLineup="(lineupId) => viewLineupData(lineupId)" />
 		</PreviewPanel>
 
 		<FilterPanel v-bind="{
@@ -911,34 +964,12 @@ bugHeOption:[], */
 			@changeBugHe="filterHandlers.changeBugHe" />
 	</main>
 
-	<Teleport to="body">
-		<GS_Window v-if="selectFromSpotFormContext.isFormVisible"
-			@exit="selectFromSpotFormContext.close">
-			<template #title>
-				Choose what to do with clicked throw spot
-			</template>
-			<template #default>
-				<div
-					v-for="lineupId in selectFromSpotFormContext.clickedFromSpot!.activeLineupIds">
-					<div @click="formSelectFromSpot(lineupId)"
-						style="cursor: pointer; display: inline-block;"
-						:style="{ color: `hsl(${viewToSpots.get(viewLineups.get(lineupId)?.lineup.toId!)?.hslColor}, 100%, 60%)` }">
-						+SELECT {{ viewLineups.get(lineupId)?.lineup.lineupId }}
-					</div>
-				</div>
-				<div
-					v-for="lineupId in selectFromSpotFormContext.clickedFromSpot!.selectedLineupIds">
-					<div @click="formDeselectFromSpot(lineupId)"
-						style="cursor: pointer; display: inline-block;"
-						:style="{ color: `hsl(${viewToSpots.get(viewLineups.get(lineupId)?.lineup.toId!)?.hslColor}, 100%, 60%)` }">
-						-DESELECT {{ viewLineups.get(lineupId)?.lineup.lineupId }}
-					</div>
-				</div>
-			</template>
-		</GS_Window>
-	</Teleport>
-
-
+	<SelectForm :isVisible="selectFromSpotFormContext.isFormVisible"
+		@exit="selectFromSpotFormContext.close()"
+		:activeLineups="selectFormProps.activeLineups.value!"
+		:selectedLineups="selectFormProps.selectedLineups.value!"
+		@select="lineupId => formSelectFromSpot(lineupId)"
+		@deselect="lineupId => formDeselectFromSpot(lineupId)" />
 	<Teleport to="body">
 		<Loading_goldsource v-if="isLoading" :nSegmentsVisible="nSegmentsVisible">
 			<template #title>
