@@ -30,6 +30,12 @@ const fromSrc = computed(() => {
 const lineupSrc = computed(() => {
     return `/src/assets/content/lineups/${currentRoute.value}/${props.lineup.lineup.name}` + props.lineup.lineup.srcAim
 })
+const toSrc = computed(() => {
+    const path = `/src/assets/content/spots/${currentRoute.value}`
+    const spotFolderName = camelcase(props.toSpot.toSpot.name)
+    const toSrc = props.toSpot.toSpot.toSrc || props.toSpot.toSpot.toSrc2
+    return path + "/" + spotFolderName + toSrc
+})
 </script>
 
 <template>
@@ -71,7 +77,7 @@ const lineupSrc = computed(() => {
             </figure>
             <figure class="screenPanel panelLand">
                 <div class="screenPanel__imgcont">
-                    <img class="img" :src="toSpot.toSpot.toSrc"
+                    <img class="img" :src="toSrc"
                         alt="image of landing spot">
                 </div>
                 <figcaption class="screenPanel__label">Lands there</figcaption>
