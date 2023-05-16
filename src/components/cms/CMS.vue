@@ -28,6 +28,7 @@ import { maplist } from '@/data/maplist';
 import type { Spot } from '@/data/interfaces/Spot';
 import { z } from 'zod'
 import axios from 'axios';
+import camelcase from 'camelcase';
 
 
 /* Placeholder называется как называется, так как точка прилёта гранаты
@@ -383,7 +384,7 @@ async function submitNewSpot() {
     }
     const formData = new FormData()
     formData.append('spotId', newToSpotData.value!.spotId)
-    formData.append('name', newToSpotData.value!.name)
+    formData.append('name', camelcase(newToSpotData.value!.name))
     formData.append('coords', JSON.stringify(newToSpotData.value!.coords))
     const toImg = newToSpotData.value!.toImg as Blob
     const toImg2 = newToSpotData.value!.toImg2 as Blob
