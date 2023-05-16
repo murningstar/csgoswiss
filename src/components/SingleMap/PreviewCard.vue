@@ -4,7 +4,7 @@ import { useRoute } from 'vue-router';
 import camelcase from "camelcase"
 import type { LineupItem, ViewFromSpot, ViewToSpot } from '@/data/types/ViewItems';
 import type { Lineup } from '@/data/interfaces/Lineup';
-const emit = defineEmits(['viewLineup'])
+const emit = defineEmits(['lineupClicked'])
 const props = defineProps<{
     toSpot: ViewToSpot,
     lineup: Lineup,
@@ -38,7 +38,7 @@ const data = ref({
 
 <template>
     <article class="contentItem" :style="{ '--hsl': toSpot.hslColor }"
-        @click="emit('viewLineup', lineup.lineupId)">
+        @click="emit('lineupClicked', lineup.lineupId)">
         <header class="contentItem__header">
             <span class="capitalizer hsl">{{ toSpot.toSpot.name }}</span>
             {{ lineup.nadeType }}

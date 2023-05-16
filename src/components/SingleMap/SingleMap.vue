@@ -775,12 +775,18 @@ const contentPanelData = ref({
 	linkedToSpot: undefined as ViewToSpot | undefined,
 	linkedFromSpot: undefined as ViewFromSpot | undefined,
 })
-function viewLineupData(lineupId: string) {
+function openContentPanel(lineupId: string) {
 	contentPanelData.value.isVisible = true
 	const lineup = viewLineups.value.get(lineupId)!
 	contentPanelData.value.clickedLineup = lineup
 	contentPanelData.value.linkedToSpot = viewToSpots.value.get(lineup.lineup.toId)!
 	contentPanelData.value.linkedFromSpot = viewFromSpots.value.get(lineup.lineup.fromId)!
+}
+function exitContentPanel() {
+	contentPanelData.value.isVisible = false;
+	contentPanelData.value.clickedLineup = undefined
+	contentPanelData.value.linkedFromSpot = undefined
+	contentPanelData.value.linkedToSpot = undefined
 }
 /* onewaySmokeOption:[],
 fakeSmokeOption:[],
@@ -931,10 +937,11 @@ bugHeOption:[], */
 				</div>
 			</div>
 		</div>
-		<ContentPanel :isVisible="contentPanelData.isVisible"
-			:lineup="contentPanelData.clickedLineup"
-			:toSpot="contentPanelData.linkedToSpot"
-			:fromSpot="contentPanelData.linkedFromSpot" />
+		<ContentPanel @exit="exitContentPanel"
+			:isVisible="contentPanelData.isVisible"
+			:lineup="contentPanelData.clickedLineup!"
+			:toSpot="contentPanelData.linkedToSpot!"
+			:fromSpot="contentPanelData.linkedFromSpot!" />
 
 		<PreviewPanel :state="previewPanelState"
 			@toggle="previewPanelHandlers.togglePreviewPanel"
@@ -943,7 +950,7 @@ bugHeOption:[], */
 				:toSpot="viewToSpots.get(lineup.toId)!" :lineup="lineup"
 				:fromSpot="viewFromSpots.get(lineup.fromId)!"
 				:isMinimized="previewPanelState.isMinimized"
-				@viewLineup="(lineupId) => viewLineupData(lineupId)" />
+				@lineupClicked="(lineupId) => openContentPanel(lineupId)" />
 		</PreviewPanel>
 
 		<FilterPanel v-bind="{
