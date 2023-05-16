@@ -403,6 +403,9 @@ async function submitNewSpot() {
         formData.append('fromImgTpFile', fromImgTp)
     }
     if (fromImgFp || fromImgTp) {
+        if (!newToSpotData.value?.priority) {
+            return alert('Choose priority(from image provided)')
+        }
         formData.append('priority', newToSpotData.value!.priority)
     }
     const res = await axios.postForm(`http://localhost:7351/spots/${currentRoute.value}`, formData)
@@ -593,7 +596,7 @@ function exitLineupCreation() {
                         accept="image/*,.png,.jpg,.jpeg,.webp"
                         @change="$event => onChangeFileInput($event, 'fromTp')"
                         style="display: block;">
-                        
+
                     <p>Priority "from" image</p>
                     <GS_Radio :options='["fp", "tp"]'
                         :modelValue="newToSpotData!.priority"

@@ -225,6 +225,39 @@ export const lineups_mirage = new Map<Lineup["lineupId"], Lineup>([
     ],
     [
         "-7HnGtfsyJha_", // asd -> ct
-        {"lineupId":"-7HnGtfsyJha_","toId":"Ug5qL_LbcBY1k","fromId":"g2yk2MMCliVJ9","name":"into-ct-from-asd","nadeType":"smoke","side":"t","tickrate":128,"throwClick":"leftclick","throwMovement":"regular","difficulty":"easy","comboLineupIds":[],"srcAim":"/aim.png","srcOverview":"/overview.png","srcOverview2":"/overview2.png","priority":2},
+        {
+            lineupId: "-7HnGtfsyJha_",
+            toId: "Ug5qL_LbcBY1k",
+            fromId: "g2yk2MMCliVJ9",
+            name: "into-ct-from-asd",
+            nadeType: "smoke",
+            side: "t",
+            tickrate: 128,
+            throwClick: "leftclick",
+            throwMovement: "regular",
+            difficulty: "easy",
+            comboLineupIds: [],
+            srcAim: "/aim.png",
+            srcOverview: "/overview.png",
+            srcOverview2: "/overview2.png",
+            priority: 2,
+        },
+    ],
+    [
+        "l6K-nZRe_rWKi", // 1 -> 2
+        {
+            lineupId: "l6K-nZRe_rWKi",
+            toId: "iGUh3ToS0KFUU",
+            fromId: "seCwwpCIUb8lK",
+            name: "into-2-from-1",
+            nadeType: "smoke",
+            side: "t",
+            tickrate: 128,
+            throwClick: "leftclick",
+            throwMovement: "regular",
+            difficulty: "easy",
+            comboLineupIds: [],
+            srcAim: "/aim.png",
+        },
     ],
 ]);

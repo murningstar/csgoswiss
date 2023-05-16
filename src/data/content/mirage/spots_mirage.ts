@@ -135,4 +135,26 @@ export const spots_mirage = new Map<Spot["spotId"], Spot>([
             fromSrc_tp: "/fromTp_asd.png",
         },
     ],
+    [
+        "seCwwpCIUb8lK",
+        {
+            spotId: "seCwwpCIUb8lK",
+            name: "1",
+            coords: { x: 89.9, y: 58.9 },
+            priority: "fp",
+            toSrc: "/to_1.png",
+            fromSrc_fp: "/fromFp_1.png",
+        },
+    ],
+    [
+        "iGUh3ToS0KFUU",
+        {
+            spotId: "iGUh3ToS0KFUU",
+            name: "2",
+            coords: { x: 84.1, y: 65.9 },
+            priority: "fp",
+            toSrc: "/to_2.jpg",
+            fromSrc_fp: "/fromFp_2.webp",
+        },
+    ],
 ]);
