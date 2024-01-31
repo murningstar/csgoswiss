@@ -13,6 +13,8 @@ import type {
 } from "./GrenadeProperties";
 import type { MapItems } from "@/data/types/MapItems";
 import { boolean } from "zod";
+import type { SpotsHashMap } from "./SpotsHashMap";
+import type { LineupsHashMap } from "./LineupsHashMap";
 
 export type LineupItem = {
     lineup: Lineup;
@@ -161,9 +163,9 @@ export class ViewItemsFactory {
     readonly lineups: Map<Lineup["lineupId"], Lineup>;
     readonly spots: Map<Spot["spotId"], Spot>;
     readonly lineupIdNameMap: Map<string, string>;
-    constructor(mapItems: MapItems) {
-        this.lineups = mapItems.lineups;
-        this.spots = mapItems.spots;
+    constructor(spots:SpotsHashMap, lineups:LineupsHashMap) {
+        this.lineups = lineups;
+        this.spots = spots;
         this.lineupIdNameMap = new Map<string, string>();
         this.lineups.forEach((lineup, lineupId) => {
             this.lineupIdNameMap.set(lineup.name, lineupId);
