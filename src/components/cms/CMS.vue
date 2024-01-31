@@ -1,44 +1,52 @@
 <script setup lang="ts">
-import { computed, ref, watch, reactive, onMounted, onUnmounted } from 'vue';
-import { onBeforeRouteLeave, useRoute } from 'vue-router'
-import AddGrenadeForm from "@/components/cms/AddGrenadeForm.vue"
-import CreateLineupForm from '@/components/cms/CreateLineupForm.vue';
-import GS_Button from "@/components/UI/GS_Button.vue"
-import GS_Check from "@/components/UI/GS_Check.vue"
-import GS_Input from "@/components/UI/GS_Input.vue"
-import GS_Radio from "@/components/UI/GS_Radio.vue"
-import GS_Window from '@/components/UI/GS_Window.vue';
-import GS_ContainerLight from '@/components/UI/GS_ContainerLight.vue';
-import { useMachine } from "@xstate/vue"
-import { createMachine } from "xstate"
-import { nanoid } from "nanoid"
-import type { CoordsObj, Difficulty, ForWhom, NadeType, Side, ThrowClick, ThrowMovement, Tickrate } from '@/data/types/GrenadeProperties';
-import type { Placeholder } from '@/data/_old/Placeholder'
-import { nadeTypeList } from '@/data/nadeTypeList';
-import { useSomestore } from '@/stores/somestore';
-import { mirageGrenades } from '@/data/content/mirage/mirageGrenades';
-import { ancientGrenades } from '@/data/content/ancient/ancientGrenades';
-import { dust2Grenades } from '@/data/content/dust2/dust2Grenades';
-import { infernoGrenades } from '@/data/content/inferno/infernoGrenades';
-import { nukeGrenades } from '@/data/content/nuke/nukeGrenades';
-import { overpassGrenades } from '@/data/content/overpass/overpassGrenades';
-import { vertigoGrenades } from '@/data/content/vertigo/vertigoGrenades';
-import type { MapItems } from '@/data/types/MapItems';
-import { maplist } from '@/data/maplist';
-import type { Spot } from '@/data/interfaces/Spot';
-import { z } from 'zod'
-import axios from 'axios';
-import camelcase from 'camelcase';
-
+import { computed, ref, watch, reactive, onMounted, onUnmounted } from "vue";
+import { onBeforeRouteLeave, useRoute } from "vue-router";
+import AddGrenadeForm from "@/components/cms/AddGrenadeForm.vue";
+import CreateLineupForm from "@/components/cms/CreateLineupForm.vue";
+import GS_Button from "@/components/UI/GS_Button.vue";
+import GS_Check from "@/components/UI/GS_Check.vue";
+import GS_Input from "@/components/UI/GS_Input.vue";
+import GS_Radio from "@/components/UI/GS_Radio.vue";
+import GS_Window from "@/components/UI/GS_Window.vue";
+import GS_ContainerLight from "@/components/UI/GS_ContainerLight.vue";
+import { useMachine } from "@xstate/vue";
+import { createMachine } from "xstate";
+import { nanoid } from "nanoid";
+import type {
+    CoordsObj,
+    Difficulty,
+    ForWhom,
+    NadeType,
+    Side,
+    ThrowClick,
+    ThrowMovement,
+    Tickrate,
+} from "@/data/types/GrenadeProperties";
+import type { Placeholder } from "@/data/_old/Placeholder";
+import { nadeTypeList } from "@/data/nadeTypeList";
+import { useSomestore } from "@/stores/somestore";
+import { mirageGrenades } from "@/data/content/mirage/mirageGrenades";
+import { ancientGrenades } from "@/data/content/ancient/ancientGrenades";
+import { dust2Grenades } from "@/data/content/dust2/dust2Grenades";
+import { infernoGrenades } from "@/data/content/inferno/infernoGrenades";
+import { nukeGrenades } from "@/data/content/nuke/nukeGrenades";
+import { overpassGrenades } from "@/data/content/overpass/overpassGrenades";
+import { vertigoGrenades } from "@/data/content/vertigo/vertigoGrenades";
+import type { MapItems } from "@/data/types/MapItems";
+import { maplist } from "@/data/maplist";
+import type { Spot } from "@/data/interfaces/Spot";
+import { z } from "zod";
+import axios from "axios";
+import camelcase from "camelcase";
 
 /* Placeholder называется как называется, так как точка прилёта гранаты
 при создании не имеет никакого типа. То есть она ни smoke, ни molotov и т.д. */
-const placeholders = ref<Placeholder[]>([])
+const placeholders = ref<Placeholder[]>([]);
 
-const someStore = useSomestore()
+const someStore = useSomestore();
 
-const route = useRoute()
-const currentRoute = computed(() => route.path.slice(1))
+const route = useRoute();
+const currentRoute = computed(() => route.path.slice(1));
 
 /* Возможно нужно вынести склеивание этого объекта в отдельный файл и импортировать его,
 если склеивание происходит каждый раз при загрузке приложения.*/
@@ -49,33 +57,34 @@ const allMapItems: any = {
     infernoGrenades,
     nukeGrenades,
     overpassGrenades,
-    vertigoGrenades
-}
+    vertigoGrenades,
+};
 const currentRouteMapItems = computed(() => {
     if (maplist.includes(currentRoute.value)) {
-        return allMapItems[`${currentRoute.value}Grenades`] as MapItems
+        return allMapItems[`${currentRoute.value}Grenades`] as MapItems;
+    } else {
+        return { lineups: new Map(), spots: new Map() } as MapItems;
     }
-    else {
-        return { lineups: new Map(), spots: new Map() } as MapItems
-    }
-})
+});
 // Сделал каждой гранате текущей карты по computed для визуального облегчения template
 // const smokes = computed(() => currentRouteMapItems.value.smokes)
 // const molotovs = computed(() => currentRouteMapItems.value.molotovs)
 // const flashes = computed(() => currentRouteMapItems.value.flashes)
 // const hes = computed(() => currentRouteMapItems.value.hes)
 // const throwSpots = computed(() => currentRouteMapItems.value.throwSpots)
-const currentRouteSpots = computed(() => currentRouteMapItems.value.spots)
-const lineups = computed(() => currentRouteMapItems.value.lineups)
+const currentRouteSpots = computed(() => currentRouteMapItems.value.spots);
+const lineups = computed(() => currentRouteMapItems.value.lineups);
 const hint = computed(() => {
-    if (state.value.matches('shadowmapOn.selectingToSpot')) { return 'Choose land spot first (or create new)' }
-    if (state.value.matches('shadowmapOn.selectingFromSpot')) { return 'Choose throw spot (or create new)' }
-})
-
-
+    if (state.value.matches("shadowmapOn.selectingToSpot")) {
+        return "Choose land spot first (or create new)";
+    }
+    if (state.value.matches("shadowmapOn.selectingFromSpot")) {
+        return "Choose throw spot (or create new)";
+    }
+});
 
 const cmsStateMachine = createMachine<{
-    clickedPhIx: number | undefined
+    clickedPhIx: number | undefined;
     // undefined явно показывает, что в текущий момент времени может быть не нажат никакой Placeholder
 }>({
     initial: "shadowmapOff",
@@ -87,7 +96,7 @@ const cmsStateMachine = createMachine<{
         shadowmapOff: {
             id: "shadowmapOff",
             on: {
-                TOGGLE: "shadowmapOn"
+                TOGGLE: "shadowmapOn",
             },
         },
         shadowmapOn: {
@@ -103,15 +112,16 @@ const cmsStateMachine = createMachine<{
 
                         CLICK_ON_PLACEHOLDER: "typingPlaceholder",
                         CLICK_ON_PLACEHOLDER_SMOKE: "typingPlaceholder.smoke",
-                        CLICK_ON_PLACEHOLDER_MOLOTOV: "typingPlaceholder.molotov",
+                        CLICK_ON_PLACEHOLDER_MOLOTOV:
+                            "typingPlaceholder.molotov",
                         CLICK_ON_PLACEHOLDER_FLASH: "typingPlaceholder.flash",
                         CLICK_ON_PLACEHOLDER_HE: "typingPlaceholder.he",
-                        EDIT_OLD: "editingOld"
+                        EDIT_OLD: "editingOld",
                     },
                     entry: (context) => {
                         context.clickedPhIx = undefined;
-                        newLineupProps.value.toSpot = null
-                    }
+                        newLineupProps.value.toSpot = null;
+                    },
                 },
                 selectingFromSpot: {
                     id: "selectingFromSpot",
@@ -120,19 +130,21 @@ const cmsStateMachine = createMachine<{
                         CLICK_ON_SELECTED_TOSPOT: "selectingToSpot",
                         CREATE_NEW_SPOT: "creatingNewSpot",
                     },
-                    entry: () => { newLineupProps.value.fromSpot = null },
+                    entry: () => {
+                        newLineupProps.value.fromSpot = null;
+                    },
                 },
                 creatingNewSpot: {
                     id: "creatingNewSpot",
                     on: {
-                        EXIT: "selectingToSpot"
-                    }
+                        EXIT: "selectingToSpot",
+                    },
                 },
                 creatingLineup: {
                     id: "creatingLineup",
                     on: {
-                        EXIT: "selectingFromSpot"
-                    }
+                        EXIT: "selectingFromSpot",
+                    },
                 },
                 typingPlaceholder: {
                     id: "typingPlaceholder",
@@ -140,7 +152,7 @@ const cmsStateMachine = createMachine<{
                     onDone: "#shadowmapOff",
                     entry: (context, event) => {
                         // payload of send(), т.е. индекс(важно, не идентификатор) кликнутого placeholder присваивается в текущий_кликнутый_индекс
-                        context.clickedPhIx = event.phIndex
+                        context.clickedPhIx = event.phIndex;
                     },
                     states: {
                         choosingType: {
@@ -151,88 +163,91 @@ const cmsStateMachine = createMachine<{
                                 ADD_MOLOTOV: "molotov",
                                 ADD_FLASH: "flash",
                                 ADD_HE: "he",
-                                BACK: "#shadowmapOn"
-                            }
+                                BACK: "#shadowmapOn",
+                            },
                         },
                         smoke: {
                             id: "smoke",
                             on: {
                                 SAVE: "saved",
                                 BACK: "choosingType",
-                                COLLAPSE: "#shadowmapOn"
-                            }
+                                COLLAPSE: "#shadowmapOn",
+                            },
                         },
                         molotov: {
                             id: "molotov",
                             on: {
                                 SAVE: "saved",
                                 BACK: "choosingType",
-                                COLLAPSE: "#shadowmapOn"
-                            }
+                                COLLAPSE: "#shadowmapOn",
+                            },
                         },
                         flash: {
                             id: "flash",
                             on: {
                                 SAVE: "saved",
                                 BACK: "choosingType",
-                                COLLAPSE: "#shadowmapOn"
-                            }
+                                COLLAPSE: "#shadowmapOn",
+                            },
                         },
                         he: {
                             id: "he",
                             on: {
                                 SAVE: "saved",
                                 BACK: "choosingType",
-                                COLLAPSE: "#shadowmapOn"
-                            }
+                                COLLAPSE: "#shadowmapOn",
+                            },
                         },
                         saved: {
                             id: "saved",
-                            type: 'final',
+                            type: "final",
                             entry: () => {
                                 setTimeout(() => {
-                                    window.location.reload()
+                                    window.location.reload();
                                 }, 100);
                             },
-
-                        }
-                    }
+                        },
+                    },
                 },
-                editingOld: {
-
-                }
-            }
+                editingOld: {},
+            },
         },
-    }
-})
+    },
+});
 
-const isDragging = ref(false)
+const isDragging = ref(false);
 
-const { state, send } = useMachine(cmsStateMachine)
+const { state, send } = useMachine(cmsStateMachine);
 
-const buttonContent = computed(() => state.value.matches('shadowmapOn') ? 'x' : '+')
-const buttonBgColor = computed(() => state.value.matches('shadowmapOn') ? 'indianred' : 'aqua')
+const buttonContent = computed(() =>
+    state.value.matches("shadowmapOn") ? "x" : "+"
+);
+const buttonBgColor = computed(() =>
+    state.value.matches("shadowmapOn") ? "indianred" : "aqua"
+);
 
 // Клик по пустому месту на карте - добавление нового Placeholder в массив
 function pushNewPlaceholder(event: MouseEvent) {
     if (isDragging.value === false && event.currentTarget == event.target) {
-        let boundClRect = (event.currentTarget as HTMLDivElement).getBoundingClientRect()
-        let clickOnRect_x = event.clientX - boundClRect.left
-        let clickOnRect_y = event.clientY - boundClRect.top
-        let clickOnRect_xPercent = (clickOnRect_x * 100) / boundClRect.width
-        let clickOnRect_yPercent = (clickOnRect_y * 100) / boundClRect.height
+        let boundClRect = (
+            event.currentTarget as HTMLDivElement
+        ).getBoundingClientRect();
+        let clickOnRect_x = event.clientX - boundClRect.left;
+        let clickOnRect_y = event.clientY - boundClRect.top;
+        let clickOnRect_xPercent = (clickOnRect_x * 100) / boundClRect.width;
+        let clickOnRect_yPercent = (clickOnRect_y * 100) / boundClRect.height;
 
         newToSpotData.value = {
             spotId: nanoid(13),
-            name: '',
+            name: "",
             coords: {
                 x: Number(clickOnRect_xPercent.toFixed(1)),
-                y: Number(clickOnRect_yPercent.toFixed(1))
+                y: Number(clickOnRect_yPercent.toFixed(1)),
             },
             toImg: null,
-            fromImg: null
-        }
-        send('CREATE_NEW_SPOT')
+            fromImg: null,
+        };
+        send("CREATE_NEW_SPOT");
 
         /* placeholders.value.push({
             id: nanoid(13),
@@ -251,14 +266,18 @@ function onClickPlaceholder(phId: string) {
 
     // phIndex передаваемый в send почему-то подсвечивается белым а не оранж, хотя это 100% он.
     let phIndex = placeholders.value.findIndex((placeholder) => {
-        return placeholder.id == phId
-    })
+        return placeholder.id == phId;
+    });
     if (isDragging.value === false) {
-        if (placeholders.value[phIndex].type === '') {
-            send({ type: 'CLICK_ON_PLACEHOLDER', phIndex })
-        }
-        else {
-            send({ type: `CLICK_ON_PLACEHOLDER_${placeholders.value[phIndex].type.toUpperCase()}`, phIndex })
+        if (placeholders.value[phIndex].type === "") {
+            send({ type: "CLICK_ON_PLACEHOLDER", phIndex });
+        } else {
+            send({
+                type: `CLICK_ON_PLACEHOLDER_${placeholders.value[
+                    phIndex
+                ].type.toUpperCase()}`,
+                phIndex,
+            });
         }
     }
 }
@@ -267,221 +286,290 @@ function nadeTypeOnClick(nadeType: string) {
     /* В контексте xstate всегда хранится копия Placeholdera, показывающая с каким объектом
     мы сейчас работаем. Чтобы изменить оригинальный объект, ищем его индекс по id объекта-копии
     (из контекста xstate). А затем заменяем его type на nadeType(аргумент ф-ии) */
-    placeholders.value[state.value.context.clickedPhIx!].type = nadeType
-    send(`ADD_${nadeType}`.toUpperCase())
+    placeholders.value[state.value.context.clickedPhIx!].type = nadeType;
+    send(`ADD_${nadeType}`.toUpperCase());
 }
 function getShadowColor(placeholderType: string) {
     switch (placeholderType) {
-        case '':
-            return `0 0 5px 7px rgba(85, 0, 255, 0.702)`
-        case 'Smoke':
-            return `0 0 5px 7px rgba(216, 218, 222, 0.702)`
-        case 'Molotov':
-            return `0 0 5px 7px rgba(255, 21, 0, 0.702)`
-        case 'Flash':
-            return `0 0 5px 7px rgba(255, 231, 110, 0.702)`
-        case 'He':
-            return `0 0 5px 7px rgba(26, 255, 0, 0.702)`
+        case "":
+            return `0 0 5px 7px rgba(85, 0, 255, 0.702)`;
+        case "Smoke":
+            return `0 0 5px 7px rgba(216, 218, 222, 0.702)`;
+        case "Molotov":
+            return `0 0 5px 7px rgba(255, 21, 0, 0.702)`;
+        case "Flash":
+            return `0 0 5px 7px rgba(255, 231, 110, 0.702)`;
+        case "He":
+            return `0 0 5px 7px rgba(26, 255, 0, 0.702)`;
     }
 }
 function getBgColor(placeholderType: string) {
     switch (placeholderType) {
-        case '':
-            return `rgba(0, 0, 0, 0.801)`
-        case 'Smoke':
-            return `rgba(255, 255, 255, 0.801)`
-        case 'Molotov':
-            return `rgba(255, 85, 0, 0.801)`
-        case 'Flash':
-            return `rgba(255, 230, 0, 0.801)`
-        case 'He':
-            return `rgba(0, 49, 0, 0.801)`
+        case "":
+            return `rgba(0, 0, 0, 0.801)`;
+        case "Smoke":
+            return `rgba(255, 255, 255, 0.801)`;
+        case "Molotov":
+            return `rgba(255, 85, 0, 0.801)`;
+        case "Flash":
+            return `rgba(255, 230, 0, 0.801)`;
+        case "He":
+            return `rgba(0, 49, 0, 0.801)`;
     }
 }
 
 function deletePlaceholder(rightClickedPlaceholder: Placeholder) {
     placeholders.value.splice(
-        placeholders.value.findIndex((placeholderObj) => placeholderObj.id == rightClickedPlaceholder.id),
+        placeholders.value.findIndex(
+            (placeholderObj) => placeholderObj.id == rightClickedPlaceholder.id
+        ),
         1
-    )
+    );
 }
-const smokeFormOn = computed(() => state.value.matches("shadowmapOn.typingPlaceholder.smoke"))
-const molotovFormOn = computed(() => state.value.matches("shadowmapOn.typingPlaceholder.molotov"))
-const flashFormOn = computed(() => state.value.matches("shadowmapOn.typingPlaceholder.flash"))
-const heFormOn = computed(() => state.value.matches("shadowmapOn.typingPlaceholder.he"))
-const formState = reactive({ smokeFormOn, molotovFormOn, flashFormOn, heFormOn })
+const smokeFormOn = computed(() =>
+    state.value.matches("shadowmapOn.typingPlaceholder.smoke")
+);
+const molotovFormOn = computed(() =>
+    state.value.matches("shadowmapOn.typingPlaceholder.molotov")
+);
+const flashFormOn = computed(() =>
+    state.value.matches("shadowmapOn.typingPlaceholder.flash")
+);
+const heFormOn = computed(() =>
+    state.value.matches("shadowmapOn.typingPlaceholder.he")
+);
+const formState = reactive({
+    smokeFormOn,
+    molotovFormOn,
+    flashFormOn,
+    heFormOn,
+});
 
 const addGrenadeFormHandlers = {
-    updateType: (newVal: string) => { placeholders.value[state.value.context.clickedPhIx!].type = newVal },
-    updateName: (newVal: string) => { placeholders.value[state.value.context.clickedPhIx!].name = newVal },
-    updateSide: (newVal: Side) => { placeholders.value[state.value.context.clickedPhIx!].side = newVal },
-    updateTickrate: (newVal: Tickrate) => { placeholders.value[state.value.context.clickedPhIx!].tickrate = newVal },
-    updateThrowClick: (newVal: ThrowClick) => { placeholders.value[state.value.context.clickedPhIx!].throwClick = newVal },
-    updateThrowMovement: (newVal: ThrowMovement) => { placeholders.value[state.value.context.clickedPhIx!].throwMovement = newVal },
-    updateDifficulty: (newVal: Difficulty) => { placeholders.value[state.value.context.clickedPhIx!].difficulty = newVal },
+    updateType: (newVal: string) => {
+        placeholders.value[state.value.context.clickedPhIx!].type = newVal;
+    },
+    updateName: (newVal: string) => {
+        placeholders.value[state.value.context.clickedPhIx!].name = newVal;
+    },
+    updateSide: (newVal: Side) => {
+        placeholders.value[state.value.context.clickedPhIx!].side = newVal;
+    },
+    updateTickrate: (newVal: Tickrate) => {
+        placeholders.value[state.value.context.clickedPhIx!].tickrate = newVal;
+    },
+    updateThrowClick: (newVal: ThrowClick) => {
+        placeholders.value[state.value.context.clickedPhIx!].throwClick =
+            newVal;
+    },
+    updateThrowMovement: (newVal: ThrowMovement) => {
+        placeholders.value[state.value.context.clickedPhIx!].throwMovement =
+            newVal;
+    },
+    updateDifficulty: (newVal: Difficulty) => {
+        placeholders.value[state.value.context.clickedPhIx!].difficulty =
+            newVal;
+    },
 
-    updateIsOnewaySmoke: (newVal: boolean) => { placeholders.value[state.value.context.clickedPhIx!].isOnewaySmoke = newVal },
-    updateIsFakeSmoke: (newVal: boolean) => { placeholders.value[state.value.context.clickedPhIx!].isFakeSmoke = newVal },
-    updateIsBugSmoke: (newVal: boolean) => { placeholders.value[state.value.context.clickedPhIx!].isBugSmoke = newVal },
-    updateForWhom: (newVal: ForWhom) => { placeholders.value[state.value.context.clickedPhIx!].forWhom = newVal },
-    updateIsOnewayMolotov: (newVal: boolean) => { placeholders.value[state.value.context.clickedPhIx!].isOnewayMolotov = newVal },
-    updateIsFakeMolotov: (newVal: boolean) => { placeholders.value[state.value.context.clickedPhIx!].isFakeMolotov = newVal },
-    updateIsBugMolotov: (newVal: boolean) => { placeholders.value[state.value.context.clickedPhIx!].isBugMolotov = newVal },
-    updateIsBugHe: (newVal: boolean) => { placeholders.value[state.value.context.clickedPhIx!].isBugHe = newVal },
-}
-
+    updateIsOnewaySmoke: (newVal: boolean) => {
+        placeholders.value[state.value.context.clickedPhIx!].isOnewaySmoke =
+            newVal;
+    },
+    updateIsFakeSmoke: (newVal: boolean) => {
+        placeholders.value[state.value.context.clickedPhIx!].isFakeSmoke =
+            newVal;
+    },
+    updateIsBugSmoke: (newVal: boolean) => {
+        placeholders.value[state.value.context.clickedPhIx!].isBugSmoke =
+            newVal;
+    },
+    updateForWhom: (newVal: ForWhom) => {
+        placeholders.value[state.value.context.clickedPhIx!].forWhom = newVal;
+    },
+    updateIsOnewayMolotov: (newVal: boolean) => {
+        placeholders.value[state.value.context.clickedPhIx!].isOnewayMolotov =
+            newVal;
+    },
+    updateIsFakeMolotov: (newVal: boolean) => {
+        placeholders.value[state.value.context.clickedPhIx!].isFakeMolotov =
+            newVal;
+    },
+    updateIsBugMolotov: (newVal: boolean) => {
+        placeholders.value[state.value.context.clickedPhIx!].isBugMolotov =
+            newVal;
+    },
+    updateIsBugHe: (newVal: boolean) => {
+        placeholders.value[state.value.context.clickedPhIx!].isBugHe = newVal;
+    },
+};
 
 onMounted(() => {
     window.onbeforeunload = (e) => {
         if (placeholders.value.length > 0) {
-            e.preventDefault()
-            return ''
+            e.preventDefault();
+            return "";
         }
-    }
+    };
     setTimeout(() => {
         console.log(state.value.value);
-    }, 5000)
-})
+    }, 5000);
+});
 onUnmounted(() => {
-    window.onbeforeunload = null
-})
+    window.onbeforeunload = null;
+});
 
 function toggleCms() {
-    send('TOGGLE')
-    someStore.toggleCmsMode()
+    send("TOGGLE");
+    someStore.toggleCmsMode();
 }
 function shadowMapOnMouseOver(event: MouseEvent) {
     if ((event.target as HTMLDivElement).className == "shadowMap") {
-        cursorCircleVisible.value = true
-        console.log('should be visible now');
+        cursorCircleVisible.value = true;
+        console.log("should be visible now");
     } else {
-        cursorCircleVisible.value = false
+        cursorCircleVisible.value = false;
     }
 }
 function cursorOnMove(ev: MouseEvent) {
     if (cursorCircleRef.value) {
-        cursorCircleRef.value.style.top = ev.clientY + 'px'
-        cursorCircleRef.value.style.left = ev.clientX + 'px'
+        cursorCircleRef.value.style.top = ev.clientY + "px";
+        cursorCircleRef.value.style.left = ev.clientX + "px";
     }
 }
 function shadowMapOnMouseOut(event: MouseEvent) {
-    cursorCircleVisible.value = false
+    cursorCircleVisible.value = false;
 }
 function log() {
     console.log(123);
 }
 
-const cursorCircleVisible = ref(false)
-const cursorCircleRef = ref(null)
+const cursorCircleVisible = ref(false);
+const cursorCircleRef = ref(null);
 
 async function submitNewSpot() {
-    if (!newToSpotData.value!.toImg
-        && !newToSpotData.value!.toImg2
-        && !newToSpotData.value!.fromFp
-        && !newToSpotData.value!.fromTp
+    if (
+        !newToSpotData.value!.toImg &&
+        !newToSpotData.value!.toImg2 &&
+        !newToSpotData.value!.fromFp &&
+        !newToSpotData.value!.fromTp
     ) {
-        return alert('Нужно залить минимум одну из картинок')
+        return alert("Нужно залить минимум одну из картинок");
     }
-    const formData = new FormData()
-    formData.append('spotId', newToSpotData.value!.spotId)
-    formData.append('name', camelcase(newToSpotData.value!.name))
-    formData.append('coords', JSON.stringify(newToSpotData.value!.coords))
-    const toImg = newToSpotData.value!.toImg as Blob
-    const toImg2 = newToSpotData.value!.toImg2 as Blob
-    const fromImgFp = newToSpotData.value!.fromFp as Blob
-    const fromImgTp = newToSpotData.value!.fromTp as Blob
+    const formData = new FormData();
+    formData.append("spotId", newToSpotData.value!.spotId);
+    formData.append("name", camelcase(newToSpotData.value!.name));
+    formData.append("coords", JSON.stringify(newToSpotData.value!.coords));
+    const toImg = newToSpotData.value!.toImg as Blob;
+    const toImg2 = newToSpotData.value!.toImg2 as Blob;
+    const fromImgFp = newToSpotData.value!.fromFp as Blob;
+    const fromImgTp = newToSpotData.value!.fromTp as Blob;
     if (toImg) {
-        formData.append('toImgFile', toImg)
+        formData.append("toImgFile", toImg);
     }
     if (toImg2) {
-        formData.append('toImg2File', toImg2)
+        formData.append("toImg2File", toImg2);
     }
     if (fromImgFp) {
-        formData.append('fromImgFpFile', fromImgFp)
+        formData.append("fromImgFpFile", fromImgFp);
     }
     if (fromImgTp) {
-        formData.append('fromImgTpFile', fromImgTp)
+        formData.append("fromImgTpFile", fromImgTp);
     }
     if (fromImgFp || fromImgTp) {
         if (!newToSpotData.value?.priority) {
-            return alert('Choose priority(from image provided)')
+            return alert("Choose priority(from image provided)");
         }
-        formData.append('priority', newToSpotData.value!.priority)
+        formData.append("priority", newToSpotData.value!.priority);
     }
-    const res = await axios.postForm(`http://localhost:7351/spots/${currentRoute.value}`, formData)
+    const res = await axios.postForm(
+        `http://localhost:7351/spots/${currentRoute.value}`,
+        formData
+    );
     // console.log(res);
 }
 function onClickExit() {
-    send('EXIT')
+    send("EXIT");
 }
 const newToSpotData = ref<{
-    spotId: string,
-    name: string,
+    spotId: string;
+    name: string;
     coords: {
-        x: number,
-        y: number
-    },
-    toImg?: File,
-    toImg2?: File,
-    fromFp?: File,
-    fromTp?: File,
-    priority: "fp" | "tp",
-}>()
+        x: number;
+        y: number;
+    };
+    toImg?: File;
+    toImg2?: File;
+    fromFp?: File;
+    fromTp?: File;
+    priority: "fp" | "tp";
+}>();
 
-function onChangeFileInput(e: Event, direction: 'to' | 'to2' | 'fromFp' | 'fromTp') {
-    const target = e.target as HTMLInputElement
-    const files = target.files
-    if (!files) { // если пользователь отменил добавление картинки ((?)как-то xd)
-        if (direction == 'to') newToSpotData.value!.toImg = undefined
-        if (direction == 'to2') newToSpotData.value!.toImg2 = undefined
-        if (direction == 'fromFp') newToSpotData.value!.fromFp = undefined
-        if (direction == 'fromTp') newToSpotData.value!.fromTp = undefined
-        return
+function onChangeFileInput(
+    e: Event,
+    direction: "to" | "to2" | "fromFp" | "fromTp"
+) {
+    const target = e.target as HTMLInputElement;
+    const files = target.files;
+    if (!files) {
+        // если пользователь отменил добавление картинки ((?)как-то xd)
+        if (direction == "to") newToSpotData.value!.toImg = undefined;
+        if (direction == "to2") newToSpotData.value!.toImg2 = undefined;
+        if (direction == "fromFp") newToSpotData.value!.fromFp = undefined;
+        if (direction == "fromTp") newToSpotData.value!.fromTp = undefined;
+        return;
     }
-    if (files) { // если добавлена картинка
-        if (direction == 'to') newToSpotData.value!.toImg = target.files![0]
-        if (direction == 'to2') newToSpotData.value!.toImg2 = target.files![0]
-        if (direction == 'fromFp') newToSpotData.value!.fromFp = target.files![0]
-        if (direction == 'fromTp') newToSpotData.value!.fromTp = target.files![0]
-        return
+    if (files) {
+        // если добавлена картинка
+        if (direction == "to") newToSpotData.value!.toImg = target.files![0];
+        if (direction == "to2") newToSpotData.value!.toImg2 = target.files![0];
+        if (direction == "fromFp")
+            newToSpotData.value!.fromFp = target.files![0];
+        if (direction == "fromTp")
+            newToSpotData.value!.fromTp = target.files![0];
+        return;
     }
 }
 const newLineupProps = ref<{
-    toSpot: Spot | null,
-    fromSpot: Spot | null,
+    toSpot: Spot | null;
+    fromSpot: Spot | null;
 }>({
     toSpot: null,
     fromSpot: null,
-})
+});
 
 function spotOnClick(spot: Spot) {
     if (state.value.matches("shadowmapOn.selectingToSpot")) {
-        newLineupProps.value.toSpot = spot
-        send('CLICK_ON_TOSPOT')
-        return
+        newLineupProps.value.toSpot = spot;
+        send("CLICK_ON_TOSPOT");
+        return;
     }
     if (state.value.matches("shadowmapOn.selectingFromSpot")) {
-        newLineupProps.value.fromSpot = spot
-        send('CLICK_ON_FROMSPOT')
-        return
+        newLineupProps.value.fromSpot = spot;
+        send("CLICK_ON_FROMSPOT");
+        return;
     }
 }
 function exitLineupCreation() {
-    send('EXIT')
-    newLineupProps.value.fromSpot = null
+    send("EXIT");
+    newLineupProps.value.fromSpot = null;
 }
-
 </script>
 
-
 <template>
-    <div class="shadowMap" v-if="state.matches('shadowmapOn')"
+    <div
+        class="shadowMap"
+        v-if="state.matches('shadowmapOn')"
         @mousedown="isDragging = false"
-        @mousemove="$event => { isDragging = true; cursorOnMove($event) }"
-        @mouseover="$event => shadowMapOnMouseOver($event)"
-        @mouseup.left="$event => pushNewPlaceholder($event)"
-        @mouseout="shadowMapOnMouseOut">
-
+        @mousemove="
+            ($event) => {
+                isDragging = true;
+                cursorOnMove($event);
+            }
+        "
+        @mouseover="($event) => shadowMapOnMouseOver($event)"
+        @mouseup.left="($event) => pushNewPlaceholder($event)"
+        @mouseout="shadowMapOnMouseOut"
+    >
         <!-- hint -->
         <Teleport to="body">
             <div class="hint">
@@ -492,36 +580,46 @@ function exitLineupCreation() {
         <!-- display selected spots -->
         <Teleport to="body">
             <div class="selectedList">
-                <p>toSpot: {{ newLineupProps.toSpot?.name || 'undefined' }}</p>
-                <p>fromSpot: {{ newLineupProps.fromSpot?.name || 'undefined' }}</p>
+                <p>toSpot: {{ newLineupProps.toSpot?.name || "undefined" }}</p>
+                <p>
+                    fromSpot: {{ newLineupProps.fromSpot?.name || "undefined" }}
+                </p>
             </div>
         </Teleport>
 
         <!-- red cursor dot -->
         <Teleport to="body">
-            <div ref="cursorCircleRef" class="cursorCircle"
-                v-if="cursorCircleVisible">
-            </div>
+            <div
+                ref="cursorCircleRef"
+                class="cursorCircle"
+                v-if="cursorCircleVisible"
+            ></div>
         </Teleport>
 
         <!-- red spots -->
-        <div class="cmsSpot" v-for=" [spotId, spot]  in  currentRouteSpots "
-            @click="spotOnClick(spot)" :style="{
+        <div
+            class="cmsSpot"
+            v-for="[spotId, spot] in currentRouteSpots"
+            @click="spotOnClick(spot)"
+            :style="{
                 top: `${spot.coords.y}%`,
                 left: `${spot.coords.x}%`,
-            }">
-        </div>
+            }"
+        ></div>
 
         <!-- placeholders -->
-        <div class="placeholder" v-for=" placeholder  in  placeholders " :style="{
-            top: `${placeholder.coords.y}%`,
-            left: `${placeholder.coords.x}%`,
-            boxShadow: getShadowColor(placeholder.type),
-            backgroundColor: getBgColor(placeholder.type)
-        }
-            " @click.left="onClickPlaceholder(placeholder.id)"
-            @contextmenu.prevent="deletePlaceholder(placeholder)">
-        </div>
+        <div
+            class="placeholder"
+            v-for="placeholder in placeholders"
+            :style="{
+                top: `${placeholder.coords.y}%`,
+                left: `${placeholder.coords.x}%`,
+                boxShadow: getShadowColor(placeholder.type),
+                backgroundColor: getBgColor(placeholder.type),
+            }"
+            @click.left="onClickPlaceholder(placeholder.id)"
+            @contextmenu.prevent="deletePlaceholder(placeholder)"
+        ></div>
 
         <!-- Модалка для выбора типа гранаты -->
         <!-- <Teleport to="body">
@@ -565,58 +663,91 @@ function exitLineupCreation() {
 
         <!-- createSpotForm -->
         <Teleport to="body">
-            <GS_Window v-if="state.matches('shadowmapOn.creatingNewSpot')"
-                @exit="send('EXIT')">
+            <GS_Window
+                v-if="state.matches('shadowmapOn.creatingNewSpot')"
+                @exit="send('EXIT')"
+            >
                 <template #title>Create new spot</template>
                 <GS_ContainerLight>
-                    <p style="color:grey"> Id:{{ newToSpotData!.spotId }} </p>
+                    <p style="color: grey">Id:{{ newToSpotData!.spotId }}</p>
 
                     <p>Enter new spot's name</p>
-                    <GS_Input :modelValue="newToSpotData!.name"
-                        @update:modelValue="nv => newToSpotData!.name = nv" />
+                    <GS_Input
+                        :modelValue="newToSpotData!.name"
+                        @update:modelValue="nv => newToSpotData!.name = nv"
+                    />
 
                     <p>To image (landing image)</p>
-                    <input type="file" name="toImgFile" id=""
+                    <input
+                        type="file"
+                        name="toImgFile"
+                        id=""
                         accept="image/*,.png,.jpg,.jpeg,.webp"
-                        @change="$event => onChangeFileInput($event, 'to')"
-                        style="display: block;">
+                        @change="($event) => onChangeFileInput($event, 'to')"
+                        style="display: block"
+                    />
                     <p>To image 2 (additional landing image)</p>
-                    <input type="file" name="toImgFile" id=""
+                    <input
+                        type="file"
+                        name="toImgFile"
+                        id=""
                         accept="image/*,.png,.jpg,.jpeg,.webp"
-                        @change="$event => onChangeFileInput($event, 'to2')"
-                        style="display: block;">
+                        @change="($event) => onChangeFileInput($event, 'to2')"
+                        style="display: block"
+                    />
 
                     <p>From image (1st person)</p>
-                    <input type="file" name="fromImgFile" id=""
+                    <input
+                        type="file"
+                        name="fromImgFile"
+                        id=""
                         accept="image/*,.png,.jpg,.jpeg,.webp"
-                        @change="$event => onChangeFileInput($event, 'fromFp')"
-                        style="display: block;">
+                        @change="
+                            ($event) => onChangeFileInput($event, 'fromFp')
+                        "
+                        style="display: block"
+                    />
                     <p>From image (3rd person)</p>
-                    <input type="file" name="fromImgFile" id=""
+                    <input
+                        type="file"
+                        name="fromImgFile"
+                        id=""
                         accept="image/*,.png,.jpg,.jpeg,.webp"
-                        @change="$event => onChangeFileInput($event, 'fromTp')"
-                        style="display: block;">
+                        @change="
+                            ($event) => onChangeFileInput($event, 'fromTp')
+                        "
+                        style="display: block"
+                    />
 
                     <p>Priority "from" image</p>
-                    <GS_Radio :options='["fp", "tp"]'
+                    <GS_Radio
+                        :options="['fp', 'tp']"
                         :modelValue="newToSpotData!.priority"
                         :radioName="'spotFromPriority'"
-                        @update:modelValue="nv => newToSpotData!.priority = nv" />
+                        @update:modelValue="nv => newToSpotData!.priority = nv"
+                    />
 
-                    <div style="display: flex; margin-top: 2rem;">
+                    <div style="display: flex; margin-top: 2rem">
                         <GS_Button @click="submitNewSpot"> Submit </GS_Button>
-                        <GS_Button @click="onClickExit">Exit(and delete)</GS_Button>
+                        <GS_Button @click="onClickExit"
+                            >Exit(and delete)</GS_Button
+                        >
                     </div>
                 </GS_ContainerLight>
             </GS_Window>
         </Teleport>
 
         <!-- createLineupForm -->
-        <CreateLineupForm :isVisible="state.matches('shadowmapOn.creatingLineup')"
-            :newLineupData="newLineupProps" @exit="exitLineupCreation" />
+        <CreateLineupForm
+            :isVisible="state.matches('shadowmapOn.creatingLineup')"
+            :newLineupData="newLineupProps"
+            @exit="exitLineupCreation"
+        />
 
         <!-- Формы для вписывания данных новой гранаты -->
-        <AddGrenadeForm @exit="send('COLLAPSE')" v-bind="formState"
+        <AddGrenadeForm
+            @exit="send('COLLAPSE')"
+            v-bind="formState"
             v-if="smokeFormOn || molotovFormOn || flashFormOn || heFormOn"
             :clickedPlaceholder="placeholders[state.context.clickedPhIx!]"
             :clickedPhIx="state.context.clickedPhIx"
@@ -627,27 +758,40 @@ function exitLineupCreation() {
             @update:tickrateValue="addGrenadeFormHandlers.updateTickrate"
             @update:comboIdsValue="(newVal: any) => { }"
             @update:throwClickValue="addGrenadeFormHandlers.updateThrowClick"
-            @update:throwMovementValue="addGrenadeFormHandlers.updateThrowMovement"
+            @update:throwMovementValue="
+                addGrenadeFormHandlers.updateThrowMovement
+            "
             @update:difficultyValue="addGrenadeFormHandlers.updateDifficulty"
-            @update:isOnewaySmokeValue="addGrenadeFormHandlers.updateIsOnewaySmoke"
+            @update:isOnewaySmokeValue="
+                addGrenadeFormHandlers.updateIsOnewaySmoke
+            "
             @update:isFakeSmokeValue="addGrenadeFormHandlers.updateIsFakeSmoke"
             @update:isBugSmokeValue="addGrenadeFormHandlers.updateIsBugSmoke"
             @update:forWhomValue="addGrenadeFormHandlers.updateForWhom"
-            @update:isOnewayMolotovValue="addGrenadeFormHandlers.updateIsOnewayMolotov"
-            @update:isFakeMolotovValue="addGrenadeFormHandlers.updateIsFakeMolotov"
-            @update:isBugMolotovValue="addGrenadeFormHandlers.updateIsBugMolotov"
-            @update:isBugHeValue="addGrenadeFormHandlers.updateIsBugHe" />
+            @update:isOnewayMolotovValue="
+                addGrenadeFormHandlers.updateIsOnewayMolotov
+            "
+            @update:isFakeMolotovValue="
+                addGrenadeFormHandlers.updateIsFakeMolotov
+            "
+            @update:isBugMolotovValue="
+                addGrenadeFormHandlers.updateIsBugMolotov
+            "
+            @update:isBugHeValue="addGrenadeFormHandlers.updateIsBugHe"
+        />
     </div>
 
     <!-- вкл/выкл CMS; вне div, т.к. отвечает за его отображение -->
     <Teleport to="body">
-        <div class="toggleCMSbtn" :style="{ backgroundColor: buttonBgColor }"
-            @click="toggleCms">
+        <div
+            class="toggleCMSbtn"
+            :style="{ backgroundColor: buttonBgColor }"
+            @click="toggleCms"
+        >
             {{ buttonContent }}
         </div>
     </Teleport>
 </template>
-
 
 <style scoped lang="scss">
 .cursorCircle {
@@ -754,7 +898,7 @@ function exitLineupCreation() {
 .chooseContainer {
     display: flex;
 
-    &>* {
+    & > * {
         flex: 1 1 0px;
         margin-left: 8px;
     }
@@ -800,3 +944,4 @@ function exitLineupCreation() {
     background-color: rgba(0, 0, 0, 0.5);
 }
 </style>
+@/data/mapNamesList
