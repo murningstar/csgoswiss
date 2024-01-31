@@ -7,6 +7,8 @@ startLoading();
 onMounted(() => {
 	endLoading()
 });
+const isNotificationVisible = ref(true)
+const hideNotification = () => isNotificationVisible.value = false
 </script>
 
 <template>
@@ -29,7 +31,17 @@ onMounted(() => {
 			</Teleport>
 		</div>
 	</div>
-	<div>someCOntent</div>
+	<Teleport to="body" v-if="isNotificationVisible">
+		<div class="bgdarker">
+			<GS_Window @exit="hideNotification">
+				<template #title>Source 2 waiting room</template>
+				Development is stopped until Source 2 is released to see if it's
+				even
+				relevant.
+			</GS_Window>
+		</div>
+	</Teleport>
+	<!-- <div>someCOntent</div> -->
 	<!-- <div>{{ computedDoubler }}</div> -->
 	<!-- <div style="background-color: black;" @click="increment">asd</div> -->
 </template>
@@ -61,5 +73,11 @@ $border_dark: rgb(35, 41, 27);
 		flex-direction: column;
 		background-color: var(--bg_light);
 	}
+}
+
+.bgdarker {
+	position: absolute;
+	inset: 0;
+	background-color: rgba(0, 0, 0, 0.76);
 }
 </style>
