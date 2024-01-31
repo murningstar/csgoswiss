@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { ref, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { maplist } from "@/data/maplist";
+import { mapNamesList } from "@/data/mapNamesList";
 import { useSomestore } from "@/stores/somestore";
 const router = useRouter();
 const route = useRoute();
@@ -19,7 +19,7 @@ function purgeActiveNades(mapName: string) {
     <nav>
         <li class="listOfMapLinks">
             <ul
-                v-for="map in maplist"
+                v-for="map in mapNamesList"
                 :class="{ activeMap: currentMap == map }"
                 @click="purgeActiveNades(map)"
             >

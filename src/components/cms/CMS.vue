@@ -33,7 +33,7 @@ import { nukeGrenades } from "@/data/content/nuke/nukeGrenades";
 import { overpassGrenades } from "@/data/content/overpass/overpassGrenades";
 import { vertigoGrenades } from "@/data/content/vertigo/vertigoGrenades";
 import type { MapItems } from "@/data/types/MapItems";
-import { maplist } from "@/data/maplist";
+import { mapNamesList } from "@/data/mapNamesList";
 import type { Spot } from "@/data/interfaces/Spot";
 import { z } from "zod";
 import axios from "axios";
@@ -60,7 +60,7 @@ const allMapItems: any = {
     vertigoGrenades,
 };
 const currentRouteMapItems = computed(() => {
-    if (maplist.includes(currentRoute.value)) {
+    if (mapNamesList.includes(currentRoute.value)) {
         return allMapItems[`${currentRoute.value}Grenades`] as MapItems;
     } else {
         return { lineups: new Map(), spots: new Map() } as MapItems;

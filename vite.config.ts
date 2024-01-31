@@ -11,9 +11,7 @@ export default defineConfig({
             "@": fileURLToPath(new URL("./src", import.meta.url)),
         },
     },
-    server: {
-        host: "192.168.0.103",
-    },
+    server: {},
     css: {
         preprocessorOptions: {
             scss: {
