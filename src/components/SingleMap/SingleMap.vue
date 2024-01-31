@@ -50,7 +50,8 @@ import { vertigoGrenades } from "@/data/content/vertigo/vertigoGrenades";
 
 // composables
 import { useLoadingGoldsourceLogic } from "@/components/Loading_goldsource/loading_goldsource";
-
+import { useMapData } from "@/composables/mapData";
+import { useFilter } from "@/composables/filter";
 // other
 import { mapNamesList } from "@/data/mapNamesList";
 import { nadeTypeList } from "@/data/nadeTypeList";
@@ -71,6 +72,7 @@ import type { Spot } from "@/data/interfaces/Spot";
 import { ViewItemsFactory, type LineupItem } from "@/data/types/ViewItems";
 import type { ViewToSpot, ViewFromSpot } from "@/data/types/ViewItems";
 
+/* Loading window Bindings */
 const {
     isLoading,
     nSegmentsVisible,
@@ -108,8 +110,11 @@ const currentRouteMapItems = computed(() => {
 // const flashes = computed(() => currentRouteMapItems.value.flashes)
 // const hes = computed(() => currentRouteMapItems.value.hes)
 // const throwSpots = computed(() => currentRouteMapItems.value.throwSpots)
-const spots = computed(() => currentRouteMapItems.value.spots);
-const lineups = computed(() => currentRouteMapItems.value.lineups);
+
+// const spots = computed(() => currentRouteMapItems.value.spots);
+// const lineups = computed(() => currentRouteMapItems.value.lineups);
+
+const { lineups, spots } = useMapData();
 
 /* computed alt attribute value for images of maps */
 const imgMapError = computed(() => {
@@ -130,7 +135,7 @@ watch(
         if (newPath != oldPath) {
             startLoading();
         }
-    }
+    },
 );
 
 const imgRef = ref(null);
@@ -216,98 +221,9 @@ onMounted(() => {
     imgResizeObs.observe(imgRef.value!);
 });
 
-const isFiltersVisible = ref(false);
-const toggleFilters = () => (isFiltersVisible.value = !isFiltersVisible.value);
-
-const filtersPropData = reactive({
-    nadeTypeList: nadeTypeList,
-});
-const filterState = reactive({
-    nadeType: "smoke" as NadeType | "all",
-    side: "t" as Side,
-    tickrate: 128 as Tickrate,
-    difficulties: new Set([
-        "easy",
-        "medium",
-        "hard",
-        "pixelPerfect",
-    ]) as Set<Difficulty>,
-    onewaySmokeOption: "All",
-    fakeSmokeOption: "All",
-    bugSmokeOption: "All",
-    forWhom: "yourself" as ForWhom,
-    onewayMolotovOption: "All",
-    fakeMolotovOption: "All",
-    bugMolotovOption: "All",
-    bugHeOption: "All",
-});
-watch(filterState, (newVal) => {
-    const stringified = JSON.stringify(newVal, (key, value) => {
-        return key == "difficulties" ? Array.from(value) : value;
-    });
-    localStorage.setItem("filterState", stringified);
-});
-const filterFromCache = () => {
-    const storedFilter = localStorage.getItem("filterState");
-    if (storedFilter) {
-        const parsed = JSON.parse(
-            localStorage.getItem("filterState")!,
-            (k, v) => {
-                return k == "difficulties" ? new Set(v) : v;
-            }
-        );
-        Object.assign(filterState, parsed);
-    }
-};
-onMounted(filterFromCache);
-
-const filterHandlers = {
-    changeNadeType: (newVal: any) => {
-        filterState.nadeType = newVal;
-    },
-    changeSide: (newVal: any) => {
-        filterState.side = newVal;
-    },
-    changeTickrate: (newVal: any) => {
-        filterState.tickrate = newVal;
-    },
-    changeDifficulty: (option: Difficulty, newVal: any) => {
-        if (newVal === true) {
-            filterState.difficulties.add(option);
-        } else {
-            filterState.difficulties.delete(option);
-        }
-        console.log("difficulty modelValue SINGLEMAP: ", newVal);
-    },
-    // changeDifficulty: (newVal: any, option: string) => {
-    // 	filterState.difficultiesState[`${option}Visible` as keyof typeof filterState.difficultiesState] = newVal
-    // 	console.log(filterState.difficultiesState[`${option}Visible` as keyof typeof filterState.difficultiesState]);
-    // },
-    changeOnewaySmoke: (newVal: any) => {
-        filterState.onewaySmokeOption = newVal;
-    },
-    changeFakeSmoke: (newVal: any) => {
-        filterState.fakeSmokeOption = newVal;
-    },
-    changeBugSmoke: (newVal: any) => {
-        filterState.bugSmokeOption = newVal;
-    },
-    changeForWhom: (newVal: any) => {
-        filterState.forWhom = newVal;
-    },
-    changeOnewayMolotov: (newVal: any) => {
-        filterState.onewayMolotovOption = newVal;
-    },
-    changeFakeMolotov: (newVal: any) => {
-        filterState.fakeMolotovOption = newVal;
-    },
-    changeBugMolotov: (newVal: any) => {
-        filterState.bugMolotovOption = newVal;
-    },
-    changeBugHe: (newVal: any) => {
-        filterState.bugHeOption = newVal;
-    },
-};
+/* Filters & FilterPanel */
+const { filterState, filterHandlers, isFiltersVisible, toggleFilters, filtersPropData } =
+    useFilter();
 
 const isDragging = ref(false);
 
@@ -324,7 +240,7 @@ const previewPanelHandlers = {
         previewPanelState.isMinimized = !previewPanelState.isMinimized;
         window.localStorage.setItem(
             "previewPanelState.isMinimized",
-            JSON.stringify(previewPanelState.isMinimized)
+            JSON.stringify(previewPanelState.isMinimized),
         );
     },
 };
@@ -332,7 +248,7 @@ const previewPanelHandlers = {
 onMounted(() => {
     if (window.localStorage.getItem("previewPanelState.isMinimized") !== null) {
         previewPanelState.isMinimized = JSON.parse(
-            window.localStorage.getItem("previewPanelState.isMinimized")!
+            window.localStorage.getItem("previewPanelState.isMinimized")!,
         );
     }
 });
@@ -371,8 +287,9 @@ const viewFromSpots = ref<Map<Spot["spotId"], ViewFromSpot>>(new Map());
 const activeToSpotsCounter = ref(0);
 
 const viewItemsFactory = computed(() => {
-    return new ViewItemsFactory(currentRouteMapItems.value);
+    return new ViewItemsFactory(spots.value, lineups.value);
 });
+
 const selectedLineups = computed(() => {
     const res = [...viewLineups.value]
         .filter((lineup) => lineup[1].isSelected)
@@ -390,21 +307,22 @@ const selectedLineups = computed(() => {
             // localStorage.removeItem('where')
         }
     }
-    /* return selected lineups */
+
     return res;
 });
+
 onMounted(() => {
     if (route.query.into) {
         router.push({ query: { where: route.query.into } });
         if (Array.isArray(route.query.into)) {
             const intos = (route.query.into as string[]).map(
-                (lineupName) => "into-" + lineupName
+                (lineupName) => "into-" + lineupName,
             );
             const lineupIds: string[] = [];
             intos.forEach((lineupName) =>
                 lineupIds.push(
-                    viewItemsFactory.value.lineupIdNameMap.get(lineupName)!
-                )
+                    viewItemsFactory.value.lineupIdNameMap.get(lineupName)!,
+                ),
             );
             lineupIds.forEach((lineupId, ix) => {
                 const lineup =
@@ -490,7 +408,7 @@ function clickToSpot(event: Event, clickedToSpot: ViewToSpot) {
 function clickFromSpot(
     event: Event,
     fromSpot: ViewFromSpot,
-    lineup: LineupItem | undefined
+    lineup: LineupItem | undefined,
 ) {
     const intersection =
         fromSpot.activeLineupIds.size + fromSpot.selectedLineupIds.size;
@@ -533,7 +451,7 @@ const methods_toSpot = {
                     toSpots.push(spots.value.get(lineup.fromId)!);
                 } catch (error) {
                     console.log(
-                        "Probably problem is Bad/Damaged Lineup Data. Most probably Map key Id is not the same as Item's Id"
+                        "Probably problem is Bad/Damaged Lineup Data. Most probably Map key Id is not the same as Item's Id",
                     );
                     console.log("Error: ");
                     console.error(error);
@@ -542,7 +460,7 @@ const methods_toSpot = {
             toSpots.forEach((fromSpot) => {
                 const length = Math.sqrt(
                     (fromSpot.coords.x - toSpot.toSpot.coords.x) ** 2 +
-                        (fromSpot.coords.y - toSpot.toSpot.coords.y) ** 2
+                        (fromSpot.coords.y - toSpot.toSpot.coords.y) ** 2,
                 );
                 const duration = 2.2 + length * 0.01;
                 durations.push(duration);
@@ -581,7 +499,7 @@ const methods_toSpot = {
         toSpot.isSelected = true;
         toSpot.isActive = false;
         const ix1 = toSpot.activeFromSpotIds.findIndex(
-            (entry) => entry == lineup.lineup.fromId
+            (entry) => entry == lineup.lineup.fromId,
         );
         toSpot.activeFromSpotIds.splice(ix1, 1);
         toSpot.activeLineupIds.delete(lineup.lineup.lineupId);
@@ -596,7 +514,7 @@ const methods_toSpot = {
             if (intersection > 1) {
                 //активирован/выбран не только удаляемым лайнапом
                 const ix1 = fromSpot.activatedByToSpotIds.findIndex(
-                    (entry) => entry == lineup.lineup.toId
+                    (entry) => entry == lineup.lineup.toId,
                 );
                 fromSpot.activatedByToSpotIds.splice(ix1, 1);
                 fromSpot.activeLineupIds.delete(lineupId);
@@ -605,7 +523,7 @@ const methods_toSpot = {
                 fromSpot.filter.tickrate[lineup.lineup.tickrate]--;
                 fromSpot.filter.difficulties[lineup.lineup.difficulty]--;
                 fromSpot.lineupIds = fromSpot.lineupIds.filter(
-                    (lineupIdFltr) => lineupId != lineupIdFltr
+                    (lineupIdFltr) => lineupId != lineupIdFltr,
                 );
                 console.log(493);
                 if (fromSpot.activeLineupIds.size < 1) {
@@ -618,7 +536,7 @@ const methods_toSpot = {
             }
             viewLineups.value.delete(lineupId);
             const ix1 = toSpot.activeFromSpotIds.findIndex(
-                (entry) => entry == lineup.lineup.fromId
+                (entry) => entry == lineup.lineup.fromId,
             );
             toSpot.activeFromSpotIds.splice(ix1, 1);
             toSpot.activeLineupIds.delete(lineupId);
@@ -634,7 +552,7 @@ const methods_toSpot = {
         toSpot.activeLineupIds.forEach((lineupId) => {
             const viewLineup = viewLineups.value.get(lineupId)!;
             const ix1 = toSpot.activeFromSpotIds.findIndex(
-                (entry) => entry == viewLineup.lineup.fromId
+                (entry) => entry == viewLineup.lineup.fromId,
             );
             toSpot.activeFromSpotIds.splice(ix1, 1);
             toSpot.activeLineupIds.delete(lineupId);
@@ -650,7 +568,7 @@ const methods_fromSpot = {
         fromSpot.activeLineupIds.delete(lineup.lineup.lineupId);
         fromSpot.selectedLineupIds.add(lineup.lineup.lineupId);
         const ix1 = fromSpot.activatedByToSpotIds.findIndex(
-            (entry) => entry == lineup.lineup.toId
+            (entry) => entry == lineup.lineup.toId,
         );
         fromSpot.activatedByToSpotIds.splice(ix1, 1);
         fromSpot.selectedByToSpotIds.push(lineup.lineup.toId);
@@ -674,7 +592,7 @@ const methods_fromSpot = {
             viewLineups.value.delete(lineup.lineup.lineupId);
             const toSpot = viewToSpots.value.get(lineup.lineup.toId)!;
             const ix1 = toSpot.selectedFromSpotIds.findIndex(
-                (entry) => entry == fromSpot.fromSpot.spotId
+                (entry) => entry == fromSpot.fromSpot.spotId,
             );
             toSpot.selectedFromSpotIds.splice(ix1, 1);
             toSpot.selectedLineupIds.delete(lineup.lineup.lineupId);
@@ -687,12 +605,12 @@ const methods_fromSpot = {
             // if (fromSpot.selectedLineupIds.size < 2) {
             // fromSpot.isSelected = false
             const ix1 = fromSpot.selectedByToSpotIds.findIndex(
-                (entry) => entry == lineup.lineup.toId
+                (entry) => entry == lineup.lineup.toId,
             );
             fromSpot.selectedByToSpotIds.splice(ix1, 1);
             fromSpot.selectedLineupIds.delete(lineup.lineup.lineupId);
             fromSpot.lineupIds = fromSpot.lineupIds.filter(
-                (lId) => lId != lineup.lineup.lineupId
+                (lId) => lId != lineup.lineup.lineupId,
             );
             fromSpot.filter.nadeType[lineup.lineup.nadeType]--;
             fromSpot.filter.side[lineup.lineup.side]--;
@@ -700,7 +618,7 @@ const methods_fromSpot = {
             fromSpot.filter.difficulties[lineup.lineup.difficulty]--;
             const toSpot = viewToSpots.value.get(lineup.lineup.toId)!;
             const ix1_toSpot = toSpot.selectedFromSpotIds.findIndex(
-                (entry) => entry == fromSpot.fromSpot.spotId
+                (entry) => entry == fromSpot.fromSpot.spotId,
             );
             toSpot.selectedFromSpotIds.splice(ix1_toSpot, 1);
             toSpot.selectedLineupIds.delete(lineup.lineup.lineupId);
@@ -724,7 +642,7 @@ const methods_fromSpot = {
         if (!fromSpotExists) {
             // если не существует - создать
             const fromSpot = viewItemsFactory.value.createActiveViewFromSpot(
-                lineup.lineup.lineupId
+                lineup.lineup.lineupId,
             );
             console.log(fromSpot);
             viewFromSpots.value.set(fromId, fromSpot);
@@ -754,7 +672,7 @@ const methods_fromSpot = {
         if (intersection > 1) {
             //активирован/выбран не только удаляемым лайнапом
             const ix1 = fromSpot.activatedByToSpotIds.findIndex(
-                (entry) => entry == lineup.lineup.toId
+                (entry) => entry == lineup.lineup.toId,
             );
             fromSpot.activatedByToSpotIds.splice(ix1, 1);
             fromSpot.activeLineupIds.delete(lineupId);
@@ -763,7 +681,7 @@ const methods_fromSpot = {
             fromSpot.filter.tickrate[lineup.lineup.tickrate]--;
             fromSpot.filter.difficulties[lineup.lineup.difficulty]--;
             fromSpot.lineupIds = fromSpot.lineupIds.filter(
-                (lineupIdFltr) => lineupId != lineupIdFltr
+                (lineupIdFltr) => lineupId != lineupIdFltr,
             );
             if (fromSpot.activeLineupIds.size < 1) {
                 fromSpot.isActive = false;
@@ -829,7 +747,7 @@ const selectFormProps = {
                     lineupItem: lineup,
                     viewToSpot: viewToSpots.value.get(lineup.lineup.toId)!,
                     viewFromSpot: viewFromSpots.value.get(
-                        lineup.lineup.fromId
+                        lineup.lineup.fromId,
                     )!,
                 };
                 return lineupPropObj;
@@ -848,7 +766,7 @@ const selectFormProps = {
                     lineupItem: lineup,
                     viewToSpot: viewToSpots.value.get(lineup.lineup.toId)!,
                     viewFromSpot: viewFromSpots.value.get(
-                        lineup.lineup.fromId
+                        lineup.lineup.fromId,
                     )!,
                 };
                 return lineupPropObj;
@@ -869,10 +787,10 @@ function openContentPanel(lineupId: string) {
     const lineup = viewLineups.value.get(lineupId)!;
     contentPanelData.value.clickedLineup = lineup;
     contentPanelData.value.linkedToSpot = viewToSpots.value.get(
-        lineup.lineup.toId
+        lineup.lineup.toId,
     )!;
     contentPanelData.value.linkedFromSpot = viewFromSpots.value.get(
-        lineup.lineup.fromId
+        lineup.lineup.fromId,
     )!;
 }
 function exitContentPanel() {
@@ -920,7 +838,7 @@ bugHeOption:[], */
                     @mousedown="isDragging = false"
                     @mousemove="isDragging = true"
                 >
-                    <CMS />
+                    <!-- <CMS /> -->
                     <img
                         ref="imgRef"
                         @load="onImageLoaded"
@@ -1000,7 +918,7 @@ bugHeOption:[], */
                                 filterState.tickrate ===
                                     viewLineup.lineup.tickrate &&
                                 filterState.difficulties.has(
-                                    viewLineup.lineup.difficulty
+                                    viewLineup.lineup.difficulty,
                                 ) &&
                                 !store.isCmsModeOn
                             "
@@ -1009,12 +927,12 @@ bugHeOption:[], */
                                 <line
                                     :x1="`${
                                         viewFromSpots.get(
-                                            viewLineup.lineup.fromId
+                                            viewLineup.lineup.fromId,
                                         )?.fromSpot.coords.x
                                     }%`"
                                     :y1="`${
                                         viewFromSpots.get(
-                                            viewLineup.lineup.fromId
+                                            viewLineup.lineup.fromId,
                                         )?.fromSpot.coords.y
                                     }%`"
                                     :x2="`${
@@ -1029,12 +947,12 @@ bugHeOption:[], */
                                         viewLineup.isSelected
                                             ? `hsl(${
                                                   viewToSpots.get(
-                                                      viewLineup.lineup.toId
+                                                      viewLineup.lineup.toId,
                                                   )?.hslColor
                                               }, 100%, 56%)`
                                             : `hsl(${
                                                   viewToSpots.get(
-                                                      viewLineup.lineup.toId
+                                                      viewLineup.lineup.toId,
                                                   )?.hslColor
                                               }, 80%, 55%)`
                                     "
@@ -1051,12 +969,12 @@ bugHeOption:[], */
                                 :style="{
                                     '--spotX': `${
                                         viewFromSpots.get(
-                                            viewLineup.lineup.fromId
+                                            viewLineup.lineup.fromId,
                                         )?.fromSpot.coords.x
                                     }%`,
                                     '--spotY': `${
                                         viewFromSpots.get(
-                                            viewLineup.lineup.fromId
+                                            viewLineup.lineup.fromId,
                                         )?.fromSpot.coords.y
                                     }%`,
                                     '--nadeX': `${
@@ -1081,8 +999,8 @@ bugHeOption:[], */
                                     filter: `hue-rotate(${
                                         Number(
                                             viewToSpots.get(
-                                                viewLineup.lineup.toId
-                                            )?.hslColor
+                                                viewLineup.lineup.toId,
+                                            )?.hslColor,
                                         ) +
                                         360 -
                                         40
@@ -1206,7 +1124,8 @@ bugHeOption:[], */
     min-height: 0;
     flex-grow: 1;
     background-color: var(--bg_dark);
-    box-shadow: -1px -1px 0 0 var(--border_dark),
+    box-shadow:
+        -1px -1px 0 0 var(--border_dark),
         1px 1px 0 0 var(--border_light);
     cursor: grab;
 
@@ -1332,4 +1251,3 @@ line {
     }
 }
 </style>
-@/data/mapNamesList
