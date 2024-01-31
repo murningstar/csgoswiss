@@ -1,4 +1,4 @@
-export const maplist:string[] = [
+export const mapNamesList:string[] = [
   "mirage",
   "dust2",
   "inferno",
