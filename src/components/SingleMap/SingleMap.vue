@@ -1,9 +1,9 @@
 <script lang="ts" setup>
-// vue
+// Vue imports
 import { ref, computed, watch, onMounted, type StyleValue, reactive, watchEffect, onBeforeMount } from "vue";
 import { onBeforeRouteLeave, onBeforeRouteUpdate, useRoute, useRouter } from 'vue-router'
 import { useSomestore } from "@/stores/somestore";
-// libs
+// Libraries
 import panzoom from "panzoom"
 import { gsap } from "gsap"
 import { random } from "nanoid";
@@ -22,7 +22,7 @@ import PreviewCard from "@/components/SingleMap/PreviewCard.vue"
 import ContentPanel from "@/components/SingleMap/ContentPanel.vue"
 import SelectForm from "@/components/SingleMap/SelectForm.vue"
 import GS_Window from "@/components/UI/GS_Window.vue";
-// data
+// Data of Lineups & Spots
 import { mirageGrenades } from "@/data/content/mirage/mirageGrenades";
 import { ancientGrenades } from "@/data/content/ancient/ancientGrenades";
 import { dust2Grenades } from "@/data/content/dust2/dust2Grenades";

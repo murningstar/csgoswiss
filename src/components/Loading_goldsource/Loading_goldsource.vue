@@ -66,13 +66,13 @@ const props = defineProps({ nSegmentsVisible: { type: Number, default: 0 } })
 		background-color: rgb(62, 70, 55);
 		padding: 4px;
 		width: fit-content;
-		border: 2px solid blue;
+		// border: 2px solid blue;
 
 		.loading__progressSegment-container {
-			border: 2px solid cyan;
+			// border: 2px solid cyan;
 
 			.loading__progressSegment-item {
-				border: 2px solid green;
+				// border: 2px solid green;
 				height: 24px;
 				width: 12px;
 				margin: 0 3px;

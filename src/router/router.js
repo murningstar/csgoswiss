@@ -16,6 +16,7 @@ let router = createRouter({
 		// { path: "/vertigo", name: "vertigo" },
 	],
 	linkActiveClass: "mapLink-active",
+
 });
 
 export default router;

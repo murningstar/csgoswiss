@@ -114,7 +114,7 @@ console.log(props.toItem);
             clicked: isActive,
             selected: isSelected
         }"></button>
-        <img class="sprite" src="@/assets/ui/Smoke circle.png"
+        <img class="sprite" src="@/assets/ui/Smoke_circle.png"
             alt="Smoke effect image downloading error" ref="spriteRef" />
     </div>
 </template>
