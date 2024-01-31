@@ -30,11 +30,13 @@ import { infernoGrenades } from "@/data/content/inferno/infernoGrenades";
 import { nukeGrenades } from "@/data/content/nuke/nukeGrenades";
 import { overpassGrenades } from "@/data/content/overpass/overpassGrenades";
 import { vertigoGrenades } from "@/data/content/vertigo/vertigoGrenades";
-// other
+// composables
 import { useLoadingGoldsourceLogic } from "@/components/Loading_goldsource/loading_goldsource"
+// other
 import { maplist } from "@/data/maplist"
-import type { MapItems } from "@/data/types/MapItems"
 import { nadeTypeList } from "@/data/nadeTypeList";
+
+import type { MapItems } from "@/data/types/MapItems"
 import type { Smoke as SmokeType } from "@/data/_old/Smoke";
 // import type { Grenade } from "@/data/interfaces/Grenade";
 import type { Difficulty, ForWhom, NadeType, Side, Tickrate } from "@/data/types/GrenadeProperties";
