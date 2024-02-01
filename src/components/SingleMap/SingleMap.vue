@@ -284,6 +284,7 @@ const selectedLineups = computed(() => {
     return res;
 });
 
+/* Если в URL есть lineup'ы, то сделать их выбранными */
 onMounted(() => {
     if (route.query.into) {
         router.push({ query: { where: route.query.into } });

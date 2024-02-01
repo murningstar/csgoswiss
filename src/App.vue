@@ -8,7 +8,7 @@ import {
     computed,
 } from "vue";
 import GS_Window from "@/components/UI/GS_Window.vue";
-import LoadingGoldsource from "@/components/LoadingGoldsource/LoadingGoldsource.vue";
+import LoadingGoldsource from "@/components/loadingGoldsource/LoadingGoldsource.vue";
 import { useLoadingGoldsource } from "@/composables/loadingGoldsource";
 const { isLoading, nSegmentsVisible, startLoading, endLoading } =
     useLoadingGoldsource();
