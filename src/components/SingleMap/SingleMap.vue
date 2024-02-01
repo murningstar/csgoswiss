@@ -1,25 +1,10 @@
 <script lang="ts" setup>
 // Vue imports
-import {
-    ref,
-    computed,
-    watch,
-    onMounted,
-    type StyleValue,
-    reactive,
-    watchEffect,
-    onBeforeMount,
-} from "vue";
-import {
-    onBeforeRouteLeave,
-    onBeforeRouteUpdate,
-    useRoute,
-    useRouter,
-} from "vue-router";
+import { ref, computed, watch, onMounted, reactive } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import { useSomestore } from "@/stores/somestore";
 
 // Libraries
-import panzoom from "panzoom";
 import { gsap } from "gsap";
 import { random } from "nanoid";
 import { createMachine } from "xstate";
@@ -51,8 +36,11 @@ import { vertigoGrenades } from "@/data/content/vertigo/vertigoGrenades";
 
 // composables
 import { useLoadingGoldsource } from "@/composables/loadingGoldsource";
-import { useMapData } from "@/composables/mapData";
-import { useFilter } from "@/composables/filter";
+import { useAutoFetchMapData } from "@/composables/singleMap/autoFetchMapData"; // fetch lineups & spots data + autorefetch on route.path change
+import { useFilter } from "@/composables/singleMap/filter";
+// directives
+import { vPanzoom } from "@/directives/vPanzoom";
+
 // other
 import { mapNamesList } from "@/data/mapNamesList";
 import { nadeTypeList } from "@/data/nadeTypeList";
@@ -60,18 +48,21 @@ import { nadeTypeList } from "@/data/nadeTypeList";
 import type { MapItems } from "@/data/types/MapItems";
 import type { Smoke as SmokeType } from "@/data/_old/Smoke";
 // import type { Grenade } from "@/data/interfaces/Grenade";
-import type {
-    Difficulty,
-    ForWhom,
-    NadeType,
-    Side,
-    Tickrate,
-} from "@/data/types/GrenadeProperties";
 import type { ThrowSpot } from "@/data/_old/ThrowSpot";
 import type { Lineup } from "@/data/interfaces/Lineup";
 import type { Spot } from "@/data/interfaces/Spot";
 import { ViewItemsFactory, type LineupItem } from "@/data/types/ViewItems";
 import type { ViewToSpot, ViewFromSpot } from "@/data/types/ViewItems";
+
+/* Global stuff */
+const store = useSomestore();
+const router = useRouter();
+const route = useRoute();
+const currentRoute = computed(() => route.path.slice(1));
+const isDragging = ref(false);
+
+/* Autorefetchable lineup & spots data on route change */
+// const { lineups, spots } = useAutoFetchMapData(); // Не отображаются *ВОЗМОЖНО* из-за того что они сначала пустые
 
 /* Loading window Bindings */
 const {
@@ -81,11 +72,28 @@ const {
     endLoading,
     onImageLoadError,
 } = useLoadingGoldsource();
+watch(
+    // открывает окно загрузки когда путь изменился
+    () => route.path,
+    (newPath, oldPath) => {
+        /* если убрать условие, то всё все равно будет работать, а именно
+	- при клике на ту же карту, startloading не сработает,
+	- при клике на другую карту startloading сработает.
+	Почему так, хз его знает, проверку оставил на всякий случай */
+        if (newPath != oldPath) {
+            startLoading();
+        }
+    },
+);
 
-const store = useSomestore();
-const router = useRouter();
-const route = useRoute();
-const currentRoute = computed(() => route.path.slice(1));
+/* Filters & FilterPanel bindings */
+const {
+    filterState,
+    filterHandlers,
+    isFiltersVisible,
+    toggleFilters,
+    filtersPropData,
+} = useFilter();
 
 /* Возможно нужно вынести склеивание этого объекта в отдельный файл и импортировать его,
 если склеивание происходит каждый раз при загрузке приложения.*/
@@ -105,45 +113,29 @@ const currentRouteMapItems = computed(() => {
         return { lineups: new Map(), spots: new Map() } as MapItems;
     }
 });
-// Сделал каждой гранате текущей карты по computed для визуального облегчения template
-// const smokes = computed(() => currentRouteMapItems.value.smokes)
-// const molotovs = computed(() => currentRouteMapItems.value.molotovs)
-// const flashes = computed(() => currentRouteMapItems.value.flashes)
-// const hes = computed(() => currentRouteMapItems.value.hes)
-// const throwSpots = computed(() => currentRouteMapItems.value.throwSpots)
 
-// const spots = computed(() => currentRouteMapItems.value.spots);
-// const lineups = computed(() => currentRouteMapItems.value.lineups);
+const spots = computed(() => currentRouteMapItems.value.spots);
+const lineups = computed(() => currentRouteMapItems.value.lineups);
 
-const { lineups, spots } = useMapData();
-
-/* computed alt attribute value for images of maps */
+/* IMAGE STUFF */
+const imgRef = ref(null);
+const smokeSpritesRef = ref([]);
+const outerContainerRef = ref<HTMLDivElement | null>(null);
+const pointSize = ref(0);
+const pxCoef = 0.0016155; // пропорция 1px к размеру карты
+/* alt attribute for images of maps */
 const imgMapError = computed(() => {
     if (mapNamesList.includes(currentRoute.value)) {
-        return `Downloading error of map image de_${currentRoute.value}, please refresh the page or choose another map`;
+        return `de_${currentRoute.value} map top view`;
     } else {
         return `There isn't such map in active pool, please choose another map`;
     }
 });
-/* открывает окно загрузки когда путь изменился */
-watch(
-    () => route.path,
-    (newPath, oldPath) => {
-        /* если убрать условие, то всё все равно будет работать, а именно
-	- при клике на ту же карту, startloading не сработает,
-	- при клике на другую карту startloading сработает.
-	Почему так, хз его знает, проверку оставил на всякий случай */
-        if (newPath != oldPath) {
-            startLoading();
-        }
-    },
-);
-
-const imgRef = ref(null);
-const smokeSpritesRef = ref([]);
-
+/* onload обработчик для картинок карт (наприм. mirage.wepb) */
 function onImageLoaded(event: Event) {
-    // console.log("%cimage loaded", "color:green", performance.now());
+    const getElemSide = (elem: HTMLImageElement) => {
+        return elem.getBoundingClientRect().height;
+    };
     endLoading();
     /* ПОСЧИТАТЬ РАЗМЕР ТОЧКИ ПРИ ЗАГРУЗКЕ КАРТЫ */
     if (store.isFirstLoad) {
@@ -173,7 +165,7 @@ function onImageLoaded(event: Event) {
         });
     });
 }
-/* ИЗМЕНИТЬ РАЗМЕР ТОЧКИ НА РЕСАЙЗЕ */
+/* ИЗМЕНИТЬ РАЗМЕР ТОЧКИ НА РЕСАЙЗЕ (применяется в onMounted чуть ниже) */
 const imgResizeObs = new ResizeObserver((obsedElements) => {
     if (!store.isFirstLoad) {
         const mapside = obsedElements[0].contentRect.height;
@@ -187,73 +179,45 @@ const imgResizeObs = new ResizeObserver((obsedElements) => {
         }
     }
 });
-/* Можно спокойно подгружать все карты и пикча текущей карты
-загружена не будет, т.к. браузер увидит, что она есть в кэше => 
-функционал для отслеживания уже загруженных карт не нужен */
+/* Функция для подгрузки изображений других карт */
 async function preloadRestData() {
+    /* Можно спокойно подгружать все карты и пикча текущей карты
+    загружена не будет, т.к. браузер увидит, что она есть в кэше => 
+    функционал для отслеживания уже загруженных карт не нужен */
     mapNamesList.forEach((map) => {
         let img = new Image();
         img.src = `/src/assets/maps/webp/${map}.webp`;
-        // import(`@/data/v2_spotSvyaz/${map}/${map}GrenadesV2`)
-        // import(`@/data/v2_spotSvyaz/${map}/lineups_${map}`)
-        // import(`@/data/v2_spotSvyaz/${map}/spots_${map}`)
-        // img.onload = (e) => { console.log(`%c ${map} image loaded`, "color:blue") }
     });
 }
-
-const outerContainerRef = ref<HTMLDivElement | null>(null);
-const innerContainerRef = ref(null);
-const pointSize = ref(0);
-const pxCoef = 0.0016155; // пропорция 1px к размеру карты
-
-function getElemSide(elem: HTMLImageElement) {
-    return elem.getBoundingClientRect().height;
-}
+/* preloadRestData(), resizeObserver.observe() */
 onMounted(() => {
     preloadRestData();
-
-    panzoom(outerContainerRef.value as HTMLDivElement, {
-        maxZoom: 3,
-        minZoom: 1,
-        bounds: true,
-        zoomDoubleClickSpeed: 1,
-    });
-
     imgResizeObs.observe(imgRef.value!);
 });
 
-/* Filters & FilterPanel */
-const {
-    filterState,
-    filterHandlers,
-    isFiltersVisible,
-    toggleFilters,
-    filtersPropData,
-} = useFilter();
-
-const isDragging = ref(false);
-
-const previewPanelState = reactive({
+/* PreviewPanel stuff */
+const previewPanelState = ref({
     isToggled: false,
     isMinimized: false,
     isActive: computed(() => selectedLineups.value.length > 0),
 });
 const previewPanelHandlers = {
     togglePreviewPanel: () => {
-        previewPanelState.isToggled = !previewPanelState.isToggled;
+        previewPanelState.value.isToggled = !previewPanelState.value.isToggled;
     },
-    toggleContentMode: () => {
-        previewPanelState.isMinimized = !previewPanelState.isMinimized;
+    toggleMinimize: () => {
+        previewPanelState.value.isMinimized =
+            !previewPanelState.value.isMinimized;
         window.localStorage.setItem(
             "previewPanelState.isMinimized",
-            JSON.stringify(previewPanelState.isMinimized),
+            JSON.stringify(previewPanelState.value.isMinimized),
         );
     },
 };
-/* localStorage preview state */
+/* init PreviewPanel's `minimized` from localStorage */
 onMounted(() => {
     if (window.localStorage.getItem("previewPanelState.isMinimized") !== null) {
-        previewPanelState.isMinimized = JSON.parse(
+        previewPanelState.value.isMinimized = JSON.parse(
             window.localStorage.getItem("previewPanelState.isMinimized")!,
         );
     }
@@ -272,22 +236,25 @@ toSpotы.
 /* VIEW-TOSPOTS2 */
 /* В один спот может прилетать несколько разных лайнапов. Информацию о каждом
 нужно хранить в этом споте для условной отрисовки на основе фильтров
-
+---
 На 1 лайнап делать 1 спот - нельзя, т.к. споты будут наслаиваться на миникарте, если
 у 2 и более лайнапов один и тот же toSpot.
-
+---
 По сути viewToSpots содержит в себе все возможные точки, куда летят гранаты.
 В template нужно только показать нужные на основе фильтров  */
 const viewToSpots = ref<Map<Spot["spotId"], ViewToSpot>>(new Map());
+
 /* VIEW-LINEUPS */
 const viewLineups = ref<Map<Lineup["lineupId"], LineupItem>>(new Map());
+
 /* VIEW-FROMSPOTS */
 /* Лайнапов к одному fromСпоту 
-		может быть несколько, когда включено несколько toСпотов
-	Или когда редкий эдж кейс, когда уже выбрана граната, такая как на мираже смок в окно
-		и к ней выбирается еще молотов с той же позиции также в окно. Кому это может пригодиться?
-		Мб кто-то будет расставлять экзеки на карте и кому-то понадобится такой функционал. */
+может быть несколько, когда включено несколько toСпотов
+Или когда редкий эдж кейс, когда уже выбрана граната, такая как на мираже смок в окно
+и к ней выбирается еще молотов с той же позиции также в окно. Кому это может пригодиться?
+Мб кто-то будет расставлять экзеки на карте и кому-то понадобится такой функционал. */
 const viewFromSpots = ref<Map<Spot["spotId"], ViewFromSpot>>(new Map());
+
 /* activeToSpotsCounter используется только для вычисления hslColor, 
 а именно, чтобы первый toSpot всегда был желтый */
 const activeToSpotsCounter = ref(0);
@@ -352,12 +319,13 @@ onMounted(() => {
     }
 });
 
+/* Показать previewPanel при выборе лайнапа (но не при отмене выбора); скрыть, если отменён весь выбор */
 watch(selectedLineups, (newVal, oldVal) => {
     if (newVal.length > oldVal.length) {
-        previewPanelState.isToggled = true;
+        previewPanelState.value.isToggled = true;
     }
     if (newVal.length === 0) {
-        previewPanelState.isToggled = false;
+        previewPanelState.value.isToggled = false;
     }
 });
 
@@ -837,7 +805,7 @@ bugHeOption:[], */
     <!-- драг миникарты работает сквозь этот sibling(братский)-элемент  -->
     <main class="wrapperOuter">
         <div class="wrapperInner">
-            <div class="mapContainer-outer" ref="outerContainerRef" @wheel="">
+            <div class="mapContainer-outer" v-panzoom @wheel="">
                 <div
                     class="mapContainer-inner"
                     ref="innerContainerRef"
@@ -845,6 +813,7 @@ bugHeOption:[], */
                     @mousemove="isDragging = true"
                 >
                     <!-- <CMS /> -->
+
                     <img
                         ref="imgRef"
                         @load="onImageLoaded"
@@ -1053,7 +1022,7 @@ bugHeOption:[], */
         <PreviewPanel
             :state="previewPanelState"
             @toggle="previewPanelHandlers.togglePreviewPanel"
-            @toggleMode="previewPanelHandlers.toggleContentMode"
+            @toggleMinimize="previewPanelHandlers.toggleMinimize"
         >
             <PreviewCard
                 v-for="lineup in selectedLineups"
@@ -1257,4 +1226,3 @@ line {
     }
 }
 </style>
-@/components/Loading_goldsource/loadingGoldsource
