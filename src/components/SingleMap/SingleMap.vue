@@ -50,7 +50,7 @@ import { overpassGrenades } from "@/data/content/overpass/overpassGrenades";
 import { vertigoGrenades } from "@/data/content/vertigo/vertigoGrenades";
 
 // composables
-import { useLoadingGoldsource } from "@/components/loadingGoldsource/loadingGoldsource";
+import { useLoadingGoldsource } from "@/composables/loadingGoldsource";
 import { useMapData } from "@/composables/mapData";
 import { useFilter } from "@/composables/filter";
 // other
