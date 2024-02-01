@@ -6,11 +6,11 @@ import router from "@/router/router.js";
 
 import Navbar from "@/components/Navbar/Navbar.vue";
 import Maps from "@/components/Maps/Maps.vue"
-import loadingWindow from "@/components/Loading_goldsource/Loading_goldsource.vue";
+
 import SingleMap from "@/components/SingleMap/SingleMap.vue";
 import CMS from "@/components/cms/CMS.vue";
 
-const components = [Navbar, Maps, loadingWindow, SingleMap, CMS]
+const components = [Navbar, Maps, SingleMap, CMS]
 
 let app = createApp(App);
 app.use(router);

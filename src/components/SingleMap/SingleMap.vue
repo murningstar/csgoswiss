@@ -38,6 +38,7 @@ import PreviewCard from "@/components/SingleMap/PreviewCard.vue";
 import ContentPanel from "@/components/SingleMap/ContentPanel.vue";
 import SelectForm from "@/components/SingleMap/SelectForm.vue";
 import GS_Window from "@/components/UI/GS_Window.vue";
+import LoadingGoldsource from "@/components/LoadingGoldsource/LoadingGoldsource.vue";
 
 // Data of Lineups & Spots
 import { mirageGrenades } from "@/data/content/mirage/mirageGrenades";
@@ -49,7 +50,7 @@ import { overpassGrenades } from "@/data/content/overpass/overpassGrenades";
 import { vertigoGrenades } from "@/data/content/vertigo/vertigoGrenades";
 
 // composables
-import { useLoadingGoldsourceLogic } from "@/components/Loading_goldsource/loading_goldsource";
+import { useLoadingGoldsource } from "@/components/loadingGoldsource/loadingGoldsource";
 import { useMapData } from "@/composables/mapData";
 import { useFilter } from "@/composables/filter";
 // other
@@ -79,7 +80,7 @@ const {
     startLoading,
     endLoading,
     onImageLoadError,
-} = useLoadingGoldsourceLogic();
+} = useLoadingGoldsource();
 
 const store = useSomestore();
 const router = useRouter();
@@ -222,8 +223,13 @@ onMounted(() => {
 });
 
 /* Filters & FilterPanel */
-const { filterState, filterHandlers, isFiltersVisible, toggleFilters, filtersPropData } =
-    useFilter();
+const {
+    filterState,
+    filterHandlers,
+    isFiltersVisible,
+    toggleFilters,
+    filtersPropData,
+} = useFilter();
 
 const isDragging = ref(false);
 
@@ -1090,7 +1096,7 @@ bugHeOption:[], */
         @deselect="(lineupId) => formDeselectFromSpot(lineupId)"
     />
     <Teleport to="body">
-        <Loading_goldsource
+        <LoadingGoldsource
             v-if="isLoading"
             :nSegmentsVisible="nSegmentsVisible"
         >
@@ -1098,7 +1104,7 @@ bugHeOption:[], */
             <template #message>
                 Downloading de_{{ currentRoute }} image...
             </template>
-        </Loading_goldsource>
+        </LoadingGoldsource>
     </Teleport>
 </template>
 
@@ -1251,3 +1257,4 @@ line {
     }
 }
 </style>
+@/components/Loading_goldsource/loadingGoldsource
