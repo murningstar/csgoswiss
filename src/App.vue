@@ -87,4 +87,3 @@ $border_dark: rgb(35, 41, 27);
     background-color: rgba(0, 0, 0, 0.76);
 }
 </style>
-@/components/Loading_goldsource/loadingGoldsource

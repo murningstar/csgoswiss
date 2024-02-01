@@ -8,7 +8,7 @@ const props = defineProps<{
         isMinimized: boolean,
     }
 }>()
-const emit = defineEmits(['toggle', 'toggleMode'])
+const emit = defineEmits(['toggle', 'toggleMinimize'])
 </script>
 
 <template>
@@ -25,7 +25,7 @@ const emit = defineEmits(['toggle', 'toggleMode'])
             <div class="controlButtonsContainer">
 
                 <button class="previewPanel__button" v-if="state.isToggled"
-                    @click="() => { if (state.isMinimized) { emit('toggleMode') } }"
+                    @click="() => { if (state.isMinimized) { emit('toggleMinimize') } }"
                     :style="{
                         borderTop: !state.isMinimized ? '1px solid var(--border_dark)' : '1px solid var(--border_light)',
                         borderLeft: !state.isMinimized ? '1px solid var(--border_dark)' : '1px solid var(--border_light)',
@@ -54,7 +54,7 @@ const emit = defineEmits(['toggle', 'toggleMode'])
                             fill: !state.isMinimized ? 'white' : 'rgb(255, 235, 63)',
 
                         }"
-                        @click="() => { if (!state.isMinimized) { emit('toggleMode') } }">
+                        @click="() => { if (!state.isMinimized) { emit('toggleMinimize') } }">
                         <g data-name="Layer 2" id="Layer_2">
                             <path d="M28,10H4A1,1,0,0,1,4,8H28a1,1,0,0,1,0,2Z" />
                             <path d="M28,17H4a1,1,0,0,1,0-2H28a1,1,0,0,1,0,2Z" />
