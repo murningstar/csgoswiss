@@ -1,121 +1,50 @@
-
 <script setup lang="ts">
-import type { Grenade } from '@/data/_old/Grenade';
-import type { Difficulty, ForWhom, NadeType, Side, Tickrate, ViewCountDifficulty, ViewCountNadeType, ViewCountSide, ViewCountTickrate } from '@/data/types/GrenadeProperties';
-import type { Spot } from '@/data/interfaces/Spot';
-import { reactive, computed, ref, onMounted } from 'vue';
-const props = defineProps<{
-    toItem: {
-        toSpot: Spot;
-        filter: {
-            nadeType: ViewCountNadeType;
-            side: ViewCountSide;
-            tickrate: ViewCountTickrate;
-            difficulties: ViewCountDifficulty;
-        };
-        lineupIds: string[];
-    },
-    pointSize: number,
-    isActive: boolean,
-    isSelected: boolean,
-    filter: {
-        nadeType: "all" | "smoke" | "molotov" | "flash" | "he",
-        side: Side,
-        tickrate: Tickrate,
-        difficulties: Set<Difficulty>,
-        onewaySmokeOption: string,
-        fakeSmokeOption: string,
-        bugSmokeOption: string,
-        forWhom: ForWhom,
-        onewayMolotovOption: string,
-        fakeMolotovOption: string,
-        bugMolotovOption: string,
-        bugHeOption: string,
-    },
-}>()
+import type {
+    ViewCountDifficulty,
+    ViewCountNadeType,
+    ViewCountSide,
+    ViewCountTickrate,
+} from "@/data/types/GrenadeProperties";
+import type { Spot } from "@/data/interfaces/Spot";
+import { reactive, ref, onMounted } from "vue";
+import type { ViewToSpot } from "@/data/types/ViewItems";
+const props = defineProps<{ viewToSpot: ZViewToSpot }>();
 
 /* toSpot !!! */
-const toSpot = reactive(props.toItem)
+const toSpot = reactive(props.viewToSpot);
 
-const difficultyIntersection = computed(() => {
-    const filterDifficulties: Difficulty[] = []
-    props.filter.difficulties.forEach((dif) => {
-        filterDifficulties.push(dif)
-    })
-    const res = filterDifficulties.some((difficulty) => {
-        return toSpot.filter.difficulties[difficulty] > 0
-    })
-    return res
-})
-
-const showIf = computed(() => {
-    console.log('difficultyIntersection ', difficultyIntersection.value);
-    return (
-        (toSpot.filter.nadeType[props.filter.nadeType] > 0 //может произойти сравнение undefined > 0 (так и надо, undefined > 0 все равно вернет false. и следующее выражение вернет true, если значение фильтра - "all")
-            || props.filter.nadeType == 'all')
-        && toSpot.filter.side[props.filter.side] > 0
-        && toSpot.filter.tickrate[props.filter.tickrate] > 0
-        && difficultyIntersection.value)
-    // &&
-    // (
-    //     toSpot.isOnewaySmoke === true && (
-    //         props.onewayOption === 'Oneways only' ||
-    //         props.onewayOption === 'All'
-    //     ) ||
-    //     toSpot.isOnewaySmoke === false && (
-    //         props.onewayOption === 'Regular only' ||
-    //         props.onewayOption === 'All'
-    //     )
-    // ) &&
-    // (
-    //     toSpot.isFakeSmoke === true && (
-    //         props.fakeOption === 'FakeSmokes only' ||
-    //         props.fakeOption === 'All'
-    //     ) ||
-    //     toSpot.isFakeSmoke === false && (
-    //         props.fakeOption === 'Regular only' ||
-    //         props.fakeOption === 'All'
-    //     )
-    // ) &&
-    // (
-    //     toSpot.isFakeSmoke === true && (
-    //         props.bugOption === 'BugSmokes only' ||
-    //         props.bugOption === 'All'
-    //     ) ||
-    //     toSpot.isFakeSmoke === false && (
-    //         props.bugOption === 'Regular only' ||
-    //         props.bugOption === 'All'
-    //     )
-    // )
-})
-const spriteRef = ref(null)
+/* Эта хрень экспозится т.к. GSAP (для вращения смока) применяется в родительском компоненте */
+const spriteRef = ref(null);
 defineExpose({
-    spriteRef
-})
+    spriteRef,
+});
 onMounted(() => {
-    console.log('smoke mounte');
     // spriteRef.value!.style.animationPlayState = "running"
-})
-console.log(props.toItem);
-
-
-// v-show="showIf || isActive"
+});
+console.log(props.viewToSpot);
 </script>
 
-
 <template>
-    <div class="grenadeContainer" :style="{
-        top: `${toSpot.toSpot.coords.y}%`,
-        left: `${toSpot.toSpot.coords.x}%`,
-        // width: `${pointSize}px`,
-        // height: `${pointSize}px`,
-    }" v-show="showIf || isActive || isSelected">
-        <button class="button" :class="{
-            clicked: isActive,
-            selected: isSelected
-        }"></button>
-        <img class="sprite" src="@/assets/ui/Smoke_circle.png"
-            alt="Smoke effect image downloading error" ref="spriteRef" />
+    <div
+        class="grenadeContainer"
+        :style="{
+            top: `${toSpot.toSpot.coords.y}%`,
+            left: `${toSpot.toSpot.coords.x}%`,
+        }"
+    >
+        <button
+            class="button"
+            :class="{
+                // clicked: isActive,
+                // selected: isSelected
+            }"
+        ></button>
+        <img
+            class="sprite"
+            src="@/assets/ui/Smoke_circle.png"
+            alt="Smoke effect image downloading error"
+            ref="spriteRef"
+        />
     </div>
 </template>
 
@@ -154,7 +83,7 @@ console.log(props.toItem);
 }
 
 .button::before {
-    content: '';
+    content: "";
     display: inline-block;
     position: absolute;
     // z-index: -1;
@@ -164,7 +93,14 @@ console.log(props.toItem);
     width: 450%;
     height: 450%;
     // background: radial-gradient(circle, rgba(237, 237, 237, 1) 0%, rgba(237, 237, 237, 1) 14%, rgba(255, 237, 237, 0.5) 56%, rgba(237, 237, 237, 0) 70.71%);
-    background: radial-gradient(circle, rgba(237, 237, 237, 1) 0%, rgb(174, 174, 174) 0%, rgba(237, 237, 237, 1) 33%, rgba(237, 237, 237, 0.5) 57%, rgba(237, 237, 237, 0) 71%);
+    background: radial-gradient(
+        circle,
+        rgba(237, 237, 237, 1) 0%,
+        rgb(174, 174, 174) 0%,
+        rgba(237, 237, 237, 1) 33%,
+        rgba(237, 237, 237, 0.5) 57%,
+        rgba(237, 237, 237, 0) 71%
+    );
     translate: -50% -50%;
     transform: translateZ(-2px);
     opacity: 100%;
@@ -187,10 +123,17 @@ console.log(props.toItem);
 }
 
 .button:hover::before {
-    background: radial-gradient(circle, rgba(237, 237, 237, 1) 0%, rgba(237, 237, 237, 1) 14%, rgba(237, 237, 237, 0.95) 55%, rgba(237, 237, 237, 0.6) 62%, rgba(237, 237, 237, 0) 70.71%);
+    background: radial-gradient(
+        circle,
+        rgba(237, 237, 237, 1) 0%,
+        rgba(237, 237, 237, 1) 14%,
+        rgba(237, 237, 237, 0.95) 55%,
+        rgba(237, 237, 237, 0.6) 62%,
+        rgba(237, 237, 237, 0) 70.71%
+    );
 }
 
-.sprite:hover~.button {
+.sprite:hover ~ .button {
     /* box-shadow: 0 0 5px 2px rgba(0, 0, 0, 0.25), 0 0 4px 16px rgba(237, 237, 237, 1); */
 }
 
@@ -237,7 +180,14 @@ console.log(props.toItem);
 }
 
 .clicked::before {
-    background: radial-gradient(circle, rgba(237, 237, 237, 1) 0%, rgba(237, 237, 237, 1) 14%, rgba(237, 237, 237, 0.95) 55%, rgba(237, 237, 237, 0.6) 62%, rgba(237, 237, 237, 0) 70.71%);
+    background: radial-gradient(
+        circle,
+        rgba(237, 237, 237, 1) 0%,
+        rgba(237, 237, 237, 1) 14%,
+        rgba(237, 237, 237, 0.95) 55%,
+        rgba(237, 237, 237, 0.6) 62%,
+        rgba(237, 237, 237, 0) 70.71%
+    );
 }
 
 .clicked:hover {
@@ -255,7 +205,14 @@ console.log(props.toItem);
 }
 
 .selected::before {
-    background: radial-gradient(circle, rgba(237, 237, 237, 1) 0%, rgba(237, 237, 237, 1) 14%, rgba(237, 237, 237, 0.95) 55%, rgba(237, 237, 237, 0.6) 62%, rgba(237, 237, 237, 0) 70.71%);
+    background: radial-gradient(
+        circle,
+        rgba(237, 237, 237, 1) 0%,
+        rgba(237, 237, 237, 1) 14%,
+        rgba(237, 237, 237, 0.95) 55%,
+        rgba(237, 237, 237, 0.6) 62%,
+        rgba(237, 237, 237, 0) 70.71%
+    );
 }
 
 .selected:hover {

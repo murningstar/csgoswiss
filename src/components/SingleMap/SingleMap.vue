@@ -832,10 +832,6 @@ bugHeOption:[], */
                         :alt="imgMapError"
                     />
 
-                    <template v-for="[id, value] in viewToSpots.value">
-                        <div>{{ id }}</div>
-                    </template>
-
                     <!-- ЭТО БЫЛО ЗАКОММЕНТИРОВАНО ЕЩЁ ДО ИЗМЕНЕНИЙ -->
                     <!-- <template v-for="[toId, toItem] in viewToSpots">
 						<Grenade @click="toggleNade($event, toId)"
@@ -893,19 +889,18 @@ bugHeOption:[], */
 							:isSelected="store.activeGrenadeItems.has(smoke.id) ? true : false" />
 					</template> -->
 
-                    
-                    <!-- <template v-for="[toId, toItem] in viewToSpots">
+                    <!-- <template v-for="[id, value] in viewToSpots.value">
+                        <div>{{ id }}</div>
+                    </template> -->
+                    <template v-for="[toId, viewToSpot] in viewToSpots.value">
                         <Grenade
                             v-show="!store.isCmsModeOn"
-                            @click="clickToSpot($event, toItem)"
-                            :toItem="toItem"
+                            @click="clickToSpot($event, viewToSpot)"
+                            :viewToSpot="viewToSpot"
                             ref="smokeSpritesRef"
-                            :pointSize="pointSize"
-                            :isActive="toItem.isActive"
-                            :isSelected="toItem.isSelected"
                             :filter="filterState"
                         />
-                    </template> -->
+                    </template>
 
                     <!-- <template v-for="[viewLineupId, viewLineup] in viewLineups">
                         <div
