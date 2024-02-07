@@ -6,11 +6,14 @@ import { useRoute } from "vue-router";
 import axios from "axios";
 import type { Spot } from "@/data/interfaces/Spot";
 import type { Lineup } from "@/data/interfaces/Lineup";
+import type { SpotsHashMap } from "@/data/types/SpotsHashMap";
+import type { LineupsHashMap } from "@/data/types/LineupsHashMap";
 
 function prepareForEval(fileContents: string) {
     const startIndex = fileContents.indexOf("new");
-    const endIndex = fileContents.lastIndexOf(")") + 2;
-    return fileContents.slice(startIndex, endIndex);
+    const endIndex = fileContents.split("//#")[0].lastIndexOf(";") + 1;
+    const satinized = fileContents.slice(startIndex, endIndex);
+    return satinized;
 }
 
 async function fetchSpotsOrLineups(
@@ -18,6 +21,7 @@ async function fetchSpotsOrLineups(
     mapName: string,
     controller: AbortController,
 ) {
+    console.log(`fetch for ${mapName} ${type}`);
     return await axios.get<string>(
         `/src/data/content/${mapName}/${type}_${mapName}`,
         {
@@ -27,8 +31,8 @@ async function fetchSpotsOrLineups(
 }
 
 export function useAutoFetchMapData() {
-    const spots = ref<Map<Spot["spotId"], Spot>>(new Map());
-    const lineups = ref<Map<Lineup["lineupId"], Lineup>>(new Map());
+    const spots = ref<SpotsHashMap>(new Map());
+    const lineups = ref<LineupsHashMap>(new Map());
     const error = ref(null);
     const loading = ref(false);
     const route = useRoute();
@@ -46,8 +50,8 @@ export function useAutoFetchMapData() {
             fetchSpotsOrLineups("lineups", currentRoute.value, controller),
         ])
             .then((res) => {
-                lineups.value = eval(prepareForEval(res[0].data));
-                spots.value = eval(prepareForEval(res[1].data));
+                spots.value = eval(prepareForEval(res[0].data));
+                lineups.value = eval(prepareForEval(res[1].data));
             })
             .catch((e) => {
                 error.value = e.message;
@@ -61,16 +65,15 @@ export function useAutoFetchMapData() {
         };
     }
 
-    // watchEffect((onCleanup) => {
-    //     const abort = populate();
-    //     onCleanup(() => abort());
-    // });
     watch(
         () => route.path,
         () => {
             if (previousAbort.value) previousAbort.value();
             previousAbort.value = populate();
         },
+        { immediate: true },
+        // c immediate:true данные загрузятся при первой загрузке
+        // иначе только при смене маршрута
     );
 
     return { spots, lineups, loading, error };
