@@ -1,4 +1,4 @@
-import { onMounted, ref, watch } from "vue";
+import { onMounted, ref, watch, type Ref, computed } from "vue";
 import type {
     NadeType,
     Side,
@@ -7,8 +7,11 @@ import type {
     ForWhom,
 } from "@/data/types/GrenadeProperties";
 import { nadeTypeList } from "@/data/nadeTypeList";
+import type { LineupsHashMap } from "@/data/types/LineupsHashMap";
 
-export function useFilter() {
+export function useFilter(
+    // unfilteredLineups: Ref<LineupsHashMap>
+    ) {
     /* Visibility of FilterPanel.vue */
     const isFiltersVisible = ref(false);
     const toggleFilters = () =>
@@ -63,6 +66,15 @@ export function useFilter() {
     }
     /* Init filterstate from LocalStorage */
     onMounted(initFilterStateFromLocalStorage);
+
+    /* Filter lineups based on filterState */
+    // const filteredLineups = computed(() => {
+    //     return new Map(
+    //         [...unfilteredLineups.value].filter(([lineupId, lineup], ix) => {
+
+    //         }),
+    //     );
+    // });
 
     /* Mutations */
     const filterHandlers = {

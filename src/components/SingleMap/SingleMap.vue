@@ -23,7 +23,7 @@ import PreviewCard from "@/components/SingleMap/PreviewCard.vue";
 import ContentPanel from "@/components/SingleMap/ContentPanel.vue";
 import SelectForm from "@/components/SingleMap/SelectForm.vue";
 import GS_Window from "@/components/UI/GS_Window.vue";
-import LoadingGoldsource from "@/components/LoadingGoldsource/LoadingGoldsource.vue";
+import LoadingGoldsource from "@/components/loadingGoldsource/LoadingGoldsource.vue";
 
 // Data of Lineups & Spots
 import { mirageGrenades } from "@/data/content/mirage/mirageGrenades";
@@ -53,6 +53,7 @@ import type { Lineup } from "@/data/interfaces/Lineup";
 import type { Spot } from "@/data/interfaces/Spot";
 import { ViewItemsFactory, type LineupItem } from "@/data/types/ViewItems";
 import type { ViewToSpot, ViewFromSpot } from "@/data/types/ViewItems";
+import { useViewItems } from "@/composables/singleMap/useViewItems";
 
 /* Global stuff */
 const store = useSomestore();
@@ -62,7 +63,9 @@ const currentRoute = computed(() => route.path.slice(1));
 const isDragging = ref(false);
 
 /* Autorefetchable lineup & spots data on route change */
-// const { lineups, spots } = useAutoFetchMapData(); // Не отображаются *ВОЗМОЖНО* из-за того что они сначала пустые
+const { lineups, spots } = useAutoFetchMapData(); // Не отображаются *ВОЗМОЖНО* из-за того что они сначала пустые
+const { viewItemsFactory, viewToSpots, viewLineups, viewFromSpots } =
+    useViewItems(spots, lineups);
 
 /* Loading window Bindings */
 const {
@@ -97,25 +100,25 @@ const {
 
 /* Возможно нужно вынести склеивание этого объекта в отдельный файл и импортировать его,
 если склеивание происходит каждый раз при загрузке приложения.*/
-const allMapItems: any = {
-    mirageGrenades,
-    ancientGrenades,
-    dust2Grenades,
-    infernoGrenades,
-    nukeGrenades,
-    overpassGrenades,
-    vertigoGrenades,
-};
-const currentRouteMapItems = computed(() => {
-    if (mapNamesList.includes(currentRoute.value)) {
-        return allMapItems[`${currentRoute.value}Grenades`] as MapItems;
-    } else {
-        return { lineups: new Map(), spots: new Map() } as MapItems;
-    }
-});
+// const allMapItems: any = {
+//     mirageGrenades,
+//     ancientGrenades,
+//     dust2Grenades,
+//     infernoGrenades,
+//     nukeGrenades,
+//     overpassGrenades,
+//     vertigoGrenades,
+// };
+// const currentRouteMapItems = computed(() => {
+//     if (mapNamesList.includes(currentRoute.value)) {
+//         return allMapItems[`${currentRoute.value}Grenades`] as MapItems;
+//     } else {
+//         return { lineups: new Map(), spots: new Map() } as MapItems;
+//     }
+// });
 
-const spots = computed(() => currentRouteMapItems.value.spots);
-const lineups = computed(() => currentRouteMapItems.value.lineups);
+// const spots = computed(() => currentRouteMapItems.value.spots);
+// const lineups = computed(() => currentRouteMapItems.value.lineups);
 
 /* IMAGE STUFF */
 const imgRef = ref(null);
@@ -242,10 +245,10 @@ toSpotы.
 ---
 По сути viewToSpots содержит в себе все возможные точки, куда летят гранаты.
 В template нужно только показать нужные на основе фильтров  */
-const viewToSpots = ref<Map<Spot["spotId"], ViewToSpot>>(new Map());
+// const viewToSpots = ref<Map<Spot["spotId"], ViewToSpot>>(new Map());
 
 /* VIEW-LINEUPS */
-const viewLineups = ref<Map<Lineup["lineupId"], LineupItem>>(new Map());
+// const viewLineups = ref<Map<Lineup["lineupId"], LineupItem>>(new Map());
 
 /* VIEW-FROMSPOTS */
 /* Лайнапов к одному fromСпоту 
@@ -253,104 +256,105 @@ const viewLineups = ref<Map<Lineup["lineupId"], LineupItem>>(new Map());
 Или когда редкий эдж кейс, когда уже выбрана граната, такая как на мираже смок в окно
 и к ней выбирается еще молотов с той же позиции также в окно. Кому это может пригодиться?
 Мб кто-то будет расставлять экзеки на карте и кому-то понадобится такой функционал. */
-const viewFromSpots = ref<Map<Spot["spotId"], ViewFromSpot>>(new Map());
+// const viewFromSpots = ref<Map<Spot["spotId"], ViewFromSpot>>(new Map());
 
 /* activeToSpotsCounter используется только для вычисления hslColor, 
 а именно, чтобы первый toSpot всегда был желтый */
-const activeToSpotsCounter = ref(0);
+// const activeToSpotsCounter = ref(0);
 
-const viewItemsFactory = computed(() => {
-    return new ViewItemsFactory(spots.value, lineups.value);
-});
+// const viewItemsFactory = computed(() => {
+//     return new ViewItemsFactory(spots.value, lineups.value);
+// });
 
-const selectedLineups = computed(() => {
-    const res = [...viewLineups.value]
-        .filter((lineup) => lineup[1].isSelected)
-        .map((lineup) => lineup[1].lineup);
-    if (!store.isFirstLoad) {
-        const ids = res.map((lineup) => lineup.lineupId);
-        const into = res.map((lineup) => lineup.name.replace("into-", ""));
-        if (res.length > 0) {
-            /* Names into url */
-            router.push({ query: { into: into } });
-            /* IDs into localstorage */
-            // localStorage.setItem('where', JSON.stringify(ids))
-        } else {
-            router.push({ query: {} });
-            // localStorage.removeItem('where')
-        }
-    }
+// const selectedLineups = computed(() => {
+//     const res = [...viewLineups.value]
+//         .filter((lineup) => lineup[1].isSelected)
+//         .map((lineup) => lineup[1].lineup);
+//     if (!store.isFirstLoad) {
+//         const ids = res.map((lineup) => lineup.lineupId);
+//         const into = res.map((lineup) => lineup.name.replace("into-", ""));
+//         if (res.length > 0) {
+//             /* Names into url */
+//             router.push({ query: { into: into } });
+//             /* IDs into localstorage */
+//             // localStorage.setItem('where', JSON.stringify(ids))
+//         } else {
+//             router.push({ query: {} });
+//             // localStorage.removeItem('where')
+//         }
+//     }
 
-    return res;
-});
+//     return res;
+// });
 
 /* Если в URL есть lineup'ы, то сделать их выбранными */
-onMounted(() => {
-    if (route.query.into) {
-        router.push({ query: { where: route.query.into } });
-        if (Array.isArray(route.query.into)) {
-            const intos = (route.query.into as string[]).map(
-                (lineupName) => "into-" + lineupName,
-            );
-            const lineupIds: string[] = [];
-            intos.forEach((lineupName) =>
-                lineupIds.push(
-                    viewItemsFactory.value.lineupIdNameMap.get(lineupName)!,
-                ),
-            );
-            lineupIds.forEach((lineupId, ix) => {
-                const lineup =
-                    viewItemsFactory.value.createViewLineup(lineupId);
-                const toSpot = viewToSpots.value.get(lineup.lineup.toId)!;
-                clickToSpot(new Event("restoreLineups"), toSpot);
-                const fromSpot = viewFromSpots.value.get(lineup.lineup.fromId)!;
-                clickFromSpot(new Event("restoreLineups"), fromSpot, lineup);
-            });
-        } else {
-            const into = "into-" + (route.query.into as string);
-            const lineupId = viewItemsFactory.value.lineupIdNameMap.get(into);
-            const lineup = viewItemsFactory.value.createViewLineup(lineupId);
-            const toSpot = viewToSpots.value.get(lineup.lineup.toId)!;
-            clickToSpot(new Event("restoreLineups"), toSpot);
-            const fromSpot = viewFromSpots.value.get(lineup.lineup.fromId)!;
-            clickFromSpot(new Event("restoreLineups"), fromSpot, lineup);
-        }
-    } else {
-        return;
-    }
-});
+// onMounted(() => {
+//     if (route.query.into) {
+//         router.push({ query: { where: route.query.into } });
+//         if (Array.isArray(route.query.into)) {
+//             const intos = (route.query.into as string[]).map(
+//                 (lineupName) => "into-" + lineupName,
+//             );
+//             const lineupIds: string[] = [];
+//             intos.forEach((lineupName) =>
+//                 lineupIds.push(
+//                     viewItemsFactory.value.lineupIdNameMap.get(lineupName)!,
+//                 ),
+//             );
+//             lineupIds.forEach((lineupId, ix) => {
+//                 const lineup =
+//                     viewItemsFactory.value.createViewLineup(lineupId);
+//                 const toSpot = viewToSpots.value.get(lineup.lineup.toId)!;
+//                 clickToSpot(new Event("restoreLineups"), toSpot);
+//                 const fromSpot = viewFromSpots.value.get(lineup.lineup.fromId)!;
+//                 clickFromSpot(new Event("restoreLineups"), fromSpot, lineup);
+//             });
+//         } else {
+//             const into = "into-" + (route.query.into as string);
+//             const lineupId = viewItemsFactory.value.lineupIdNameMap.get(into);
+//             const lineup = viewItemsFactory.value.createViewLineup(lineupId);
+//             const toSpot = viewToSpots.value.get(lineup.lineup.toId)!;
+//             clickToSpot(new Event("restoreLineups"), toSpot);
+//             const fromSpot = viewFromSpots.value.get(lineup.lineup.fromId)!;
+//             clickFromSpot(new Event("restoreLineups"), fromSpot, lineup);
+//         }
+//     } else {
+//         return;
+//     }
+// });
 
-/* Показать previewPanel при выборе лайнапа (но не при отмене выбора); скрыть, если отменён весь выбор */
-watch(selectedLineups, (newVal, oldVal) => {
-    if (newVal.length > oldVal.length) {
-        previewPanelState.value.isToggled = true;
-    }
-    if (newVal.length === 0) {
-        previewPanelState.value.isToggled = false;
-    }
-});
+// /* Показать previewPanel при выборе лайнапа (но не при отмене выбора); скрыть, если отменён весь выбор */
+// watch(selectedLineups, (newVal, oldVal) => {
+//     if (newVal.length > oldVal.length) {
+//         previewPanelState.value.isToggled = true;
+//     }
+//     if (newVal.length === 0) {
+//         previewPanelState.value.isToggled = false;
+//     }
+// });
 
 /* Эта функция очищает viewToSpots, viewLineups и viewFromSpots
 И на основе lineups и spots заполняет значениями viewToSpots.
 P.S. viewLineups и viewFromSpots создаются в обработчике клика. */
-function populateRefsWithData() {
-    viewToSpots.value.clear();
-    viewLineups.value.clear();
-    viewFromSpots.value.clear();
-    /* Сборка viewToSpots */
-    viewToSpots.value = viewItemsFactory.value.generateViewToSpots();
-    console.log("refs Populated");
-}
-populateRefsWithData();
-// /* При смене маршрута, меняются computed lineups и spots. */
-watch(currentRouteMapItems, (nv) => {
-    populateRefsWithData();
-});
 
-watch(viewLineups, () => {
-    console.log("viewLineups watcher:");
-    console.log(viewLineups.value);
-});
+// function populateRefsWithData() {
+//     viewToSpots.value.clear();
+//     viewLineups.value.clear();
+//     viewFromSpots.value.clear();
+//     /* Сборка viewToSpots */
+//     viewToSpots.value = viewItemsFactory.value.generateViewToSpots();
+//     console.log("refs Populated");
+// }
+// populateRefsWithData();
+// // /* При смене маршрута, меняются computed lineups и spots. */
+// watch(currentRouteMapItems, (nv) => {
+//     populateRefsWithData();
+// });
+
+// watch(viewLineups, () => {
+//     console.log("viewLineups watcher:");
+//     console.log(viewLineups.value);
+// });
 
 /* onClick TOSPOT */
 function clickToSpot(event: Event, clickedToSpot: ViewToSpot) {
@@ -828,6 +832,11 @@ bugHeOption:[], */
                         :alt="imgMapError"
                     />
 
+                    <template v-for="[id, value] in viewToSpots.value">
+                        <div>{{ id }}</div>
+                    </template>
+
+                    <!-- ЭТО БЫЛО ЗАКОММЕНТИРОВАНО ЕЩЁ ДО ИЗМЕНЕНИЙ -->
                     <!-- <template v-for="[toId, toItem] in viewToSpots">
 						<Grenade @click="toggleNade($event, toId)"
 							:spot="toItem.toSpot" ref="smokeSpritesRef"
@@ -869,6 +878,7 @@ bugHeOption:[], */
 								)" />
 					</template> -->
 
+                    <!-- ЭТО БЫЛО ЗАКОММЕНТИРОВАНО ЕЩЁ ДО ИЗМЕНЕНИЙ -->
                     <!-- <template v-for="[id, smoke] in smokes">
 						<SmokeComponent @click="onGrenadeClick($event, smoke)"
 							:smoke="smoke" :pointSize="pointSize"
@@ -883,7 +893,21 @@ bugHeOption:[], */
 							:isSelected="store.activeGrenadeItems.has(smoke.id) ? true : false" />
 					</template> -->
 
-                    <template v-for="[viewLineupId, viewLineup] in viewLineups">
+                    
+                    <!-- <template v-for="[toId, toItem] in viewToSpots">
+                        <Grenade
+                            v-show="!store.isCmsModeOn"
+                            @click="clickToSpot($event, toItem)"
+                            :toItem="toItem"
+                            ref="smokeSpritesRef"
+                            :pointSize="pointSize"
+                            :isActive="toItem.isActive"
+                            :isSelected="toItem.isSelected"
+                            :filter="filterState"
+                        />
+                    </template> -->
+
+                    <!-- <template v-for="[viewLineupId, viewLineup] in viewLineups">
                         <div
                             class="svgItemWrapper"
                             v-show="
@@ -984,22 +1008,9 @@ bugHeOption:[], */
                                 }"
                             />
                         </div>
-                    </template>
+                    </template> -->
 
-                    <template v-for="[toId, toItem] in viewToSpots">
-                        <Grenade
-                            v-show="!store.isCmsModeOn"
-                            @click="clickToSpot($event, toItem)"
-                            :toItem="toItem"
-                            ref="smokeSpritesRef"
-                            :pointSize="pointSize"
-                            :isActive="toItem.isActive"
-                            :isSelected="toItem.isSelected"
-                            :filter="filterState"
-                        />
-                    </template>
-
-                    <template v-for="[fromId, fromItem] in viewFromSpots">
+                    <!-- <template v-for="[fromId, fromItem] in viewFromSpots">
                         <FromSpot
                             v-show="!store.isCmsModeOn"
                             :fromItem="fromItem"
@@ -1008,19 +1019,19 @@ bugHeOption:[], */
                             "
                             :filter="filterState"
                         />
-                    </template>
+                    </template> -->
                 </div>
             </div>
         </div>
-        <ContentPanel
+        <!-- <ContentPanel
             @exit="exitContentPanel"
             :isVisible="contentPanelData.isVisible"
             :lineup="contentPanelData.clickedLineup!"
             :toSpot="contentPanelData.linkedToSpot!"
             :fromSpot="contentPanelData.linkedFromSpot!"
-        />
+        /> -->
 
-        <PreviewPanel
+        <!-- <PreviewPanel
             :state="previewPanelState"
             @toggle="previewPanelHandlers.togglePreviewPanel"
             @toggleMinimize="previewPanelHandlers.toggleMinimize"
@@ -1033,7 +1044,7 @@ bugHeOption:[], */
                 :isMinimized="previewPanelState.isMinimized"
                 @lineupClicked="(lineupId) => openContentPanel(lineupId)"
             />
-        </PreviewPanel>
+        </PreviewPanel> -->
 
         <FilterPanel
             v-bind="{
