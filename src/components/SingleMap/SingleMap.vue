@@ -14,10 +14,11 @@ import SmokeComponent from "@/components/SingleMap/Smoke.vue";
 import MolotovComponent from "@/components/SingleMap/Molotov.vue";
 import FlashComponent from "@/components/SingleMap/Flash.vue";
 import HeComponent from "@/components/SingleMap/He.vue";
-import FromSpot from "@/components/SingleMap/FromSpot.vue";
+import ThrowSpot from "@/components/SingleMap/ThrowSpot.vue";
 import CMS from "@/components/cms/CMS.vue";
 import FilterPanel from "@/components/SingleMap/FilterPanel.vue";
-import Grenade from "@/components/SingleMap/_Grenade.vue";
+import LandSpot from "@/components/SingleMap/LandSpot.vue";
+import LineupLine from "./LineupLine.vue";
 import PreviewPanel from "@/components/SingleMap/PreviewPanel.vue";
 import PreviewCard from "@/components/SingleMap/PreviewCard.vue";
 import ContentPanel from "@/components/SingleMap/ContentPanel.vue";
@@ -25,18 +26,10 @@ import SelectForm from "@/components/SingleMap/SelectForm.vue";
 import GS_Window from "@/components/UI/GS_Window.vue";
 import LoadingGoldsource from "@/components/loadingGoldsource/LoadingGoldsource.vue";
 
-// Data of Lineups & Spots
-import { mirageGrenades } from "@/data/content/mirage/mirageGrenades";
-import { ancientGrenades } from "@/data/content/ancient/ancientGrenades";
-import { dust2Grenades } from "@/data/content/dust2/dust2Grenades";
-import { infernoGrenades } from "@/data/content/inferno/infernoGrenades";
-import { nukeGrenades } from "@/data/content/nuke/nukeGrenades";
-import { overpassGrenades } from "@/data/content/overpass/overpassGrenades";
-import { vertigoGrenades } from "@/data/content/vertigo/vertigoGrenades";
-
 // composables
 import { useLoadingGoldsource } from "@/composables/loadingGoldsource";
 import { useAutoFetchMapData } from "@/composables/singleMap/autoFetchMapData"; // fetch lineups & spots data + autorefetch on route.path change
+import { useViewItems } from "@/composables/singleMap/useViewItems";
 import { useFilter } from "@/composables/singleMap/filter";
 // directives
 import { vPanzoom } from "@/directives/vPanzoom";
@@ -48,12 +41,9 @@ import { nadeTypeList } from "@/data/nadeTypeList";
 import type { MapItems } from "@/data/types/MapItems";
 import type { Smoke as SmokeType } from "@/data/_old/Smoke";
 // import type { Grenade } from "@/data/interfaces/Grenade";
-import type { ThrowSpot } from "@/data/_old/ThrowSpot";
-import type { Lineup } from "@/data/interfaces/Lineup";
 import type { Spot } from "@/data/interfaces/Spot";
 import { ViewItemsFactory, type LineupItem } from "@/data/types/ViewItems";
-import type { ViewToSpot, ViewFromSpot } from "@/data/types/ViewItems";
-import { useViewItems } from "@/composables/singleMap/useViewItems";
+import type { ViewThrowSpot, ViewLandSpot } from "@/data/types/ViewItems";
 
 /* Global stuff */
 const store = useSomestore();
@@ -63,8 +53,8 @@ const currentRoute = computed(() => route.path.slice(1));
 const isDragging = ref(false);
 
 /* Autorefetchable lineup & spots data on route change */
-const { lineups, spots } = useAutoFetchMapData(); // Не отображаются *ВОЗМОЖНО* из-за того что они сначала пустые
-const { viewItemsFactory, viewToSpots, viewLineups, viewFromSpots } =
+const { lineups, spots } = useAutoFetchMapData();
+const { viewItemsFactory, viewThrowSpots, viewLineups, viewLandSpots } =
     useViewItems(spots, lineups);
 
 /* Loading window Bindings */
@@ -97,28 +87,6 @@ const {
     toggleFilters,
     filtersPropData,
 } = useFilter();
-
-/* Возможно нужно вынести склеивание этого объекта в отдельный файл и импортировать его,
-если склеивание происходит каждый раз при загрузке приложения.*/
-// const allMapItems: any = {
-//     mirageGrenades,
-//     ancientGrenades,
-//     dust2Grenades,
-//     infernoGrenades,
-//     nukeGrenades,
-//     overpassGrenades,
-//     vertigoGrenades,
-// };
-// const currentRouteMapItems = computed(() => {
-//     if (mapNamesList.includes(currentRoute.value)) {
-//         return allMapItems[`${currentRoute.value}Grenades`] as MapItems;
-//     } else {
-//         return { lineups: new Map(), spots: new Map() } as MapItems;
-//     }
-// });
-
-// const spots = computed(() => currentRouteMapItems.value.spots);
-// const lineups = computed(() => currentRouteMapItems.value.lineups);
 
 /* IMAGE STUFF */
 const imgRef = ref(null);
@@ -357,7 +325,7 @@ P.S. viewLineups и viewFromSpots создаются в обработчике �
 // });
 
 /* onClick TOSPOT */
-function clickToSpot(event: Event, clickedToSpot: ViewToSpot) {
+function clickToSpot(event: Event, clickedToSpot: ViewThrowSpot) {
     console.log("clicked singlemap.vue");
     if (
         event.type == "restoreLineups" ||
@@ -386,7 +354,7 @@ function clickToSpot(event: Event, clickedToSpot: ViewToSpot) {
 
 function clickFromSpot(
     event: Event,
-    fromSpot: ViewFromSpot,
+    fromSpot: ViewLandSpot,
     lineup: LineupItem | undefined,
 ) {
     const intersection =
@@ -416,8 +384,10 @@ function clickFromSpot(
     }
 }
 
+/* ЛОГИКУ ПО ВЫЧИСЛЕНИЮ FANCY ДЛИТЕЛЬНОСТИ ПОЛЁТА
+ДЛЯ FANCY АНИМАЦИИ НУЖНО СОХРАНИТЬ*/
 const methods_toSpot = {
-    activeOnClick(toSpot: ViewToSpot) {
+    activeOnClick(toSpot: ViewThrowSpot) {
         activeToSpotsCounter.value++;
         {
             // Логика для вычисления средней длительности(анимации)
@@ -458,7 +428,7 @@ const methods_toSpot = {
                 : "52";
         toSpot.isActive = true;
     },
-    toActiveDeps(toSpot: ViewToSpot) {
+    toActiveDeps(toSpot: ViewThrowSpot) {
         // toActive только те, которые не selected и также не active.
         const lineupIds = toSpot
             .getNonSelectedLineupIds()
@@ -474,7 +444,7 @@ const methods_toSpot = {
         });
     },
     select(lineup: LineupItem) {
-        const toSpot = viewToSpots.value.get(lineup.lineup.toId)!;
+        const toSpot = viewThrowSpots.value.get(lineup.lineup.toId)!;
         toSpot.isSelected = true;
         toSpot.isActive = false;
         const ix1 = toSpot.activeFromSpotIds.findIndex(
@@ -522,12 +492,12 @@ const methods_toSpot = {
         });
     },
 
-    deactivateOnClick(toSpot: ViewToSpot) {
+    deactivateOnClick(toSpot: ViewThrowSpot) {
         activeToSpotsCounter.value--;
         toSpot.isActive = false;
         methods_toSpot.toInactiveDeps(toSpot);
     },
-    toInactiveDeps(toSpot: ViewToSpot) {
+    toInactiveDeps(toSpot: ViewThrowSpot) {
         toSpot.activeLineupIds.forEach((lineupId) => {
             const viewLineup = viewLineups.value.get(lineupId)!;
             const ix1 = toSpot.activeFromSpotIds.findIndex(
@@ -542,7 +512,7 @@ const methods_toSpot = {
 };
 const methods_lineup = {};
 const methods_fromSpot = {
-    select(fromSpot: ViewFromSpot, lineup: LineupItem) {
+    select(fromSpot: ViewLandSpot, lineup: LineupItem) {
         fromSpot.isSelected = true;
         fromSpot.activeLineupIds.delete(lineup.lineup.lineupId);
         fromSpot.selectedLineupIds.add(lineup.lineup.lineupId);
@@ -563,13 +533,13 @@ const methods_fromSpot = {
         viewLineups.value.set(lineup.lineup.lineupId, lineup);
         methods_toSpot.select(lineup);
     },
-    deselect(fromSpot: ViewFromSpot, lineup: LineupItem) {
+    deselect(fromSpot: ViewLandSpot, lineup: LineupItem) {
         const intersection =
             fromSpot.activeLineupIds.size + fromSpot.selectedLineupIds.size;
         if (intersection < 2) {
             viewFromSpots.value.delete(fromSpot.fromSpot.spotId);
             viewLineups.value.delete(lineup.lineup.lineupId);
-            const toSpot = viewToSpots.value.get(lineup.lineup.toId)!;
+            const toSpot = viewThrowSpots.value.get(lineup.lineup.toId)!;
             const ix1 = toSpot.selectedFromSpotIds.findIndex(
                 (entry) => entry == fromSpot.fromSpot.spotId,
             );
@@ -595,7 +565,7 @@ const methods_fromSpot = {
             fromSpot.filter.side[lineup.lineup.side]--;
             fromSpot.filter.tickrate[lineup.lineup.tickrate]--;
             fromSpot.filter.difficulties[lineup.lineup.difficulty]--;
-            const toSpot = viewToSpots.value.get(lineup.lineup.toId)!;
+            const toSpot = viewThrowSpots.value.get(lineup.lineup.toId)!;
             const ix1_toSpot = toSpot.selectedFromSpotIds.findIndex(
                 (entry) => entry == fromSpot.fromSpot.spotId,
             );
@@ -613,7 +583,7 @@ const methods_fromSpot = {
     activate(lineup: LineupItem) {
         console.log(587);
         const toId = lineup.lineup.toId;
-        const toSpot = viewToSpots.value.get(toId)!;
+        const toSpot = viewThrowSpots.value.get(toId)!;
         console.log("toSpot: ", toSpot);
         const fromId = lineup.lineup.fromId;
         const fromSpotExists = viewFromSpots.value.has(fromId);
@@ -693,7 +663,7 @@ function formDeselectFromSpot(lineupId: string) {
 
 const selectFromSpotFormContext = ref<{
     isFormVisible: boolean;
-    clickedFromSpot: ViewFromSpot | undefined;
+    clickedFromSpot: ViewLandSpot | undefined;
     lineupIdToSelect: string | undefined;
     lineupIdToDeselect: string | undefined;
     relatedLineups: LineupItem[] | undefined;
@@ -705,7 +675,7 @@ const selectFromSpotFormContext = ref<{
     lineupIdToSelect: undefined,
     lineupIdToDeselect: undefined,
     relatedLineups: undefined,
-    open: (fromSpot: ViewFromSpot) => {
+    open: (fromSpot: ViewLandSpot) => {
         selectFromSpotFormContext.value.isFormVisible = true;
         selectFromSpotFormContext.value.clickedFromSpot = fromSpot;
     },
@@ -724,7 +694,7 @@ const selectFormProps = {
                 const lineup = viewLineups.value.get(activeLineupId)!;
                 const lineupPropObj = {
                     lineupItem: lineup,
-                    viewToSpot: viewToSpots.value.get(lineup.lineup.toId)!,
+                    viewToSpot: viewThrowSpots.value.get(lineup.lineup.toId)!,
                     viewFromSpot: viewFromSpots.value.get(
                         lineup.lineup.fromId,
                     )!,
@@ -743,7 +713,7 @@ const selectFormProps = {
                 const lineup = viewLineups.value.get(selectedLineupId)!;
                 const lineupPropObj = {
                     lineupItem: lineup,
-                    viewToSpot: viewToSpots.value.get(lineup.lineup.toId)!,
+                    viewToSpot: viewThrowSpots.value.get(lineup.lineup.toId)!,
                     viewFromSpot: viewFromSpots.value.get(
                         lineup.lineup.fromId,
                     )!,
@@ -758,14 +728,14 @@ const selectFormProps = {
 const contentPanelData = ref({
     isVisible: false,
     clickedLineup: undefined as LineupItem | undefined,
-    linkedToSpot: undefined as ViewToSpot | undefined,
-    linkedFromSpot: undefined as ViewFromSpot | undefined,
+    linkedToSpot: undefined as ViewThrowSpot | undefined,
+    linkedFromSpot: undefined as ViewLandSpot | undefined,
 });
 function openContentPanel(lineupId: string) {
     contentPanelData.value.isVisible = true;
     const lineup = viewLineups.value.get(lineupId)!;
     contentPanelData.value.clickedLineup = lineup;
-    contentPanelData.value.linkedToSpot = viewToSpots.value.get(
+    contentPanelData.value.linkedToSpot = viewThrowSpots.value.get(
         lineup.lineup.toId,
     )!;
     contentPanelData.value.linkedFromSpot = viewFromSpots.value.get(
@@ -832,189 +802,34 @@ bugHeOption:[], */
                         :alt="imgMapError"
                     />
 
-                    <!-- ЭТО БЫЛО ЗАКОММЕНТИРОВАНО ЕЩЁ ДО ИЗМЕНЕНИЙ -->
-                    <!-- <template v-for="[toId, toItem] in viewToSpots">
-						<Grenade @click="toggleNade($event, toId)"
-							:spot="toItem.toSpot" ref="smokeSpritesRef"
-							:pointSize="pointSize"
-							:isToggled="store.toggledToSpots.has(toItem.toSpot.spotId)"
-							:filter="filterState" v-show="(props.nadeType === 'All' || props.nadeType === 'Smoke') &&
-								props.side === spot.side &&
-								props.tickrate === spot.tickrate &&
-								props.difficultiesState[`${spot.difficulty}Visible` as keyof typeof props.difficultiesState] &&
-								(
-									spot.isOnewaySmoke === true && (
-										props.onewayOption === 'Oneways only' ||
-										props.onewayOption === 'All'
-									) ||
-									spot.isOnewaySmoke === false && (
-										props.onewayOption === 'Regular only' ||
-										props.onewayOption === 'All'
-									)
-								) &&
-								(
-									spot.isFakeSmoke === true && (
-										props.fakeOption === 'FakeSmokes only' ||
-										props.fakeOption === 'All'
-									) ||
-									spot.isFakeSmoke === false && (
-										props.fakeOption === 'Regular only' ||
-										props.fakeOption === 'All'
-									)
-								) &&
-								(
-									spot.isFakeSmoke === true && (
-										props.bugOption === 'BugSmokes only' ||
-										props.bugOption === 'All'
-									) ||
-									spot.isFakeSmoke === false && (
-										props.bugOption === 'Regular only' ||
-										props.bugOption === 'All'
-									)
-								)" />
-					</template> -->
-
-                    <!-- ЭТО БЫЛО ЗАКОММЕНТИРОВАНО ЕЩЁ ДО ИЗМЕНЕНИЙ -->
-                    <!-- <template v-for="[id, smoke] in smokes">
-						<SmokeComponent @click="onGrenadeClick($event, smoke)"
-							:smoke="smoke" :pointSize="pointSize"
-							:nadeType="filterState.nadeType"
-							:side="filterState.side"
-							:tickrate="filterState.tickrate"
-							:difficultiesState="filterState.difficultiesState"
-							:onewayOption="filterState.onewaySmokeOption"
-							:fakeOption="filterState.fakeSmokeOption"
-							:bugOption="filterState.bugSmokeOption"
-							ref="smokeSpritesRef"
-							:isSelected="store.activeGrenadeItems.has(smoke.id) ? true : false" />
-					</template> -->
-
-                    <!-- <template v-for="[id, value] in viewToSpots.value">
-                        <div>{{ id }}</div>
-                    </template> -->
-                    <template v-for="[toId, viewToSpot] in viewToSpots.value">
-                        <Grenade
+                    <template
+                        v-for="[landId, viewLandSpot] in viewLandSpots.value"
+                        :key="landId"
+                    >
+                        <LandSpot
                             v-show="!store.isCmsModeOn"
-                            @click="clickToSpot($event, viewToSpot)"
-                            :viewToSpot="viewToSpot"
+                            @click="viewLandSpot.$send('selfClicked', landId)"
+                            :viewLandSpot="viewLandSpot"
                             ref="smokeSpritesRef"
-                            :filter="filterState"
                         />
                     </template>
 
-                    <!-- <template v-for="[viewLineupId, viewLineup] in viewLineups">
-                        <div
-                            class="svgItemWrapper"
-                            v-show="
-                                (viewLineup.lineup.nadeType ===
-                                    filterState.nadeType ||
-                                    filterState.nadeType === 'all') &&
-                                filterState.side === viewLineup.lineup.side &&
-                                filterState.tickrate ===
-                                    viewLineup.lineup.tickrate &&
-                                filterState.difficulties.has(
-                                    viewLineup.lineup.difficulty,
-                                ) &&
-                                !store.isCmsModeOn
-                            "
-                        >
-                            <svg>
-                                <line
-                                    :x1="`${
-                                        viewFromSpots.get(
-                                            viewLineup.lineup.fromId,
-                                        )?.fromSpot.coords.x
-                                    }%`"
-                                    :y1="`${
-                                        viewFromSpots.get(
-                                            viewLineup.lineup.fromId,
-                                        )?.fromSpot.coords.y
-                                    }%`"
-                                    :x2="`${
-                                        viewToSpots.get(viewLineup.lineup.toId)
-                                            ?.toSpot.coords.x
-                                    }%`"
-                                    :y2="`${
-                                        viewToSpots.get(viewLineup.lineup.toId)
-                                            ?.toSpot.coords.y
-                                    }%`"
-                                    :stroke="
-                                        viewLineup.isSelected
-                                            ? `hsl(${
-                                                  viewToSpots.get(
-                                                      viewLineup.lineup.toId,
-                                                  )?.hslColor
-                                              }, 100%, 56%)`
-                                            : `hsl(${
-                                                  viewToSpots.get(
-                                                      viewLineup.lineup.toId,
-                                                  )?.hslColor
-                                              }, 80%, 55%)`
-                                    "
-                                    :class="{
-                                        lineSelected: viewLineup.isSelected,
-                                    }"
-                                />
-                            </svg>
-                            <img
-                                ref="smokeexecIcon"
-                                src="@/assets/icons/smokeicon.png"
-                                alt=""
-                                class="smokeexecIcon"
-                                :style="{
-                                    '--spotX': `${
-                                        viewFromSpots.get(
-                                            viewLineup.lineup.fromId,
-                                        )?.fromSpot.coords.x
-                                    }%`,
-                                    '--spotY': `${
-                                        viewFromSpots.get(
-                                            viewLineup.lineup.fromId,
-                                        )?.fromSpot.coords.y
-                                    }%`,
-                                    '--nadeX': `${
-                                        viewToSpots.get(viewLineup.lineup.toId)
-                                            ?.toSpot.coords.x
-                                    }%`,
-                                    '--nadeY': `${
-                                        viewToSpots.get(viewLineup.lineup.toId)
-                                            ?.toSpot.coords.y
-                                    }%`,
-                                    '--duration': `${
-                                        viewToSpots.get(viewLineup.lineup.toId)
-                                            ?.avgDuration
-                                    }s`,
-                                    '--rotate-from': `${
-                                        -Math.random() * 72 * 10 -
-                                        Math.random() * 270
-                                    }deg`,
-                                    '--rotate-to': `${
-                                        Math.random() * 72 * 10
-                                    }deg`,
-                                    filter: `hue-rotate(${
-                                        Number(
-                                            viewToSpots.get(
-                                                viewLineup.lineup.toId,
-                                            )?.hslColor,
-                                        ) +
-                                        360 -
-                                        40
-                                    }deg) sepia(33%)`,
-                                }"
-                            />
-                        </div>
-                    </template> -->
+                    <template
+                        v-for="[lineupId, viewLineup] in viewLineups.value"
+                        :key="lineupId"
+                    >
+                        <LineupLine :viewLineup="viewLineup" />
+                    </template>
 
-                    <!-- <template v-for="[fromId, fromItem] in viewFromSpots">
-                        <FromSpot
+                    <template
+                        v-for="[throwId, viewThrowSpot] in viewThrowSpots.value"
+                        :key="throwId"
+                    >
+                        <ThrowSpot
                             v-show="!store.isCmsModeOn"
-                            :fromItem="fromItem"
-                            @myclick="
-                                clickFromSpot($event, fromItem, undefined)
-                            "
-                            :filter="filterState"
+                            :viewThrowSpot="viewThrowSpot"
                         />
-                    </template> -->
+                    </template>
                 </div>
             </div>
         </div>
