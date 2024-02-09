@@ -1,17 +1,10 @@
 <script setup lang="ts">
-import type {
-    ViewCountDifficulty,
-    ViewCountNadeType,
-    ViewCountSide,
-    ViewCountTickrate,
-} from "@/data/types/GrenadeProperties";
-import type { Spot } from "@/data/interfaces/Spot";
 import { reactive, ref, onMounted } from "vue";
-import type { ViewToSpot } from "@/data/types/ViewItems";
-const props = defineProps<{ viewToSpot: ZViewToSpot }>();
+import type { ViewLandSpot } from "@/data/types/ViewItems";
+const props = defineProps<{ viewLandSpot: ViewLandSpot }>();
 
-/* toSpot !!! */
-const toSpot = reactive(props.viewToSpot);
+/* landSpot !!! */
+const viewLandSpot = reactive(props.viewLandSpot);
 
 /* Эта хрень экспозится т.к. GSAP (для вращения смока) применяется в родительском компоненте */
 const spriteRef = ref(null);
@@ -21,15 +14,15 @@ defineExpose({
 onMounted(() => {
     // spriteRef.value!.style.animationPlayState = "running"
 });
-console.log(props.viewToSpot);
+console.log(props.viewLandSpot);
 </script>
 
 <template>
     <div
         class="grenadeContainer"
         :style="{
-            top: `${toSpot.toSpot.coords.y}%`,
-            left: `${toSpot.toSpot.coords.x}%`,
+            top: `${viewLandSpot.landSpot.coords.y}%`,
+            left: `${viewLandSpot.landSpot.coords.x}%`,
         }"
     >
         <button
