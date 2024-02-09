@@ -10,8 +10,8 @@ import type {
 
 export interface Lineup {
     lineupId: string;
-    toId: string;
-    fromId: string;
+    throwId: string;
+    landId: string;
     nadeType: NadeType;
     name: string;
     /* Потом буду еще категоризировать эти imgFile, 
