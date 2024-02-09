@@ -8,9 +8,9 @@ import type {
 } from "../GrenadeProperties";
 import type { SpotsHashMap } from "../SpotsHashMap";
 import type { LineupsHashMap } from "../LineupsHashMap";
-import type { ViewToSpotsHashMap } from "../ViewToSpotsHashMap";
-import type { LineupItemsHashMap } from "../LineupItemsHashMap";
-import type { ViewFromSpotsHashMap } from "../ViewFromSpotsHashMap";
+import type { ViewThrowSpotsHashMap } from "../ViewThrowSpotsHashMap";
+import type { LineupItemsHashMap } from "../ViewLineupsHashMap";
+import type { ViewLandSpotsHashMap } from "../ViewLandSpotsHashMap";
 
 export type LineupItem = {
     lineup: Lineup;
@@ -159,15 +159,15 @@ export class ViewItemsFactory {
     readonly lineups: Map<Lineup["lineupId"], Lineup>;
     readonly spots: Map<Spot["spotId"], Spot>;
     readonly lineupIdNameMap: Map<string, string>;
-    viewToSpots: ViewToSpotsHashMap; // Reactive
+    viewToSpots: ViewThrowSpotsHashMap; // Reactive
     viewLineups: LineupItemsHashMap; // Reactive
-    viewFromSpots: ViewFromSpotsHashMap; // Reactive
+    viewFromSpots: ViewLandSpotsHashMap; // Reactive
     constructor(
         spots: SpotsHashMap,
         lineups: LineupsHashMap,
-        viewToSpots: ViewToSpotsHashMap, // Reactive
+        viewToSpots: ViewThrowSpotsHashMap, // Reactive
         viewLineups: LineupItemsHashMap, // Reactive
-        viewFromSpots: ViewFromSpotsHashMap, // Reactive
+        viewFromSpots: ViewLandSpotsHashMap, // Reactive
     ) {
         this.lineups = lineups;
         this.spots = spots;
@@ -232,7 +232,7 @@ export class ViewItemsFactory {
         return viewToSpotsCollection;
     }
     createViewToSpots() {
-        const viewToSpots: ViewToSpotsHashMap = { value: new Map() };
+        const viewToSpots: ViewThrowSpotsHashMap = { value: new Map() };
         // populate `viewToSpots` hashmap
         this.lineups.forEach((lineup) => {
             const { toId } = lineup;
