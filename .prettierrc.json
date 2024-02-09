@@ -1,1 +1,13 @@
-{ "tabWidth": 4 }
+{
+    "tabWidth": 4,
+    "overrides": [
+        {
+            "files": "LineupLine.vue",
+            "options": { "printWidth": 100 }
+        },
+        {
+            "files": "ThrowSpot.vue",
+            "options": { "printWidth": 100 }
+        }
+    ]
+}
