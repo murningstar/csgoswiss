@@ -11,6 +11,7 @@ const isSelected = computed(
         props.viewThrowSpot.state.value == "ACTIVE_AND_SELECTED",
 );
 function handleClick() {
+    props.viewThrowSpot.$send("selfClicked", props.viewThrowSpot.throwSpot.spotId);
     props.viewThrowSpot.$sendToDependencies("selfClicked", props.viewThrowSpot.throwSpot.spotId);
 }
 </script>
@@ -22,7 +23,7 @@ function handleClick() {
             top: `${viewThrowSpot.throwSpot.coords.y}%`,
             left: `${viewThrowSpot.throwSpot.coords.x}%`,
         }"
-        @click.stop="handleClick"
+        @click.stop="handleClick()"
     >
         <button class="throwSpot"></button>
         <svg>

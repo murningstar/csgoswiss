@@ -9,7 +9,7 @@ import type {
 import type { SpotsHashMap } from "../SpotsHashMap";
 import type { LineupsHashMap } from "../LineupsHashMap";
 import type { ViewThrowSpotsHashMap } from "../ViewThrowSpotsHashMap";
-import type { LineupItemsHashMap } from "../ViewLineupsHashMap";
+import type { LineupItemsHashMap } from "../ViewLinesHashMap";
 import type { ViewLandSpotsHashMap } from "../ViewLandSpotsHashMap";
 
 export type LineupItem = {
@@ -250,7 +250,7 @@ export class ViewItemsFactory {
         });
         return viewToSpots;
     }
-    createViewLineup(lineupId: string): LineupItem {
+    createViewLine(lineupId: string): LineupItem {
         const viewLineupItem: LineupItem = {
             lineup: this.lineups.get(lineupId)!,
             isActive: false,

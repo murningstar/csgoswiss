@@ -1,22 +1,22 @@
 <script setup lang="ts">
-import { ViewLineup } from "@/data/types/ViewItems";
+import { ViewLine } from "@/data/types/ViewItems";
 import { computed } from "vue";
 const props = defineProps<{
-    viewLineup: ViewLineup;
+    viewLine: ViewLine;
 }>();
 
-const throwId = props.viewLineup.lineup.throwId;
-const landId = props.viewLineup.lineup.landId;
+const throwId = props.viewLine.lineup.throwId;
+const landId = props.viewLine.lineup.landId;
 
-const viewLandSpot = props.viewLineup.factory.viewLandSpots.value.get(landId)!;
-const viewThrowSpot = props.viewLineup.factory.viewThrowSpots.value.get(throwId)!;
+const viewLandSpot = props.viewLine.factory.viewLandSpots.value.get(landId)!;
+const viewThrowSpot = props.viewLine.factory.viewThrowSpots.value.get(throwId)!;
 
 const x2 = viewLandSpot.landSpot.coords.x;
 const y2 = viewLandSpot.landSpot.coords.y;
 const x1 = viewThrowSpot.throwSpot.coords.x;
 const y1 = viewThrowSpot.throwSpot.coords.y;
 
-const isSelected = computed(() => props.viewLineup.state.value == "SELECTED");
+const isSelected = computed(() => props.viewLine.state.value == "SELECTED");
 const hslColor = viewLandSpot.hslColor;
 const stroke = computed(() =>
     isSelected.value ? `hsl(${hslColor.value}, 100%, 56%)` : `hsl(${hslColor.value}, 80%, 55%)`,

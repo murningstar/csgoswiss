@@ -54,7 +54,7 @@ const isDragging = ref(false);
 
 /* Autorefetchable lineup & spots data on route change */
 const { lineups, spots } = useAutoFetchMapData();
-const { viewItemsFactory, viewThrowSpots, viewLineups, viewLandSpots } =
+const { viewItemsFactory, viewThrowSpots, viewLines, viewLandSpots } =
     useViewItems(spots, lineups);
 
 /* Loading window Bindings */
@@ -216,7 +216,7 @@ toSpotы.
 // const viewToSpots = ref<Map<Spot["spotId"], ViewToSpot>>(new Map());
 
 /* VIEW-LINEUPS */
-// const viewLineups = ref<Map<Lineup["lineupId"], LineupItem>>(new Map());
+// const viewLines = ref<Map<Lineup["lineupId"], LineupItem>>(new Map());
 
 /* VIEW-FROMSPOTS */
 /* Лайнапов к одному fromСпоту 
@@ -235,7 +235,7 @@ toSpotы.
 // });
 
 // const selectedLineups = computed(() => {
-//     const res = [...viewLineups.value]
+//     const res = [...viewLines.value]
 //         .filter((lineup) => lineup[1].isSelected)
 //         .map((lineup) => lineup[1].lineup);
 //     if (!store.isFirstLoad) {
@@ -271,7 +271,7 @@ toSpotы.
 //             );
 //             lineupIds.forEach((lineupId, ix) => {
 //                 const lineup =
-//                     viewItemsFactory.value.createViewLineup(lineupId);
+//                     viewItemsFactory.value.createViewLine(lineupId);
 //                 const toSpot = viewToSpots.value.get(lineup.lineup.toId)!;
 //                 clickToSpot(new Event("restoreLineups"), toSpot);
 //                 const fromSpot = viewFromSpots.value.get(lineup.lineup.fromId)!;
@@ -280,7 +280,7 @@ toSpotы.
 //         } else {
 //             const into = "into-" + (route.query.into as string);
 //             const lineupId = viewItemsFactory.value.lineupIdNameMap.get(into);
-//             const lineup = viewItemsFactory.value.createViewLineup(lineupId);
+//             const lineup = viewItemsFactory.value.createViewLine(lineupId);
 //             const toSpot = viewToSpots.value.get(lineup.lineup.toId)!;
 //             clickToSpot(new Event("restoreLineups"), toSpot);
 //             const fromSpot = viewFromSpots.value.get(lineup.lineup.fromId)!;
@@ -301,13 +301,13 @@ toSpotы.
 //     }
 // });
 
-/* Эта функция очищает viewToSpots, viewLineups и viewFromSpots
+/* Эта функция очищает viewToSpots, viewLines и viewFromSpots
 И на основе lineups и spots заполняет значениями viewToSpots.
-P.S. viewLineups и viewFromSpots создаются в обработчике клика. */
+P.S. viewLines и viewFromSpots создаются в обработчике клика. */
 
 // function populateRefsWithData() {
 //     viewToSpots.value.clear();
-//     viewLineups.value.clear();
+//     viewLines.value.clear();
 //     viewFromSpots.value.clear();
 //     /* Сборка viewToSpots */
 //     viewToSpots.value = viewItemsFactory.value.generateViewToSpots();
@@ -319,9 +319,9 @@ P.S. viewLineups и viewFromSpots создаются в обработчике �
 //     populateRefsWithData();
 // });
 
-// watch(viewLineups, () => {
-//     console.log("viewLineups watcher:");
-//     console.log(viewLineups.value);
+// watch(viewLines, () => {
+//     console.log("viewLines watcher:");
+//     console.log(viewLines.value);
 // });
 
 /* onClick TOSPOT */
@@ -362,13 +362,13 @@ function clickFromSpot(
     if (intersection === 1) {
         if (fromSpot.isActive) {
             const activeLineupId = [...fromSpot.activeLineupIds][0];
-            const lineup = viewLineups.value.get(activeLineupId)!;
+            const lineup = viewLines.value.get(activeLineupId)!;
             methods_fromSpot.select(fromSpot, lineup);
             return;
         }
         if (fromSpot.isSelected) {
             const selectedLineupId = [...fromSpot.selectedLineupIds][0];
-            const lineup = viewLineups.value.get(selectedLineupId)!;
+            const lineup = viewLines.value.get(selectedLineupId)!;
             methods_fromSpot.deselect(fromSpot, lineup);
             return;
         }
@@ -435,12 +435,11 @@ const methods_toSpot = {
             .filter((lineupId) => !toSpot.activeLineupIds.has(lineupId));
 
         lineupIds.forEach((lineupId) => {
-            const viewLineup =
-                viewItemsFactory.value.createViewLineup(lineupId);
-            viewLineups.value.set(lineupId, viewLineup);
+            const viewLine = viewItemsFactory.value.createViewLine(lineupId);
+            viewLines.value.set(lineupId, viewLine);
             toSpot.activeLineupIds.add(lineupId);
-            toSpot.activeFromSpotIds.push(viewLineup.lineup.fromId);
-            methods_fromSpot.activate(viewLineup);
+            toSpot.activeFromSpotIds.push(viewLine.lineup.fromId);
+            methods_fromSpot.activate(viewLine);
         });
     },
     select(lineup: LineupItem) {
@@ -456,7 +455,7 @@ const methods_toSpot = {
         toSpot.selectedLineupIds.add(lineup.lineup.lineupId);
 
         toSpot.activeLineupIds.forEach((lineupId) => {
-            const lineup = viewLineups.value.get(lineupId)!;
+            const lineup = viewLines.value.get(lineupId)!;
             const fromSpot = viewFromSpots.value.get(lineup.lineup.fromId)!;
             const intersection =
                 fromSpot.activeLineupIds.size + fromSpot.selectedLineupIds.size;
@@ -483,7 +482,7 @@ const methods_toSpot = {
                 //связан только с удаляемым лайнапом => удаляем
                 viewFromSpots.value.delete(lineup.lineup.fromId);
             }
-            viewLineups.value.delete(lineupId);
+            viewLines.value.delete(lineupId);
             const ix1 = toSpot.activeFromSpotIds.findIndex(
                 (entry) => entry == lineup.lineup.fromId,
             );
@@ -499,14 +498,14 @@ const methods_toSpot = {
     },
     toInactiveDeps(toSpot: ViewThrowSpot) {
         toSpot.activeLineupIds.forEach((lineupId) => {
-            const viewLineup = viewLineups.value.get(lineupId)!;
+            const viewLine = viewLines.value.get(lineupId)!;
             const ix1 = toSpot.activeFromSpotIds.findIndex(
-                (entry) => entry == viewLineup.lineup.fromId,
+                (entry) => entry == viewLine.lineup.fromId,
             );
             toSpot.activeFromSpotIds.splice(ix1, 1);
             toSpot.activeLineupIds.delete(lineupId);
-            methods_fromSpot.deactivate(viewLineup);
-            viewLineups.value.delete(lineupId);
+            methods_fromSpot.deactivate(viewLine);
+            viewLines.value.delete(lineupId);
         });
     },
 };
@@ -530,7 +529,7 @@ const methods_fromSpot = {
         console.log("lineup ", lineup.lineup.lineupId, " made selected");
         lineup.isSelected = true;
         lineup.isActive = false;
-        viewLineups.value.set(lineup.lineup.lineupId, lineup);
+        viewLines.value.set(lineup.lineup.lineupId, lineup);
         methods_toSpot.select(lineup);
     },
     deselect(fromSpot: ViewLandSpot, lineup: LineupItem) {
@@ -538,7 +537,7 @@ const methods_fromSpot = {
             fromSpot.activeLineupIds.size + fromSpot.selectedLineupIds.size;
         if (intersection < 2) {
             viewFromSpots.value.delete(fromSpot.fromSpot.spotId);
-            viewLineups.value.delete(lineup.lineup.lineupId);
+            viewLines.value.delete(lineup.lineup.lineupId);
             const toSpot = viewThrowSpots.value.get(lineup.lineup.toId)!;
             const ix1 = toSpot.selectedFromSpotIds.findIndex(
                 (entry) => entry == fromSpot.fromSpot.spotId,
@@ -643,7 +642,7 @@ const methods_fromSpot = {
 };
 
 function formSelectFromSpot(lineupId: string) {
-    const lineup = viewLineups.value.get(lineupId)!;
+    const lineup = viewLines.value.get(lineupId)!;
     const fromSpot = viewFromSpots.value.get(lineup.lineup.fromId)!;
     // fromSpot.isActive = false
     fromSpot.isSelected = true;
@@ -654,7 +653,7 @@ function formSelectFromSpot(lineupId: string) {
     selectFromSpotFormContext.value.close();
 }
 function formDeselectFromSpot(lineupId: string) {
-    const lineup = viewLineups.value.get(lineupId)!;
+    const lineup = viewLines.value.get(lineupId)!;
     const fromSpot = viewFromSpots.value.get(lineup.lineup.fromId)!;
     methods_fromSpot.deselect(fromSpot, lineup);
 
@@ -691,7 +690,7 @@ const selectFormProps = {
                 ...selectFromSpotFormContext.value.clickedFromSpot!
                     .activeLineupIds,
             ].map((activeLineupId) => {
-                const lineup = viewLineups.value.get(activeLineupId)!;
+                const lineup = viewLines.value.get(activeLineupId)!;
                 const lineupPropObj = {
                     lineupItem: lineup,
                     viewToSpot: viewThrowSpots.value.get(lineup.lineup.toId)!,
@@ -710,7 +709,7 @@ const selectFormProps = {
                 ...selectFromSpotFormContext.value.clickedFromSpot!
                     .selectedLineupIds,
             ].map((selectedLineupId) => {
-                const lineup = viewLineups.value.get(selectedLineupId)!;
+                const lineup = viewLines.value.get(selectedLineupId)!;
                 const lineupPropObj = {
                     lineupItem: lineup,
                     viewToSpot: viewThrowSpots.value.get(lineup.lineup.toId)!,
@@ -733,7 +732,7 @@ const contentPanelData = ref({
 });
 function openContentPanel(lineupId: string) {
     contentPanelData.value.isVisible = true;
-    const lineup = viewLineups.value.get(lineupId)!;
+    const lineup = viewLines.value.get(lineupId)!;
     contentPanelData.value.clickedLineup = lineup;
     contentPanelData.value.linkedToSpot = viewThrowSpots.value.get(
         lineup.lineup.toId,
@@ -815,10 +814,10 @@ bugHeOption:[], */
                     </template>
 
                     <template
-                        v-for="[lineupId, viewLineup] in viewLineups.value"
+                        v-for="[lineupId, viewLine] in viewLines.value"
                         :key="lineupId"
                     >
-                        <LineupLine :viewLineup="viewLineup" />
+                        <LineupLine :viewLine="viewLine" />
                     </template>
 
                     <template

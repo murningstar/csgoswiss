@@ -1,4 +1,6 @@
 import type { Lineup } from "@/data/interfaces/Lineup";
-import type { ViewLineup } from "./ViewItems";
+import type { ViewLine } from "./ViewItems";
 
-export type ViewLineupsHashMap = { value: Map<Lineup["lineupId"], ViewLineup> };
+export type ViewLinesHashMap = {
+    value: Map<Lineup["lineupId"], ViewLine>;
+};

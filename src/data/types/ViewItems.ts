@@ -17,13 +17,13 @@ import type {
 import type { SpotsHashMap } from "./SpotsHashMap";
 import type { LineupsHashMap } from "./LineupsHashMap";
 import type { ViewLandSpotsHashMap } from "./ViewLandSpotsHashMap";
-import type { ViewLineupsHashMap } from "./ViewLineupsHashMap";
+import type { ViewLinesHashMap } from "./ViewLinesHashMap";
 import type { ViewThrowSpotsHashMap } from "./ViewThrowSpotsHashMap";
 
 /* ### State machines */
 
 /* ViewItems'es possible states */
-// Новые ViewLineup'ы и ViewThrowSpot'ы не имеют INACTIVE состояния,
+// Новые ViewLine'ы и ViewThrowSpot'ы не имеют INACTIVE состояния,
 // так как создаются при нажатии на `ViewLandSpot` и сразу же
 // помещаются во viewThrowSpots уже в активном состоянии
 type ViewLandSpotStateUnion =
@@ -32,7 +32,7 @@ type ViewLandSpotStateUnion =
     | "ONLY_SELECTED_SINGLE"
     | "ONLY_SELECTED_MULTIPLE"
     | "ACTIVE_AND_SELECTED";
-type ViewLineupStateUnion = "UNSPOILED" | "ACTIVE" | "SELECTED" | "KILLED";
+type ViewLineStateUnion = "UNSPOILED" | "ACTIVE" | "SELECTED" | "KILLED";
 type ViewThrowSpotStateUnion =
     | "UNSPOILED"
     | "ONLY_ACTIVE_SINGLE"
@@ -43,7 +43,7 @@ type ViewThrowSpotStateUnion =
     | "KILLED";
 /* ViewItems'es state value (it's reactive) */
 type ViewLandSpotState = { value: ViewLandSpotStateUnion };
-type ViewLineupState = { value: ViewLineupStateUnion };
+type ViewLineState = { value: ViewLineStateUnion };
 type ViewThrowSpotState = { value: ViewThrowSpotStateUnion };
 /* ViewItems'es Finite State Machines definitions */
 type ViewLandSpotMachineObject = {
@@ -51,8 +51,8 @@ type ViewLandSpotMachineObject = {
         Record<ViewItemEventType, (senderId: string) => void>
     >;
 };
-type ViewLineupMachineObject = {
-    [key in ViewLineupStateUnion]: Partial<
+type ViewLineMachineObject = {
+    [key in ViewLineStateUnion]: Partial<
         Record<ViewItemEventType, (senderId: string) => void>
     >;
 };
@@ -62,34 +62,50 @@ type ViewThrowSpotMachineObject = {
     >;
 };
 
-type ViewItemEventType =
+type ViewLandSpotEventUnion =
     | "viewLandSpotContacted"
     | "viewThrowSpotContacted"
     | "selfClicked";
-interface StateMachineViewItem {
-    $send: (event: ViewItemEventType, senderId: string) => void;
+type ViewLineEventUnion =
+    | "viewLandSpotContacted"
+    | "viewThrowSpotContacted"
+    | "selfClicked";
+type ViewFromSpotEventUnion =
+    | "viewLandSpotContacted"
+    | "viewThrowSpotContacted"
+    | "selfClicked";
+interface TransitionableViewLandSpot {
+    $send: (event: ViewLandSpotEventUnion, senderId: string) => void;
     _setState: Function;
 }
-interface ViewLandSpotStateMachine extends StateMachineViewItem {
+interface TransitionableViewLine {
+    $send: (event: ViewLineEventUnion, senderId: string) => void;
+    _setState: Function;
+}
+interface TransitionableViewThrowSpot {
+    $send: (event: ViewFromSpotEventUnion, senderId: string) => void;
+    _setState: Function;
+}
+interface ViewLandSpotStateMachine extends TransitionableViewLandSpot {
     context: {
-        activeLineups: Set<ViewLineup>;
-        selectedLineups: Set<ViewLineup>;
+        activeLineups: Set<ViewLine>;
+        selectedLineups: Set<ViewLine>;
     };
     state: ViewLandSpotState;
     states: ViewLandSpotMachineObject;
 }
-interface ViewLineupStateMachine extends StateMachineViewItem {
+interface ViewLineStateMachine extends TransitionableViewLine {
     context: {
         landSpot: Spot;
         throwSpot: Spot;
     };
-    state: ViewLineupState;
-    states: ViewLineupMachineObject;
+    state: ViewLineState;
+    states: ViewLineMachineObject;
 }
-interface ViewThrowSpotStateMachine extends StateMachineViewItem {
+interface ViewThrowSpotStateMachine extends TransitionableViewThrowSpot {
     context: {
-        activeLineups: Set<ViewLineup>;
-        selectedLineups: Set<ViewLineup>;
+        activeLineups: Set<ViewLine>;
+        selectedLineups: Set<ViewLine>;
     };
     state: ViewThrowSpotState;
     states: ViewThrowSpotMachineObject;
@@ -97,8 +113,20 @@ interface ViewThrowSpotStateMachine extends StateMachineViewItem {
 
 /* ### Observers & Observables */
 /* Interface to make a ViewItem class an Observer and Observable */
-interface ViewItemObservableObserver {
-    $sendToDependencies: (event: ViewItemEventType, senderId: string) => void;
+interface ViewLandSpotObservableObserver {
+    $sendToDependencies: (
+        event: ViewLandSpotEventUnion,
+        senderId: string,
+    ) => void;
+}
+interface ViewLineObservableObserver {
+    $sendToDependencies: (event: ViewLineEventUnion, senderId: string) => void;
+}
+interface ViewThrowSpotObservableObserver {
+    $sendToDependencies: (
+        event: ViewThrowSpotStateUnion,
+        senderId: string,
+    ) => void;
 }
 
 // Позже убрать Ref с тех элементов, реактивность для которых не нужна,
@@ -109,12 +137,12 @@ export class ViewLandSpot
     readonly factory: ViewItemsFactory;
     landSpot: Spot;
     context: {
-        activeLineups: Set<ViewLineup>;
-        selectedLineups: Set<ViewLineup>;
+        activeLineups: Set<ViewLine>;
+        selectedLineups: Set<ViewLine>;
     };
     state: ViewLandSpotState;
     states: ViewLandSpotMachineObject;
-    observers: Set<ViewLineup>;
+    observers: Set<ViewLine>;
     readonly lineupIds: Set<Lineup["lineupId"]>; // Используется для фильтрации
     avgDuration: { value: string | null }; // Вычисляется при активации. Просто так.
     hslColor: { value: string | null }; // Вычисляется при активации. Чтобы 1й всегда был желтым
@@ -137,17 +165,17 @@ export class ViewLandSpot
                         "viewLandSpotContacted",
                         this.landSpot.spotId,
                     );
-                    this.initializeHslColor()
+                    this.initializeHslColor();
                 },
             },
             ONLY_ACTIVE_MULTIPLE: {
                 selfClicked: () => {
                     this._setState("INACTIVE_UNSELECTED");
                     this.observers.forEach((observer) => {
-                        const viewLineup = this.factory.viewLineups.value.get(
+                        const viewLine = this.factory.viewLines.value.get(
                             observer.lineup.lineupId,
                         )!;
-                        this.context.activeLineups.delete(viewLineup);
+                        this.context.activeLineups.delete(viewLine);
                         observer.$send(
                             "viewLandSpotContacted",
                             this.landSpot.spotId,
@@ -157,15 +185,13 @@ export class ViewLandSpot
                 },
                 viewThrowSpotContacted: (lineupId) => {
                     this._setState("ONLY_SELECTED_SINGLE");
-                    const viewLineup =
-                        this.factory.viewLineups.value.get(lineupId)!;
-                    this.context.selectedLineups.add(viewLineup);
-                    this.context.activeLineups.clear();
-                    this.observers.forEach((observer) => {
-                        if (!(observer.lineup.lineupId == lineupId)) {
-                            this.observers.delete(observer);
-                        }
+                    const viewLine =
+                        this.factory.viewLines.value.get(lineupId)!;
+                    this.context.selectedLineups.add(viewLine);
+                    this._deleteAndDepopulateOwnDependencies({
+                        except: [lineupId],
                     });
+                    this.context.activeLineups.clear();
                 },
             },
             ONLY_SELECTED_SINGLE: {
@@ -174,17 +200,21 @@ export class ViewLandSpot
                 },
                 viewThrowSpotContacted: (lineupId) => {
                     this._setState("ONLY_ACTIVE_MULTIPLE");
-                    const viewLineup =
-                        this.factory.viewLineups.value.get(lineupId)!;
-                    this.context.selectedLineups.delete(viewLineup);
-                    this.context.activeLineups.add(viewLineup);
+                    const viewLine =
+                        this.factory.viewLines.value.get(lineupId)!;
+                    this.context.selectedLineups.delete(viewLine);
+                    this.context.activeLineups.add(viewLine);
                     this._createAndPopulateOwnDependencies({
                         except: [lineupId],
                     });
-                    this.$sendToDependencies(
-                        "viewLandSpotContacted",
-                        this.landSpot.spotId,
-                    ); // вызывает подозрения, но вроде всё правильно
+                    this.observers.forEach((observer) => {
+                        if (observer.lineup.lineupId != lineupId)
+                            /* Перевести их из UNSPOILED */
+                            observer.$send(
+                                "viewLandSpotContacted",
+                                this.landSpot.spotId,
+                            ); // вызывает подозрения, но вроде всё правильно
+                    });
                 },
             },
             ONLY_SELECTED_MULTIPLE: {
@@ -220,19 +250,19 @@ export class ViewLandSpot
                 return;
             }
             const lineup = this.factory.lineups.get(lineupId)!;
-            /* Handle ViewLineup creation */
-            const viewLineup = new ViewLineup(
+            /* Handle ViewLine creation */
+            const viewLine = new ViewLine(
                 lineup,
                 this.factory,
                 this.factory.spots.get(lineup.landId)!,
                 this.factory.spots.get(lineup.throwId)!,
             );
-            /* Add viewLineup to observers of current ViewLandSpot */
-            this.observers.add(viewLineup);
-            /* Add viewLineup to activeLineups */
-            this.context.activeLineups.add(viewLineup);
-            /* Add viewLineup into ViewLineups */
-            this.factory.viewLineups.value.set(lineup.lineupId, viewLineup);
+            /* Add viewLine to observers of current ViewLandSpot */
+            this.observers.add(viewLine);
+            /* Add viewLine to activeLineups */
+            this.context.activeLineups.add(viewLine);
+            /* Add viewLine into ViewLines */
+            this.factory.viewLines.value.set(lineup.lineupId, viewLine);
 
             /* Handle ViewThrowSpot creation */
             const throwSpot = this.factory.spots.get(lineup.throwId)!;
@@ -242,7 +272,32 @@ export class ViewLandSpot
             if (!viewThrowSpot) {
                 viewThrowSpot = new ViewThrowSpot(throwSpot, this.factory);
             }
-            this.factory.viewThrowSpots.value.set(throwSpot.spotId, viewThrowSpot);
+            this.factory.viewThrowSpots.value.set(
+                throwSpot.spotId,
+                viewThrowSpot,
+            );
+        });
+    }
+    _deleteAndDepopulateOwnDependencies(
+        options: { except: Lineup["lineupId"][] } = { except: [] },
+    ) {
+        this.observers.forEach((observer) => {
+            if (!options.except.includes(observer.lineup.lineupId)) {
+                const viewThrowSpot = this.factory.viewThrowSpots.value.get(
+                    observer.lineup.throwId,
+                )!;
+                viewThrowSpot.context.activeLineups.delete(observer);
+                viewThrowSpot.observers.delete(observer);
+                if (viewThrowSpot.state.value == "ONLY_ACTIVE_SINGLE") {
+                    this.factory.viewThrowSpots.value.delete(
+                        viewThrowSpot.throwSpot.spotId,
+                    );
+                }
+
+                this.factory.viewLines.value.delete(observer.lineup.lineupId);
+
+                this.observers.delete(observer);
+            }
         });
     }
     initializeHslColor() {
@@ -264,14 +319,24 @@ export class ViewLandSpot
     }
 }
 
-export class ViewLineup
-    implements ViewLineupStateMachine, ViewItemObservableObserver
+/* ViewLine Это не конкретный лайнап (хотя в большинстве случачев так и есть).
+Это сущность, нужная только для отображения полоски на карте. 
+О чем речь:
+- в случае, если из одного throwSpot'а в один landSpot бросаются несколько
+лайнапов (например smoke и he), то все эти лайнапы будут относиться только к одному
+ViewLine'у.
+В ином случае у нас было бы три разных ViewLineup'а, которые при клике по landSpot'у,
+получали бы от него сообщение и каждый из них передавал бы throwSpot'у одно и то же
+событие, которое заставляло бы этот throwSpot реагировать на событие от каждого из них,
+хотя источник события (landSpot) посылал только одно событие (а не столько, сколько лайнапов). */
+export class ViewLine
+    implements ViewLineStateMachine, ViewItemObservableObserver
 {
     readonly factory: ViewItemsFactory;
     lineup: Lineup;
     context: { landSpot: Spot; throwSpot: Spot };
-    state: ViewLineupState;
-    states: ViewLineupMachineObject;
+    state: ViewLineState;
+    states: ViewLineMachineObject;
     constructor(
         lineup: Lineup,
         factory: ViewItemsFactory,
@@ -280,7 +345,7 @@ export class ViewLineup
     ) {
         this.lineup = lineup;
         this.context = { landSpot: landSpot, throwSpot: throwSpot };
-        this.state = reactive<ViewLineupState>({
+        this.state = reactive<ViewLineState>({
             value: "UNSPOILED",
         });
         this.states = {
@@ -288,9 +353,10 @@ export class ViewLineup
                 viewLandSpotContacted: (landSpotId) => {
                     this._setState("ACTIVE");
                     const lineupId = this.lineup.lineupId;
-                    this.$sendToDependencies(
-                        "viewLandSpotContacted",
-                        lineupId,
+                    this.$sendToDependencies("viewLandSpotContacted", lineupId);
+                    console.log(
+                        "viewLine: viewLandSpotContacted; new state: ",
+                        this.state.value,
                     );
                 },
             },
@@ -298,16 +364,16 @@ export class ViewLineup
                 viewLandSpotContacted: (landSpotId) => {
                     this._setState("KILLED");
                     const lineupId = this.lineup.lineupId;
-                    this.factory.viewLineups.value.delete(lineupId);
-                    this.$sendToDependencies(
-                        "viewLandSpotContacted",
-                        lineupId,
-                    );
+                    this.factory.viewLines.value.delete(lineupId);
+                    this.$sendToDependencies("viewLandSpotContacted", lineupId);
                 },
                 viewThrowSpotContacted: (throwSpotId) => {
                     this._setState("SELECTED");
                     const lineupId = this.lineup.lineupId;
-                    this.$sendToDependencies("viewThrowSpotContacted", lineupId);
+                    this.$sendToDependencies(
+                        "viewThrowSpotContacted",
+                        lineupId,
+                    );
                 },
             },
             SELECTED: {
@@ -326,9 +392,12 @@ export class ViewLineup
                         this._setState("ACTIVE");
                     } else {
                         this._setState("KILLED");
-                        this.factory.viewLineups.value.delete(lineupId);
+                        this.factory.viewLines.value.delete(lineupId);
                     }
-                    this.$sendToDependencies("viewThrowSpotContacted", lineupId);
+                    this.$sendToDependencies(
+                        "viewThrowSpotContacted",
+                        lineupId,
+                    );
                 },
             },
             KILLED: {},
@@ -339,8 +408,21 @@ export class ViewLineup
         const handler = this.states[this.state.value][event];
         if (handler) handler(senderId);
     }
-    $sendToDependencies(event: ViewItemEventType, senderId: string) {}
-    _setState(newState: ViewLineupStateUnion) {
+    $sendToDependencies(event: ViewItemEventType, senderId: string) {
+        if (event == "viewLandSpotContacted") {
+            const viewThrowSpot = this.factory.viewThrowSpots.value.get(
+                this.context.throwSpot.spotId,
+            )!;
+            viewThrowSpot.$send("viewLandSpotContacted", senderId);
+        }
+        if (event == "viewThrowSpotContacted") {
+            const viewLandSpot = this.factory.viewLandSpots.value.get(
+                this.context.landSpot.spotId,
+            )!;
+            viewLandSpot.$send("viewThrowSpotContacted", senderId);
+        }
+    }
+    _setState(newState: ViewLineStateUnion) {
         this.state.value = newState;
     }
 }
@@ -351,12 +433,12 @@ export class ViewThrowSpot
     readonly factory: ViewItemsFactory;
     throwSpot: Spot;
     context: {
-        activeLineups: Set<ViewLineup>;
-        selectedLineups: Set<ViewLineup>;
+        activeLineups: Set<ViewLine>;
+        selectedLineups: Set<ViewLine>;
     };
     state: ViewThrowSpotState;
     states: ViewThrowSpotMachineObject;
-    observers: Set<ViewLineup>;
+    observers: Set<ViewLine>;
     constructor(
         throwSpot: Spot,
         // lineupIds: Lineup["lineupId"][];
@@ -375,24 +457,25 @@ export class ViewThrowSpot
             value: "UNSPOILED",
         });
         this.states = {
-            // ViewThrowSpot и ViewLineup создаются извне в состояние UNSPOILED (при клике на ViewLandSpot)
+            // ViewThrowSpot и ViewLine создаются извне в состояние UNSPOILED (при клике на ViewLandSpot)
             UNSPOILED: {
                 viewLandSpotContacted: (lineupId) => {
+                    console.log("viewFromSpot");
                     this._setState("ONLY_ACTIVE_SINGLE");
-                    const viewLineup =
-                        this.factory.viewLineups.value.get(lineupId)!;
-                    this.observers.add(viewLineup);
-                    this.context.activeLineups.add(viewLineup);
+                    const viewLine =
+                        this.factory.viewLines.value.get(lineupId)!;
+                    this.observers.add(viewLine);
+                    this.context.activeLineups.add(viewLine);
                 },
             },
             ONLY_ACTIVE_SINGLE: {
                 selfClicked: () => {
                     this._setState("ONLY_SELECTED_SINGLE");
-                    const viewLineup = this.context.activeLineups
+                    const viewLine = this.context.activeLineups
                         .values()
                         .next().value;
-                    this.context.activeLineups.delete(viewLineup);
-                    this.context.selectedLineups.add(viewLineup);
+                    this.context.activeLineups.delete(viewLine);
+                    this.context.selectedLineups.add(viewLine);
                     this.$sendToDependencies(
                         "viewThrowSpotContacted",
                         this.throwSpot.spotId,
@@ -411,10 +494,10 @@ export class ViewThrowSpot
                     /* ⚡TODO: SelectForm */
                 },
                 viewLandSpotContacted: (lineupId) => {
-                    const viewLineup =
-                        this.factory.viewLineups.value.get(lineupId)!;
-                    this.observers.delete(viewLineup);
-                    this.context.activeLineups.delete(viewLineup);
+                    const viewLine =
+                        this.factory.viewLines.value.get(lineupId)!;
+                    this.observers.delete(viewLine);
+                    this.context.activeLineups.delete(viewLine);
                     if (this.context.activeLineups.size == 1) {
                         this._setState("ONLY_ACTIVE_SINGLE");
                     }
@@ -422,15 +505,15 @@ export class ViewThrowSpot
             },
             ONLY_SELECTED_SINGLE: {
                 selfClicked: () => {
-                    const viewLineup: ViewLineup = this.context.selectedLineups
+                    const viewLine: ViewLine = this.context.selectedLineups
                         .values()
                         .next().value;
                     const viewLandSpot = this.factory.viewLandSpots.value.get(
-                        viewLineup.lineup.landId,
+                        viewLine.lineup.landId,
                     )!;
                     const shouldReactivate =
                         viewLandSpot.state.value == "ACTIVE_AND_SELECTED" ||
-                        viewLandSpot.state.value == "ONLY_SELECTED_SINGLE"; // TODO
+                        viewLandSpot.state.value == "ONLY_SELECTED_SINGLE"; // TODO others
                     if (shouldReactivate) {
                         this._setState("ONLY_ACTIVE_SINGLE");
                     } else {
@@ -488,19 +571,19 @@ export class ViewItemsFactory {
     readonly spots: Map<Spot["spotId"], Spot>;
     readonly lineupIdNameMap: Map<string, string>;
     viewLandSpots: ViewLandSpotsHashMap; // Reactive
-    viewLineups: ViewLineupsHashMap; // Reactive
+    viewLines: ViewLinesHashMap; // Reactive
     viewThrowSpots: ViewThrowSpotsHashMap; // Reactive
     constructor(
         spots: SpotsHashMap,
         lineups: LineupsHashMap,
         viewLandSpots: ViewLandSpotsHashMap, // Reactive
-        viewLineups: ViewLineupsHashMap, // Reactive
+        viewLines: ViewLinesHashMap, // Reactive
         viewThrowSpots: ViewThrowSpotsHashMap, // Reactive
     ) {
         this.lineups = lineups;
         this.spots = spots;
         this.viewLandSpots = viewLandSpots;
-        this.viewLineups = viewLineups;
+        this.viewLines = viewLines;
         this.viewThrowSpots = viewThrowSpots;
         this.lineupIdNameMap = new Map<string, string>();
         this.lineups.forEach((lineup, lineupId) => {
