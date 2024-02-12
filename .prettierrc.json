@@ -8,6 +8,10 @@
         {
             "files": "ThrowSpot.vue",
             "options": { "printWidth": 100 }
+        },
+        {
+            "files": "ViewItems.ts",
+            "options": { "printWidth": 100 }
         }
     ]
 }
