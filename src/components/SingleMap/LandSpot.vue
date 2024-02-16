@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import { reactive, ref, onMounted } from "vue";
 import type { ViewLandSpot } from "@/data/types/ViewItems";
+import { storeToRefs } from "pinia";
+import { useSomestore } from "@/stores/somestore";
+
+const { isDebugModeOn } = storeToRefs(useSomestore());
+
 const props = defineProps<{ viewLandSpot: ViewLandSpot }>();
 
 /* landSpot !!! */
@@ -38,6 +43,9 @@ console.log(props.viewLandSpot);
             alt="Smoke effect image downloading error"
             ref="spriteRef"
         />
+        <section class="debug" v-if="isDebugModeOn">
+            {{ props.viewLandSpot.state.value }}
+        </section>
     </div>
 </template>
 
@@ -229,4 +237,13 @@ console.log(props.viewLandSpot);
 		scale: 0.95;
 	}
 } */
+
+.debug {
+    position: absolute;
+    background-color: rgb(89, 119, 28);
+    font-size: 4px;
+    line-height: 1;
+    height: 5px;
+    transform: translate(-45%, 15px);
+}
 </style>

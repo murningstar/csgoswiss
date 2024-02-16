@@ -3,6 +3,7 @@ export const useSomestore = defineStore("somestore", {
     state: () => ({
         isFirstLoad: true,
         isCmsModeOn: false,
+        isDebugModeOn: true
     }),
     getters: {},
     actions: {

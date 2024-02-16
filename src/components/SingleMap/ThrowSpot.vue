@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { ViewThrowSpot } from "@/data/types/ViewItems";
+import { useSomestore } from "@/stores/somestore";
+import { storeToRefs } from "pinia";
 import { computed } from "vue";
 const props = defineProps<{
     viewThrowSpot: ViewThrowSpot;
@@ -14,6 +16,13 @@ function handleClick() {
     props.viewThrowSpot.$send("selfClicked", props.viewThrowSpot.throwSpot.spotId);
     props.viewThrowSpot.$sendToDependencies("selfClicked", props.viewThrowSpot.throwSpot.spotId);
 }
+const { isDebugModeOn } = storeToRefs(useSomestore());
+
+enum ThrowSpotState {
+    Active,
+    Selected
+}
+
 </script>
 
 <template>
@@ -35,6 +44,9 @@ function handleClick() {
                 :style="{ strokeDasharray: isSelected ? 'none' : '1 2' }"
             />
         </svg>
+        <section class="debug" v-if="isDebugModeOn">
+            {{ props.viewThrowSpot.state.value }}
+        </section>
     </div>
 </template>
 
@@ -92,6 +104,14 @@ svg {
     // stroke-width: 1.3;
     // stroke-dasharray: 2.5 2.1;
     // stroke-linecap: round;
+}
+.debug {
+    position: absolute;
+    background-color: blue;
+    font-size: 8px;
+    line-height: 1;
+    height: 10px;
+    transform: translate(-45%, 15px);
 }
 
 @keyframes rotate {
