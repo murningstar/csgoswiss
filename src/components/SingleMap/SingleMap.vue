@@ -22,7 +22,6 @@ import LineupLine from "./LineupLine.vue";
 import PreviewPanel from "@/components/SingleMap/PreviewPanel.vue";
 import PreviewCard from "@/components/SingleMap/PreviewCard.vue";
 import ContentPanel from "@/components/SingleMap/ContentPanel.vue";
-import SelectForm from "@/components/SingleMap/SelectForm.vue";
 import GS_Window from "@/components/UI/GS_Window.vue";
 import LoadingGoldsource from "@/components/loadingGoldsource/LoadingGoldsource.vue";
 
@@ -44,6 +43,7 @@ import type { Smoke as SmokeType } from "@/data/_old/Smoke";
 import type { Spot } from "@/data/interfaces/Spot";
 import { ViewItemsFactory, type LineupItem } from "@/data/types/ViewItems";
 import type { ViewThrowSpot, ViewLandSpot } from "@/data/types/ViewItems";
+import SelectFormOnClickThrowSpot from "./SelectFormOnClickThrowSpot.vue";
 
 /* Global stuff */
 const store = useSomestore();
@@ -54,8 +54,13 @@ const isDragging = ref(false);
 
 /* Autorefetchable lineup & spots data on route change */
 const { lineups, spots } = useAutoFetchMapData();
-const { viewItemsFactory, viewThrowSpots, viewLines, viewLandSpots } =
-    useViewItems(spots, lineups);
+const {
+    viewItemsFactory,
+    viewThrowSpots,
+    viewLines,
+    viewLandSpots,
+    selectFormThrowSpotContext,
+} = useViewItems(spots, lineups);
 
 /* Loading window Bindings */
 const {
@@ -226,14 +231,6 @@ toSpotы.
 Мб кто-то будет расставлять экзеки на карте и кому-то понадобится такой функционал. */
 // const viewFromSpots = ref<Map<Spot["spotId"], ViewFromSpot>>(new Map());
 
-/* activeToSpotsCounter используется только для вычисления hslColor, 
-а именно, чтобы первый toSpot всегда был желтый */
-// const activeToSpotsCounter = ref(0);
-
-// const viewItemsFactory = computed(() => {
-//     return new ViewItemsFactory(spots.value, lineups.value);
-// });
-
 // const selectedLineups = computed(() => {
 //     const res = [...viewLines.value]
 //         .filter((lineup) => lineup[1].isSelected)
@@ -301,346 +298,6 @@ toSpotы.
 //     }
 // });
 
-/* Эта функция очищает viewToSpots, viewLines и viewFromSpots
-И на основе lineups и spots заполняет значениями viewToSpots.
-P.S. viewLines и viewFromSpots создаются в обработчике клика. */
-
-// function populateRefsWithData() {
-//     viewToSpots.value.clear();
-//     viewLines.value.clear();
-//     viewFromSpots.value.clear();
-//     /* Сборка viewToSpots */
-//     viewToSpots.value = viewItemsFactory.value.generateViewToSpots();
-//     console.log("refs Populated");
-// }
-// populateRefsWithData();
-// // /* При смене маршрута, меняются computed lineups и spots. */
-// watch(currentRouteMapItems, (nv) => {
-//     populateRefsWithData();
-// });
-
-// watch(viewLines, () => {
-//     console.log("viewLines watcher:");
-//     console.log(viewLines.value);
-// });
-
-/* onClick TOSPOT */
-function clickToSpot(event: Event, clickedToSpot: ViewThrowSpot) {
-    console.log("clicked singlemap.vue");
-    if (
-        event.type == "restoreLineups" ||
-        (isDragging.value == false &&
-            (event.target as HTMLButtonElement).tagName == "BUTTON")
-    ) {
-        if (!clickedToSpot.isActive && !clickedToSpot.isSelected) {
-            methods_toSpot.activeOnClick(clickedToSpot);
-
-            return;
-        }
-        if (clickedToSpot.isActive && !clickedToSpot.isSelected) {
-            methods_toSpot.deactivateOnClick(clickedToSpot);
-            return;
-        }
-        if (!clickedToSpot.isActive && clickedToSpot.isSelected) {
-            //mb form
-            return;
-        }
-        if (clickedToSpot.isActive && clickedToSpot.isSelected) {
-            //mb form
-            return;
-        }
-    }
-}
-
-function clickFromSpot(
-    event: Event,
-    fromSpot: ViewLandSpot,
-    lineup: LineupItem | undefined,
-) {
-    const intersection =
-        fromSpot.activeLineupIds.size + fromSpot.selectedLineupIds.size;
-    if (intersection === 1) {
-        if (fromSpot.isActive) {
-            const activeLineupId = [...fromSpot.activeLineupIds][0];
-            const lineup = viewLines.value.get(activeLineupId)!;
-            methods_fromSpot.select(fromSpot, lineup);
-            return;
-        }
-        if (fromSpot.isSelected) {
-            const selectedLineupId = [...fromSpot.selectedLineupIds][0];
-            const lineup = viewLines.value.get(selectedLineupId)!;
-            methods_fromSpot.deselect(fromSpot, lineup);
-            return;
-        }
-    }
-    if (intersection > 1 && event?.type == "restoreLineups") {
-        fromSpot.isSelected = true;
-        viewFromSpots.value.set(fromSpot.fromSpot.spotId, fromSpot);
-        methods_fromSpot.select(fromSpot, lineup!);
-        return;
-    }
-    if (intersection > 1) {
-        selectFromSpotFormContext.value.open(fromSpot);
-    }
-}
-
-/* ЛОГИКУ ПО ВЫЧИСЛЕНИЮ FANCY ДЛИТЕЛЬНОСТИ ПОЛЁТА
-ДЛЯ FANCY АНИМАЦИИ НУЖНО СОХРАНИТЬ*/
-const methods_toSpot = {
-    activeOnClick(toSpot: ViewThrowSpot) {
-        activeToSpotsCounter.value++;
-        {
-            // Логика для вычисления средней длительности(анимации)
-            const toSpots: Spot[] = [];
-            const durations: number[] = [];
-            toSpot.lineupIds.forEach((lineupId) => {
-                try {
-                    const lineup =
-                        viewItemsFactory.value.lineups.get(lineupId)!;
-                    toSpots.push(spots.value.get(lineup.fromId)!);
-                } catch (error) {
-                    console.log(
-                        "Probably problem is Bad/Damaged Lineup Data. Most probably Map key Id is not the same as Item's Id",
-                    );
-                    console.log("Error: ");
-                    console.error(error);
-                }
-            });
-            toSpots.forEach((fromSpot) => {
-                const length = Math.sqrt(
-                    (fromSpot.coords.x - toSpot.toSpot.coords.x) ** 2 +
-                        (fromSpot.coords.y - toSpot.toSpot.coords.y) ** 2,
-                );
-                const duration = 2.2 + length * 0.01;
-                durations.push(duration);
-            });
-            const avgDuration = (
-                durations.reduce((acc, next) => acc + next, 0) /
-                durations.length
-            ).toFixed(2);
-            // присваивание результата
-            toSpot.avgDuration = avgDuration;
-        }
-        methods_toSpot.toActiveDeps(toSpot);
-        toSpot.hslColor =
-            activeToSpotsCounter.value > 1
-                ? (Math.random() * 359).toFixed(0)
-                : "52";
-        toSpot.isActive = true;
-    },
-    toActiveDeps(toSpot: ViewThrowSpot) {
-        // toActive только те, которые не selected и также не active.
-        const lineupIds = toSpot
-            .getNonSelectedLineupIds()
-            .filter((lineupId) => !toSpot.activeLineupIds.has(lineupId));
-
-        lineupIds.forEach((lineupId) => {
-            const viewLine = viewItemsFactory.value.createViewLine(lineupId);
-            viewLines.value.set(lineupId, viewLine);
-            toSpot.activeLineupIds.add(lineupId);
-            toSpot.activeFromSpotIds.push(viewLine.lineup.fromId);
-            methods_fromSpot.activate(viewLine);
-        });
-    },
-    select(lineup: LineupItem) {
-        const toSpot = viewThrowSpots.value.get(lineup.lineup.toId)!;
-        toSpot.isSelected = true;
-        toSpot.isActive = false;
-        const ix1 = toSpot.activeFromSpotIds.findIndex(
-            (entry) => entry == lineup.lineup.fromId,
-        );
-        toSpot.activeFromSpotIds.splice(ix1, 1);
-        toSpot.activeLineupIds.delete(lineup.lineup.lineupId);
-        toSpot.selectedFromSpotIds.push(lineup.lineup.fromId);
-        toSpot.selectedLineupIds.add(lineup.lineup.lineupId);
-
-        toSpot.activeLineupIds.forEach((lineupId) => {
-            const lineup = viewLines.value.get(lineupId)!;
-            const fromSpot = viewFromSpots.value.get(lineup.lineup.fromId)!;
-            const intersection =
-                fromSpot.activeLineupIds.size + fromSpot.selectedLineupIds.size;
-            if (intersection > 1) {
-                //активирован/выбран не только удаляемым лайнапом
-                const ix1 = fromSpot.activatedByToSpotIds.findIndex(
-                    (entry) => entry == lineup.lineup.toId,
-                );
-                fromSpot.activatedByToSpotIds.splice(ix1, 1);
-                fromSpot.activeLineupIds.delete(lineupId);
-                fromSpot.filter.nadeType[lineup.lineup.nadeType]--;
-                fromSpot.filter.side[lineup.lineup.side]--;
-                fromSpot.filter.tickrate[lineup.lineup.tickrate]--;
-                fromSpot.filter.difficulties[lineup.lineup.difficulty]--;
-                fromSpot.lineupIds = fromSpot.lineupIds.filter(
-                    (lineupIdFltr) => lineupId != lineupIdFltr,
-                );
-                console.log(493);
-                if (fromSpot.activeLineupIds.size < 1) {
-                    fromSpot.isActive = false;
-                    console.log(496);
-                }
-            } else {
-                //связан только с удаляемым лайнапом => удаляем
-                viewFromSpots.value.delete(lineup.lineup.fromId);
-            }
-            viewLines.value.delete(lineupId);
-            const ix1 = toSpot.activeFromSpotIds.findIndex(
-                (entry) => entry == lineup.lineup.fromId,
-            );
-            toSpot.activeFromSpotIds.splice(ix1, 1);
-            toSpot.activeLineupIds.delete(lineupId);
-        });
-    },
-
-    deactivateOnClick(toSpot: ViewThrowSpot) {
-        activeToSpotsCounter.value--;
-        toSpot.isActive = false;
-        methods_toSpot.toInactiveDeps(toSpot);
-    },
-    toInactiveDeps(toSpot: ViewThrowSpot) {
-        toSpot.activeLineupIds.forEach((lineupId) => {
-            const viewLine = viewLines.value.get(lineupId)!;
-            const ix1 = toSpot.activeFromSpotIds.findIndex(
-                (entry) => entry == viewLine.lineup.fromId,
-            );
-            toSpot.activeFromSpotIds.splice(ix1, 1);
-            toSpot.activeLineupIds.delete(lineupId);
-            methods_fromSpot.deactivate(viewLine);
-            viewLines.value.delete(lineupId);
-        });
-    },
-};
-const methods_lineup = {};
-const methods_fromSpot = {
-    select(fromSpot: ViewLandSpot, lineup: LineupItem) {
-        fromSpot.isSelected = true;
-        fromSpot.activeLineupIds.delete(lineup.lineup.lineupId);
-        fromSpot.selectedLineupIds.add(lineup.lineup.lineupId);
-        const ix1 = fromSpot.activatedByToSpotIds.findIndex(
-            (entry) => entry == lineup.lineup.toId,
-        );
-        fromSpot.activatedByToSpotIds.splice(ix1, 1);
-        fromSpot.selectedByToSpotIds.push(lineup.lineup.toId);
-        if (fromSpot.activeLineupIds.size < 1) {
-            fromSpot.isActive = false;
-        }
-        methods_fromSpot.toSelectedDeps(lineup);
-    },
-    toSelectedDeps(lineup: LineupItem) {
-        console.log("lineup ", lineup.lineup.lineupId, " made selected");
-        lineup.isSelected = true;
-        lineup.isActive = false;
-        viewLines.value.set(lineup.lineup.lineupId, lineup);
-        methods_toSpot.select(lineup);
-    },
-    deselect(fromSpot: ViewLandSpot, lineup: LineupItem) {
-        const intersection =
-            fromSpot.activeLineupIds.size + fromSpot.selectedLineupIds.size;
-        if (intersection < 2) {
-            viewFromSpots.value.delete(fromSpot.fromSpot.spotId);
-            viewLines.value.delete(lineup.lineup.lineupId);
-            const toSpot = viewThrowSpots.value.get(lineup.lineup.toId)!;
-            const ix1 = toSpot.selectedFromSpotIds.findIndex(
-                (entry) => entry == fromSpot.fromSpot.spotId,
-            );
-            toSpot.selectedFromSpotIds.splice(ix1, 1);
-            toSpot.selectedLineupIds.delete(lineup.lineup.lineupId);
-            if (toSpot.selectedLineupIds.size < 1) {
-                toSpot.isSelected = false;
-            }
-            toSpot.isActive = true;
-            methods_toSpot.toActiveDeps(toSpot);
-        } else {
-            // if (fromSpot.selectedLineupIds.size < 2) {
-            // fromSpot.isSelected = false
-            const ix1 = fromSpot.selectedByToSpotIds.findIndex(
-                (entry) => entry == lineup.lineup.toId,
-            );
-            fromSpot.selectedByToSpotIds.splice(ix1, 1);
-            fromSpot.selectedLineupIds.delete(lineup.lineup.lineupId);
-            fromSpot.lineupIds = fromSpot.lineupIds.filter(
-                (lId) => lId != lineup.lineup.lineupId,
-            );
-            fromSpot.filter.nadeType[lineup.lineup.nadeType]--;
-            fromSpot.filter.side[lineup.lineup.side]--;
-            fromSpot.filter.tickrate[lineup.lineup.tickrate]--;
-            fromSpot.filter.difficulties[lineup.lineup.difficulty]--;
-            const toSpot = viewThrowSpots.value.get(lineup.lineup.toId)!;
-            const ix1_toSpot = toSpot.selectedFromSpotIds.findIndex(
-                (entry) => entry == fromSpot.fromSpot.spotId,
-            );
-            toSpot.selectedFromSpotIds.splice(ix1_toSpot, 1);
-            toSpot.selectedLineupIds.delete(lineup.lineup.lineupId);
-            if (toSpot.selectedLineupIds.size < 1) {
-                toSpot.isSelected = false;
-            }
-            toSpot.isActive = true;
-            methods_toSpot.toActiveDeps(toSpot);
-            // } else {}
-        }
-    },
-
-    activate(lineup: LineupItem) {
-        console.log(587);
-        const toId = lineup.lineup.toId;
-        const toSpot = viewThrowSpots.value.get(toId)!;
-        console.log("toSpot: ", toSpot);
-        const fromId = lineup.lineup.fromId;
-        const fromSpotExists = viewFromSpots.value.has(fromId);
-        console.log(592, "exists? :", fromSpotExists, performance.now());
-        if (!fromSpotExists) {
-            // если не существует - создать
-            const fromSpot = viewItemsFactory.value.createActiveViewFromSpot(
-                lineup.lineup.lineupId,
-            );
-            console.log(fromSpot);
-            viewFromSpots.value.set(fromId, fromSpot);
-        } else {
-            //fromSpot может быть создан другим toSpotом или этим же, но через другой лайнап
-            const existingFromSpot = viewFromSpots.value.get(fromId)!;
-            existingFromSpot.activatedByToSpotIds.push(lineup.lineup.toId);
-            existingFromSpot.activeLineupIds.add(lineup.lineup.lineupId);
-            existingFromSpot.lineupIds.push(lineup.lineup.lineupId);
-            existingFromSpot.filter.nadeType[lineup.lineup.nadeType]++;
-            existingFromSpot.filter.side[lineup.lineup.side]++;
-            existingFromSpot.filter.tickrate[lineup.lineup.tickrate]++;
-            existingFromSpot.filter.difficulties[lineup.lineup.difficulty]++;
-            existingFromSpot.isActive = true;
-            console.log(existingFromSpot);
-            viewFromSpots.value.set(fromId, existingFromSpot);
-        }
-    },
-    deactivate(lineup: LineupItem) {
-        //delete if not selected/activated by any other toSpot
-        /* не уверен на 100% в этой функции, т.к. скопировал ее код из прототипа другой.
-		Т.е. она не "opinionated"  */
-        const lineupId = lineup.lineup.lineupId;
-        const fromSpot = viewFromSpots.value.get(lineup.lineup.fromId)!;
-        const intersection =
-            fromSpot.activeLineupIds.size + fromSpot.selectedLineupIds.size;
-        if (intersection > 1) {
-            //активирован/выбран не только удаляемым лайнапом
-            const ix1 = fromSpot.activatedByToSpotIds.findIndex(
-                (entry) => entry == lineup.lineup.toId,
-            );
-            fromSpot.activatedByToSpotIds.splice(ix1, 1);
-            fromSpot.activeLineupIds.delete(lineupId);
-            fromSpot.filter.nadeType[lineup.lineup.nadeType]--;
-            fromSpot.filter.side[lineup.lineup.side]--;
-            fromSpot.filter.tickrate[lineup.lineup.tickrate]--;
-            fromSpot.filter.difficulties[lineup.lineup.difficulty]--;
-            fromSpot.lineupIds = fromSpot.lineupIds.filter(
-                (lineupIdFltr) => lineupId != lineupIdFltr,
-            );
-            if (fromSpot.activeLineupIds.size < 1) {
-                fromSpot.isActive = false;
-            }
-        } else {
-            //связан только с удаляемым лайнапом => удаляем
-            viewFromSpots.value.delete(lineup.lineup.fromId);
-        }
-    },
-};
-
 function formSelectFromSpot(lineupId: string) {
     const lineup = viewLines.value.get(lineupId)!;
     const fromSpot = viewFromSpots.value.get(lineup.lineup.fromId)!;
@@ -683,46 +340,6 @@ const selectFromSpotFormContext = ref<{
         selectFromSpotFormContext.value.clickedFromSpot = undefined;
     },
 });
-const selectFormProps = {
-    activeLineups: computed(() => {
-        if (selectFromSpotFormContext.value.clickedFromSpot) {
-            const lineupPropObjArray = [
-                ...selectFromSpotFormContext.value.clickedFromSpot!
-                    .activeLineupIds,
-            ].map((activeLineupId) => {
-                const lineup = viewLines.value.get(activeLineupId)!;
-                const lineupPropObj = {
-                    lineupItem: lineup,
-                    viewToSpot: viewThrowSpots.value.get(lineup.lineup.toId)!,
-                    viewFromSpot: viewFromSpots.value.get(
-                        lineup.lineup.fromId,
-                    )!,
-                };
-                return lineupPropObj;
-            });
-            return lineupPropObjArray;
-        }
-    }),
-    selectedLineups: computed(() => {
-        if (selectFromSpotFormContext.value.clickedFromSpot) {
-            const lineupPropObjArray = [
-                ...selectFromSpotFormContext.value.clickedFromSpot!
-                    .selectedLineupIds,
-            ].map((selectedLineupId) => {
-                const lineup = viewLines.value.get(selectedLineupId)!;
-                const lineupPropObj = {
-                    lineupItem: lineup,
-                    viewToSpot: viewThrowSpots.value.get(lineup.lineup.toId)!,
-                    viewFromSpot: viewFromSpots.value.get(
-                        lineup.lineup.fromId,
-                    )!,
-                };
-                return lineupPropObj;
-            });
-            return lineupPropObjArray;
-        }
-    }),
-};
 
 const contentPanelData = ref({
     isVisible: false,
@@ -877,14 +494,11 @@ bugHeOption:[], */
         />
     </main>
 
-    <SelectForm
-        :isVisible="selectFromSpotFormContext.isFormVisible"
-        @exit="selectFromSpotFormContext.close()"
-        :activeLineups="selectFormProps.activeLineups.value!"
-        :selectedLineups="selectFormProps.selectedLineups.value!"
-        @select="(lineupId) => formSelectFromSpot(lineupId)"
-        @deselect="(lineupId) => formDeselectFromSpot(lineupId)"
+    <SelectFormOnClickThrowSpot
+        v-if="selectFormThrowSpotContext.value.isFormVisible"
+        :context="selectFormThrowSpotContext"
     />
+
     <Teleport to="body">
         <LoadingGoldsource
             v-if="isLoading"
