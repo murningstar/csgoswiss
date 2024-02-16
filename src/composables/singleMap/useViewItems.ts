@@ -1,10 +1,18 @@
-import { ViewItemsFactory } from "@/data/types/ViewItems";
+import {
+    SelectFormMediator,
+    ViewItemsFactory,
+    ViewLandSpot,
+    ViewLine,
+    ViewThrowSpot,
+} from "@/data/types/ViewItems";
 import type { SpotsHashMap } from "@/data/types/SpotsHashMap";
 import type { LineupsHashMap } from "@/data/types/LineupsHashMap";
 import type { ViewLandSpotsHashMap } from "@/data/types/ViewLandSpotsHashMap";
 import type { ViewLinesHashMap } from "@/data/types/ViewLinesHashMap";
 import type { ViewThrowSpotsHashMap } from "@/data/types/ViewThrowSpotsHashMap";
 import { ref, watch, type Ref, reactive } from "vue";
+import type { SelectFormThrowSpotContext } from "@/data/types/SelectFormContexts";
+import { useSelectForms } from "./useSelectForms";
 
 export function useViewItems(
     spots: Ref<SpotsHashMap>,
@@ -15,12 +23,17 @@ export function useViewItems(
     const viewThrowSpots = reactive<ViewThrowSpotsHashMap>({
         value: new Map(),
     }); // Создаются на клик по viewThrowSpot'у
+
+    const { selectFormThrowSpotContext } = useSelectForms();
+
+    let selectFormMediator = new SelectFormMediator(selectFormThrowSpotContext);
     let viewItemsFactory;
     watch(lineups, () => {
         /* Reset ViewItems */
         viewLandSpots.value.clear();
         viewLines.value.clear();
         viewThrowSpots.value.clear();
+        selectFormMediator.selectFormThrowSpotContext.value.reset();
         /* (Re)Initialize Factory */
         viewItemsFactory = new ViewItemsFactory(
             spots.value,
@@ -28,10 +41,18 @@ export function useViewItems(
             viewLandSpots,
             viewLines,
             viewThrowSpots,
+            selectFormMediator,
         );
         /* (Re)initialize ViewLandSpots */
         viewLandSpots.value = viewItemsFactory.createViewLandSpots().value;
     });
 
-    return { viewItemsFactory, viewLandSpots, viewThrowSpots, viewLines };
+    return {
+        viewItemsFactory,
+        viewLandSpots,
+        viewThrowSpots,
+        viewLines,
+        selectFormThrowSpotContext,
+        selectFormMediator,
+    };
 }
