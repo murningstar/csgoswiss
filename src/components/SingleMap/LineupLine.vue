@@ -5,8 +5,8 @@ const props = defineProps<{
     viewLine: ViewLine;
 }>();
 
-const throwId = props.viewLine.lineup.throwId;
-const landId = props.viewLine.lineup.landId;
+const throwId = props.viewLine.throwSpot.spotId;
+const landId = props.viewLine.landSpot.spotId;
 
 const viewLandSpot = props.viewLine.factory.viewLandSpots.value.get(landId)!;
 const viewThrowSpot = props.viewLine.factory.viewThrowSpots.value.get(throwId)!;
@@ -16,7 +16,12 @@ const y2 = viewLandSpot.landSpot.coords.y;
 const x1 = viewThrowSpot.throwSpot.coords.x;
 const y1 = viewThrowSpot.throwSpot.coords.y;
 
-const isSelected = computed(() => props.viewLine.state.value == "SELECTED");
+const isSelected = computed(
+    () =>
+        props.viewLine.state.value == "ONLY_SELECTED_SINGLE" ||
+        props.viewLine.state.value == "ONLY_SELECTED_MULTIPLE" ||
+        props.viewLine.state.value == "ACTIVE_AND_SELECTED",
+);
 const hslColor = viewLandSpot.hslColor;
 const stroke = computed(() =>
     isSelected.value ? `hsl(${hslColor.value}, 100%, 56%)` : `hsl(${hslColor.value}, 80%, 55%)`,
