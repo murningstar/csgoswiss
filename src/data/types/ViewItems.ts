@@ -20,7 +20,11 @@ import type { ViewLandSpotsHashMap } from "./ViewLandSpotsHashMap";
 import type { ViewLinesHashMap } from "./ViewLinesHashMap";
 import type { ViewThrowSpotsHashMap } from "./ViewThrowSpotsHashMap";
 import type { SelectFormThrowSpotContext } from "./SelectFormContexts";
-
+import type { SpotActorRef, SpotMachine } from "@/machines/spotMachine";
+import type { LineActorRef, LineMachine } from "@/machines/lineMachine";
+import type { SpotActorsHashMap } from "./SpotActorsHashMap";
+import type { LineActorsHashMap } from "./LineActorsHashMap";
+import { useActorRef } from "@xstate/vue";
 /* ### State machines */
 
 /* ViewItems'es possible states */
@@ -123,6 +127,168 @@ interface ViewThrowSpotObservableObserver {
 }
 
 type LineId = `${Spot["spotId"]}<-${Spot["spotId"]}`;
+
+type ViewSpotMessage = {
+    senderId: string;
+    senderNewState: ViewLandSpotStateUnion;
+    affectedLineups: Lineup[];
+};
+
+export type ViewSpotStateUnion =
+    | "UNSPOILED"
+    | "LAND_INACTIVE_UNSELECTED"
+    | "LAND_ONLY_ACTIVE"
+    | "LAND_ONLY_SELECTED_SINGLE"
+    | "LAND_ONLY_SELECTED_MULTIPLE"
+    | "LAND_ACTIVE_AND_SELECTED"
+    | "THROW_ONLY_ACTIVE_SINGLE"
+    | "THROW_ONLY_ACTIVE_MULTIPLE"
+    | "THROW_ONLY_SELECTED_SINGLE"
+    | "THROW_ONLY_SELECTED_MULTIPLE"
+    | "THROW_ACTIVE_AND_SELECTED"
+    | "THROW_KILLED"
+    | "BOTH_LAND_AND_THROW_SINGLE"
+    | "BOTH_LAND_THROW_MULTIPLE";
+
+export class ViewSpot {
+    spot: Spot;
+    state: { value: ViewSpotStateUnion };
+    readonly lineups: Set<Lineup>;
+    // Переименовать в receivingViewLines
+    observingViewLines: Set<ViewLine>;
+    avgDuration: { value: string | null }; // Вычисляется при активации. Просто так.
+    hslColor: { value: string | null }; // Вычисляется при активации. Чтобы 1й всегда был желтым
+    mediator: SelectFormMediator; // .selectFormContext is reactive
+    readonly factory: ViewItemsFactory;
+    states: {};
+
+    constructor(
+        initialType: "land" | "throw",
+        spot: Spot,
+        mediator: SelectFormMediator,
+        factory: ViewItemsFactory,
+    ) {
+        this.spot = spot;
+        this.observingViewLines = new Set();
+        this.lineups = new Set();
+        this.avgDuration = reactive({ value: "3.0" });
+        this.hslColor = reactive({ value: null });
+        this.mediator = mediator;
+        this.factory = factory;
+
+        if (initialType == "land") {
+            this.state = reactive<{ value: ViewSpotStateUnion }>({
+                value: "LAND_INACTIVE_UNSELECTED",
+            });
+        } else {
+            this.state = reactive<{ value: ViewSpotStateUnion }>({
+                value: "THROW_ONLY_ACTIVE_SINGLE",
+            });
+        }
+
+        this.states = {
+            LAND_INACTIVE_UNSELECTED: {
+                selfClicked: () => {
+                    this._setState("LAND_ONLY_ACTIVE");
+                    this.createAndPopulateOwnDependencies();
+                    this.$sendToDependencies("getActivatedAfterCreation", this.spot.spotId);
+                    this.initializeHslColor();
+                    this.incrementHslCounter();
+                },
+            },
+            LAND_ONLY_ACTIVE: {},
+            LAND_ONLY_SELECTED_SINGLE: {},
+            LAND_ONLY_SELECTED_MULTIPLE: {},
+            LAND_ACTIVE_AND_SELECTED: {},
+            THROW_ONLY_ACTIVE_SINGLE: {},
+            THROW_ONLY_ACTIVE_MULTIPLE: {},
+            THROW_ONLY_SELECTED_SINGLE: {},
+            THROW_ONLY_SELECTED_MULTIPLE: {},
+            THROW_ACTIVE_AND_SELECTED: {},
+            THROW_KILLED: {},
+            BOTH_LAND_AND_THROW_SINGLE: {},
+            BOTH_LAND_THROW_MULTIPLE: {},
+        };
+    }
+    _setState(newState: ViewSpotStateUnion) {
+        this.state.value = newState;
+    }
+    /* When `this` (ViewLandSpot) transitions throw INACTIVE_UNSELECTED into ONLY_ACTIVE; */
+    createAndPopulateOwnDependencies(options: { except: Lineup[] } = { except: [] }) {
+        this.lineups.forEach((lineup) => {
+            if (options.except.includes(lineup)) {
+                return; /* Пропустить этот lineup */
+            }
+            const landSpot = this.factory.spots.get(lineup.landId)!;
+            const throwSpot = this.factory.spots.get(lineup.throwId)!;
+
+            /* Handle ViewLine creation */
+            const lineId: LineId = `${landSpot.spotId}<-${throwSpot.spotId}`;
+
+            let viewLine = this.factory.viewLines.value.get(lineId);
+            if (!viewLine) {
+                viewLine = new ViewLine(landSpot, throwSpot, this.mediator, this.factory);
+            }
+            viewLine = reactive(viewLine);
+            viewLine.lineups.add(lineup);
+            this.observingViewLines.add(viewLine);
+            /* Add viewLine into ViewLines */
+            this.factory.viewLines.value.set(lineId, viewLine);
+
+            /* Handle throw spot creation */
+            let viewSpot = this.factory.viewThrowSpots.value.get(lineup.throwId);
+            if (!viewSpot) {
+                viewThrowSpot = new ViewThrowSpot(throwSpot, this.mediator, this.factory);
+            }
+            viewThrowSpot = reactive(viewThrowSpot);
+            this.factory.viewThrowSpots.value.set(throwSpot.spotId, viewThrowSpot);
+        });
+    }
+
+    /* hslColor вычисляется при активации. Чтобы 1й активированный всегда был желтым */
+    initializeHslColor() {
+        this.hslColor.value =
+            this.nonInactiveLandSpotsCount > 1 ? (Math.random() * 359).toFixed(0) : "52";
+    }
+    get nonInactiveLandSpotsCount() {
+        return this.mediator.nonInactiveLandSpotsCount.value;
+    }
+    incrementHslCounter() {
+        const value = this.mediator.nonInactiveLandSpotsCount.value;
+        this.mediator.nonInactiveLandSpotsCount.value = value + 1;
+    }
+    decrementHslCounter() {
+        const value = this.mediator.nonInactiveLandSpotsCount.value;
+        this.mediator.nonInactiveLandSpotsCount.value = value - 1;
+    }
+    // performSideEffects(context: {
+    //     newState: ViewSpotStateUnion;
+    //     oldState: ViewSpotStateUnion;
+    //     event: string;
+    // }) {
+    //     switch (context.newState) {
+    //         case "LAND_INACTIVE_UNSELECTED": {
+    //             if (event == "selfClicked") {
+    //                 this._initializeHslColor();
+    //                 this._incrementHslCounter();
+    //             }
+    //             break;
+    //         }
+
+    //         default:
+    //             break;
+    //     }
+    // }
+}
+
+export class SelectFormMediator {
+    nonInactiveLandSpotsCount: { value: number };
+    selectFormThrowSpotContext: SelectFormThrowSpotContext; // Reactive
+    constructor(selectFormThrowSpotContext: SelectFormThrowSpotContext) {
+        this.nonInactiveLandSpotsCount = reactive({ value: 0 });
+        this.selectFormThrowSpotContext = selectFormThrowSpotContext; // Reactive
+    }
+}
 
 // Позже убрать Ref с тех элементов, реактивность для которых не нужна,
 // то есть с тех, значения которых не изменяются через "this." в методах.
@@ -860,10 +1026,58 @@ export class ViewThrowSpot implements ViewThrowSpotStateMachine, ViewThrowSpotOb
     }
 }
 
-export class SelectFormMediator {
-    selectFormThrowSpotContext: SelectFormThrowSpotContext; // Reactive
-    constructor(selectFormThrowSpotContext: SelectFormThrowSpotContext) {
-        this.selectFormThrowSpotContext = selectFormThrowSpotContext; // Reactive
+export class ViewActorsFactory {
+    readonly lineups: Map<Lineup["lineupId"], Lineup>;
+    readonly spots: Map<Spot["spotId"], Spot>;
+    spotMachine: SpotMachine;
+    lineMachine: LineMachine;
+    spotActors: SpotActorsHashMap; // reactive
+    lineActors: LineActorsHashMap; // reactive
+    readonly mediator: SelectFormMediator;
+    constructor(
+        spots: SpotsHashMap,
+        lineups: LineupsHashMap,
+        spotMachine: SpotMachine,
+        lineMachine: LineMachine,
+        spotActors: SpotActorsHashMap,
+        lineActors: LineActorsHashMap,
+        mediator: SelectFormMediator,
+    ) {
+        this.lineups = lineups;
+        this.spots = spots;
+        this.spotMachine = spotMachine;
+        this.lineMachine = lineMachine;
+        this.spotActors = spotActors;
+        this.lineActors = lineActors;
+        this.mediator = mediator;
+    }
+    // Populate spotActors on
+    createSpotMachines() {
+        const spotActors: SpotActorsHashMap = { value: new Map() };
+
+        this.lineups.forEach((lineup) => {
+            const { landId } = lineup;
+            if (!spotActors.value.has(landId)) {
+                const spotActor = useActorRef(this.spotMachine, {
+                    input: {
+                        spot: this.spots.get(landId)!,
+                        initialType: "land",
+                        mediator: this.mediator,
+                        factory: this,
+                    },
+                });
+                spotActors.value.set(landId, spotActor);
+            }
+        });
+
+        this.lineups.forEach((lineup) => {
+            const { landId } = lineup;
+            const spotActor = spotActors.value.get(landId)!;
+            // spotActor.ref. lineups.add(lineup);
+            Добавить новое событие видимо нужно для обновления контекста
+        });
+
+        return spotActors;
     }
 }
 
@@ -895,6 +1109,7 @@ export class ViewItemsFactory {
             this.lineupIdNameMap.set(lineup.name, lineupId);
         });
     }
+
     createViewLandSpots() {
         const viewLandSpots: ViewLandSpotsHashMap = { value: new Map() };
         // populate `viewLandSpots` hashmap
@@ -914,6 +1129,7 @@ export class ViewItemsFactory {
         });
         return viewLandSpots;
     }
+
     createActiveViewThrowSpot(lineupId: string): ViewThrowSpot {
         const lineup = this.lineups.get(lineupId)!;
         const viewThrowSpot = new ViewThrowSpot({
