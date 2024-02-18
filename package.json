@@ -12,7 +12,7 @@
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore"
   },
   "dependencies": {
-    "@xstate/vue": "^3.0.3",
+    "@xstate/vue": "^3.1.0",
     "axios": "^1.6.7",
     "camelcase": "^8.0.0",
     "gsap": "^3.12.5",
@@ -21,7 +21,7 @@
     "pinia": "2.1.7",
     "vue": "3.4.15",
     "vue-router": "^4.2.5",
-    "xstate": "^5.6.0",
+    "xstate": "^5.7.0",
     "zod": "^3.22.4"
   },
   "devDependencies": {
